@@ -1,0 +1,1 @@
+#define SPEED_SLOPE
