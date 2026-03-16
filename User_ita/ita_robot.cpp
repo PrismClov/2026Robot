@@ -26,6 +26,10 @@
 /* Private function declarations ---------------------------------------------*/
 
 /* Function prototypes -------------------------------------------------------*/
+/**
+ * @brief 底盘，云台，发射机构初始化
+ *
+ */
 void Class_Chariot::Init(float __Dead_Zone)
 {
     DR16.Init(&huart3);
@@ -41,10 +45,19 @@ void Class_Chariot::Init(float __Dead_Zone)
 
 }
 
+/**
+ * @brief 50ms定时任务
+ *
+ */
 void Class_Chariot::TIM1msMod50_Alive_PeriodElapsedCallback()
 {
     DR16.TIM1msMod50_Alive_PeriodElapsedCallback();
 }
+
+/**
+ * @brief 50ms定时任务
+ *
+ */
 void Class_Chariot::TIM_Unline_Protect_PeriodElapsedCallback()
 {
     if(DR16.Get_DR16_Status() == DR16_Status_DISABLE)
@@ -53,13 +66,21 @@ void Class_Chariot::TIM_Unline_Protect_PeriodElapsedCallback()
     }
 }
 
-
+/**
+ * @brief 50ms定时任务
+ *
+ */
 void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
 {
+
     Chassis.TIM_Calculate_PeriodElapsedCallback(Sprint_Status_ENABLE);
-    Lift.StateMachine();
     
+		Lift.TIM_Calculate_PeriodElapsedCallback();
 }
+/**
+ * @brief 获取当前活动的控制器
+ *
+ */
 void Class_Chariot::Judge_DR16_Control_Type()
 {
     if (DR16.Get_Left_X() != 0 ||
@@ -86,7 +107,10 @@ void Class_Chariot::Judge_DR16_Control_Type()
     }
     
 }
-
+/**
+ * @brief 获取当前活动的控制器
+ *
+ */
 void Class_Chariot::Judge_Active_Controller()
 {
     // 检查DR16是否有输入
@@ -102,6 +126,11 @@ void Class_Chariot::Judge_Active_Controller()
         Active_Controller = Controller_NONE;
     }
 }
+
+/**
+ * @brief 底盘，云台，发射机构控制逻辑
+ *
+ */
 void Class_Chariot::Control_Chassis()
 {
     //遥控器摇杆值
@@ -134,9 +163,8 @@ void Class_Chariot::Control_Chassis()
         }
         else if (DR16.Get_Right_Switch()==DR16_Switch_Status_DOWN)  //右下 小陀螺模式
         {
-             Lift.DR16_Status = Lift_Status;
             chassis_lift_distance = dr16_l_x * Lift.Get_Target_Distance_Limit();
-            Lift.Set_Target_Distance(chassis_lift_distance);
+            //Lift.Set_Target_Distance(chassis_lift_distance);
         }
         else if (DR16.Get_Right_Switch()==DR16_Switch_Status_MIDDLE)
         {
@@ -145,6 +173,31 @@ void Class_Chariot::Control_Chassis()
             Chassis.Set_Target_Velocity_X(chassis_velocity_x);
             Chassis.Set_Target_Velocity_Y(chassis_velocity_y);
             Chassis.Set_Target_Omega(chassis_omega); 
+        }
+
+        //抬升导轮速度
+        float lift_move_speed = dr16_l_x * sqrt(1.0f - dr16_l_y * dr16_l_y / 2.0f); //*Lift.Get_Velocity_Max();
+
+        if (DR16.Get_Left_Switch() == DR16_Switch_Status_UP)  //左上 抬升up
+        {
+
+            Lift.Set_Control_Type(Lift_Control_Type_UP);
+
+        }
+
+        else if (DR16.Get_Left_Switch() == DR16_Switch_Status_MIDDLE)  //左中 抬升move
+        {
+
+            Lift.Set_Control_Type(Lift_Control_Type_MOVE);
+            Lift.Set_Move_Speed(lift_move_speed);
+
+        }
+
+        else if (DR16.Get_Left_Switch() == DR16_Switch_Status_DOWN)  //左下 抬升down
+        {
+
+            Lift.Set_Control_Type(Lift_Control_Type_DOWN);
+
         }
     }
     

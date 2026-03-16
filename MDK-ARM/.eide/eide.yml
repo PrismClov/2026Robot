@@ -65,6 +65,8 @@ virtualFolder:
         - path: ../User_alg/alg_pid.cpp
         - path: ../User_alg/alg_slope.cpp
         - path: ../User_alg/kalman_filter.cpp
+        - path: ../User_alg/alg_fsm.cpp
+        - path: ../User_alg/alg_fsm.h
       folders: []
     - name: User_chariot
       files:

@@ -6,20 +6,34 @@
  */
 void Class_Lift::Init()
 {
-	Motor_Lift_L.Init(&hcan2,Motor_DJI_ID_0x201);
+    
+	
+    Motor_Lift_L.Init(&hcan2,Motor_DJI_ID_0x201);
+
     Motor_Lift_R.Init(&hcan2,Motor_DJI_ID_0x202);
+
     Motor_Move_L.Init(&hcan2,Motor_DJI_ID_0x203);
+
     Motor_Move_R.Init(&hcan2,Motor_DJI_ID_0x204);
 
     //PID初始化
-    Motor_Lift_L.PID_Omega.Init(5.0f, 0.0,0.0);
-    Motor_Lift_R.PID_Omega.Init(5.0f, 0.0,0.0);
+    Motor_Lift_L.PID_Omega.Init(2.0f, 0.0,0.0);
+
+    Motor_Lift_R.PID_Omega.Init(2.0f, 0.0,0.0);
 
     PID_Distance_L.Init(-160.0f, 0.0f, 0.0f, 0.0f, 0.0f, 14.0);
+
     PID_Distance_R.Init(-160.0f, 0.0f, 0.0f, 0.0f, 0.0f, 14.0 );
 
-    Motor_Move_L.PID_Omega.Init(0.5,0.0,0.0);
-    Motor_Move_R.PID_Omega.Init(0.5,0.0,0.0);
+    Motor_Move_L.PID_Omega.Init(2.0,0.0,0.0);
+
+    Motor_Move_R.PID_Omega.Init(2.0,0.0,0.0);
+
+
+    //状态机初始化
+    FSM_Lift.Lift = this;
+
+    FSM_Lift.Init(4,0);    
 }
 
 /*
@@ -32,6 +46,12 @@ void Class_Lift::Distance_Caculate()
     Now_Distance[0] = Motor_Lift_L.Get_Now_Angle()*Angle_to_Distance - Offset[0];
 
     Now_Distance[1] = Motor_Lift_R.Get_Now_Angle()*Angle_to_Distance - Offset[1];
+
+    //传入行程环
+    PID_Distance_L.Set_Now(Now_Distance[0]);
+
+    PID_Distance_R.Set_Now(Now_Distance[1]);
+
 }
 
 /*-----------------------校准状态---------------------------*/
@@ -43,25 +63,9 @@ void Class_Lift::Distance_Caculate()
 void Class_Lift::Caliberate()
 {
     //速度环校准
-    if(!Caliberate_Flag[0])
-    {
-        Motor_Lift_L.Set_Target_Omega(Caliberate_Speed[0]);
-    }
-    if(!Caliberate_Flag[1])
-    {
-        Motor_Lift_R.Set_Target_Omega(Caliberate_Speed[1]);
-    }
-
-    //校准检测
-    if(Math_Abs(Now_Distance[0]) >= Distance_Caliberate && Math_Abs(Motor_Lift_L.Get_Now_Current()) >= Caliberate_Torque[0])
-    {
-        Caliberate_Flag[0] = true;
-    }
-    if(Math_Abs(Now_Distance[1]) >= Distance_Caliberate && Math_Abs(Motor_Lift_R.Get_Now_Current()) >= Caliberate_Torque[1])
-    {
-        Caliberate_Flag[1] = true;
-    }
-
+    
+    Motor_Lift_L.Set_Target_Omega(Caliberate_Speed[0]);
+    Motor_Lift_R.Set_Target_Omega(Caliberate_Speed[1]);
 
 }
 
@@ -70,6 +74,15 @@ void Class_Lift::Caliberate()
 */
 bool Class_Lift::Is_Caliberate_Finished()
 {
+		if(Math_Abs(Now_Distance[0]) >= Distance_Caliberate && Math_Abs(Motor_Lift_L.Get_Now_Current()) >= Caliberate_Torque[0])
+    {
+        Caliberate_Flag[0] = true;
+    }
+    if(Math_Abs(Now_Distance[1]) >= Distance_Caliberate && Math_Abs(Motor_Lift_R.Get_Now_Current()) >= Caliberate_Torque[1])
+    {
+        Caliberate_Flag[1] = true;
+    }
+		
     return Caliberate_Flag[0] && Caliberate_Flag[1];
 }
 
@@ -79,10 +92,6 @@ bool Class_Lift::Is_Caliberate_Finished()
 void Class_Lift::Caliberate_Cancel()
  {
     //速度环锁死
-    Motor_Lift_L.Set_Control_Method(Motor_DJI_Control_Method_OMEGA);
-
-    Motor_Lift_R.Set_Control_Method(Motor_DJI_Control_Method_OMEGA);
-
 
     Motor_Lift_L.Set_Target_Omega(0.0f);
     
@@ -97,7 +106,24 @@ void Class_Lift::Caliberate_Cancel()
 */
 void Class_Lift::Up()
 {
+    //防止超出上限
+    float temp_distance_l = (Target_Distance[0] < Target_Distance_Limit) ?Target_Distance[0]: Target_Distance_Limit;
     
+    float temp_distance_r = (Target_Distance[1] < Target_Distance_Limit) ?Target_Distance[1]: Target_Distance_Limit;
+
+
+    //跑行程环
+    PID_Distance_L.Set_Target(temp_distance_l);
+
+    PID_Distance_R.Set_Target(temp_distance_r);
+
+    PID_Distance_L.TIM_Adjust_PeriodElapsedCallback();
+
+    PID_Distance_R.TIM_Adjust_PeriodElapsedCallback();
+
+    Motor_Lift_L.Set_Target_Omega(PID_Distance_L.Get_Out());
+
+    Motor_Lift_R.Set_Target_Omega(PID_Distance_R.Get_Out());
 
 }
 
@@ -107,7 +133,14 @@ void Class_Lift::Up()
  */
 bool Class_Lift::Is_Up_Finished()
 {
-    return false;
+    bool res = false;
+
+    if(Math_Abs(Now_Distance[0] - Target_Distance[0]) <= Distance_Error && Math_Abs(Now_Distance[1] - Target_Distance[1]) <= Distance_Error)
+    {
+        res = true;
+    }
+
+    return res;
 }
 
 /**
@@ -115,7 +148,12 @@ bool Class_Lift::Is_Up_Finished()
  */
  void Class_Lift::Up_Cancel()
  {
+
+    //速度环锁死
+    Motor_Lift_L.Set_Target_Omega(0.0f);
     
+    Motor_Lift_R.Set_Target_Omega(0.0f);
+
  }
 
 
@@ -126,6 +164,10 @@ bool Class_Lift::Is_Up_Finished()
 void Class_Lift::Move()
 {
 
+    Motor_Move_L.Set_Target_Omega(Move_Speed[0]);
+
+    Motor_Move_R.Set_Target_Omega(Move_Speed[1]);
+
 }
 
 /**
@@ -133,7 +175,9 @@ void Class_Lift::Move()
 */
 bool Class_Lift::Is_Move_Finished()
 {
-   return false;
+    bool res = true;
+
+    return res;
 }
 
 /**
@@ -141,6 +185,10 @@ bool Class_Lift::Is_Move_Finished()
 */
 void Class_Lift::Move_Cancel()
 {
+
+    Motor_Move_L.Set_Target_Omega(0.0f);
+
+    Motor_Move_R.Set_Target_Omega(0.0f);
 
 }
 
@@ -151,6 +199,18 @@ void Class_Lift::Move_Cancel()
 */
 void Class_Lift::Down()
 {
+    //复位到校准位置
+    PID_Distance_L.Set_Target(0.0f);
+
+    PID_Distance_R.Set_Target(0.0f);
+
+    PID_Distance_L.TIM_Adjust_PeriodElapsedCallback();
+
+    PID_Distance_R.TIM_Adjust_PeriodElapsedCallback();
+
+    Motor_Lift_L.Set_Target_Omega(PID_Distance_L.Get_Out());
+
+    Motor_Lift_R.Set_Target_Omega(PID_Distance_R.Get_Out());
 
 }
 
@@ -159,7 +219,14 @@ void Class_Lift::Down()
 */
 bool Class_Lift::Is_Down_Finished()
 {
-    return false;
+    bool res = false;
+
+    if(Math_Abs(Now_Distance[0]) <= Distance_Error && Math_Abs(Now_Distance[1]) <= Distance_Error)
+    {
+        res = true;
+    }
+
+    return res;
 }
 
 
@@ -169,6 +236,10 @@ bool Class_Lift::Is_Down_Finished()
 
 void Class_Lift::Down_Cancel()
 {
+
+    Motor_Lift_L.Set_Target_Omega(0.0f);
+
+    Motor_Lift_R.Set_Target_Omega(0.0f);
 
 }
 
@@ -182,35 +253,53 @@ void Class_Lift::Down_Cancel()
     //实时计算同步带行程
     Distance_Caculate();
 
+
     //状态机回调
     FSM_Lift.Lift_TIM_Status_PeriodElapsedCallback();
 
-    //PID回调函数
-    
+
+    //电机一直跑速度环
+    Motor_Lift_L.TIM_Calculate_PeriodElapsedCallback();
+
+    Motor_Lift_R.TIM_Calculate_PeriodElapsedCallback();
+
+    Motor_Move_L.TIM_Calculate_PeriodElapsedCallback();
+
+    Motor_Move_R.TIM_Calculate_PeriodElapsedCallback();
 
  }
-
- void Class_Lift_FSM::Lift_TIM_Status_PeriodElapsedCallback()
+bool caliberate_flag ;
+ 
+ void Class_FSM_Lift::Lift_TIM_Status_PeriodElapsedCallback()
  {
     Status[Now_Status_Serial].Count_Time++;
 
     switch(Lift_Status)
     {
+        caliberate_flag	= Lift->Is_Caliberate_Finished();
         case Lift_Status_INIT :
-        {
-            Lift->Caliberate();
+        {   
+            if(!Lift->Is_Caliberate_Finished())
+            {
+                Lift->Caliberate();
+            }
 
             //查看校准是否完成
             if(Lift->Is_Caliberate_Finished())
             {
-                //设置同步带偏移
-                Lift->Set_Offset(Lift->Get_Now_Distance_L(),Lift->Get_Now_Distance_R());
                 
                 Lift->Caliberate_Cancel();
 
-                Lift_Status = Lift_Status_UP;
+                //跳转条件
+                if(Lift->Lift_Control_Type == Lift_Control_Type_UP)
+                {
+                    //设置同步带偏移
+                    Lift->Set_Offset(Lift->Get_Now_Distance_L(),Lift->Get_Now_Distance_R());
+                    Lift_Status = Lift_Status_UP;
+                    Set_Status(1);
+                }
                 
-                Set_Status(1);
+                
             }
         }
 
@@ -218,15 +307,21 @@ void Class_Lift::Down_Cancel()
 
         case Lift_Status_UP :
         {
-            Lift->Up();
-
-            if(Lift->Is_Up_Finished())
+            if( ! Lift->Is_Up_Finished())
+            {
+                Lift->Up();
+            }    
+            else if(Lift->Is_Up_Finished())
             {   
                 Lift->Up_Cancel();
 
-                Lift_Status = Lift_Status_MOVING;
-
-                Set_Status(2);
+                if(Lift->Lift_Control_Type == Lift_Control_Type_MOVE)
+                {
+                    Lift_Status = Lift_Status_MOVING;
+                    Set_Status(2);
+                }
+               
+                
             }
         }
 
@@ -234,15 +329,23 @@ void Class_Lift::Down_Cancel()
 
         case Lift_Status_MOVING :
         {
-            Lift->Move();
-
-            if(Lift->Is_Move_Finished())
+            if(Lift->Lift_Control_Type == Lift_Control_Type_MOVE)
+            {
+                Lift->Move();
+            }
+            //if(Lift->Is_Move_Finished())
+            //先用遥控器判断
+            else if(Lift->Lift_Control_Type == Lift_Control_Type_DOWN)
             {
                 Lift->Move_Cancel();
 
-                Lift_Status = Lift_Status_DOWN;
+                if(Lift->Lift_Control_Type == Lift_Control_Type_DOWN)
+                {
+                    Lift_Status = Lift_Status_DOWN;
+                    Set_Status(3);
+                }
 
-                Set_Status(3);
+                
             }
         }
 
@@ -250,15 +353,23 @@ void Class_Lift::Down_Cancel()
         
         case Lift_Status_DOWN :
         {
-            Lift->Down();
+
+            if(! Lift->Is_Down_Finished())
+            {
+                Lift->Down();
+            }
 
             if(Lift->Is_Down_Finished())
             {
+
                 Lift->Down_Cancel();
 
-                Lift_Status = Lift_Status_UP;
-
-                Set_Status(1);
+                if(Lift->Lift_Control_Type == Lift_Control_Type_UP)
+                {
+                    Lift_Status = Lift_Status_UP;
+                    Set_Status(1);
+                }
+                
             }
 
         }
@@ -267,7 +378,10 @@ void Class_Lift::Down_Cancel()
 
     }
 }
- 
+
+
+/*-----------------------数学辅助函数---------------------------*/
+
  /**
   * @brief 符号函数
   * 
@@ -275,13 +389,20 @@ void Class_Lift::Down_Cancel()
  inline int8_t Sign(float __value)
  {
     int8_t res = 0;
+
     if(__value>0)
     {
+
         res = 1;
+
     }
+
     else if(__value<0)
     {
+
         res = -1;
+
     }
+    
     return res;
  }

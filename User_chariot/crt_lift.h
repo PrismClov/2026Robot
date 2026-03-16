@@ -7,6 +7,21 @@
 /*---------------------变量声明-------------------------*/
 class Class_Lift;
 /*---------------------枚举-------------------------*/
+/**
+ * @brief 控制类型
+ * 
+ */
+
+ enum Enum_Lift_Control_Type
+{
+    Lift_Control_Type_DISABLE = 0,
+    Lift_Control_Type_UP,
+    Lift_Control_Type_MOVE,
+    Lift_Control_Type_DOWN,
+
+};
+
+
 
 /**
  * @brief 抬升状态
@@ -27,25 +42,33 @@ enum Enum_Lift_Status
  * 
  */
 
-class Class_Lift_FSM : public Class_FSM
+class Class_FSM_Lift : public Class_FSM
 {
     public:
     
     Class_Lift *Lift;
 
-    Class_DR16 *DR16;
-
     void Lift_TIM_Status_PeriodElapsedCallback();
 
     Enum_Lift_Status Lift_Status =  Lift_Status_INIT;
+
 };
 
+
+
+/**
+ * @brief 抬升
+ * 
+ */
 class Class_Lift
 { 
     public:
+
+    //控制状态
+    Enum_Lift_Control_Type Lift_Control_Type = Lift_Control_Type_DISABLE;
     //抬升状态机
-    Class_Lift_FSM FSM_Lift;
-    
+    Class_FSM_Lift FSM_Lift;
+    friend class Class_FSM_Lift;
     //行程环
     Class_PID PID_Distance_L;
     Class_PID PID_Distance_R;
@@ -124,15 +147,23 @@ class Class_Lift
     //设置同步带校准偏差
     inline void Set_Offset(float __offset_l, float __offset_r);
 
+    inline void Set_Control_Type(Enum_Lift_Control_Type __type);
+
+    //设置导轮速度
+    inline void Set_Move_Speed(float __speed);
+
     private:
 
 /*-----------------------电控参数---------------------------*/  
-    //同步带行程
+    //同步带行程 单位m
     float Now_Distance[2] = { 0.0f, 0.0f };
-    float Target_Distance[2] = { 0.0f, 0.0f };
+
+    //同步带上升目标距离，下降时加了负号
+    float Target_Distance[2] = { - 0.20f, - 0.20f };
 
     float Target_Distance_Limit = 0.40f;
-    
+
+    float Distance_Error = 0.003f;
     //校准距离 贴地时剩余行程3cm
     float Distance_Caliberate = 0.03f;
 
@@ -142,9 +173,13 @@ class Class_Lift
     //校准速度
     float Caliberate_Speed[2] = { -5.0f, -5.0f };
     //校准力矩
-    float Caliberate_Torque[2] = { 6.5f, 6.5f };
+    float Caliberate_Torque[2] = { 5.0f, 5.0f };
     //偏移量
     float Offset[2] = { 0.0f, 0.0f };
+
+    //导轮速度
+    float Move_Speed[2] = { 0.0f, 0.0f };
+
 
 
 /*-----------------------机械参数---------------------------*/
@@ -227,5 +262,24 @@ inline void Class_Lift::Set_Offset(float __offset_l, float __offset_r)
     Offset[0] = __offset_l;
     Offset[1] = __offset_r;
 }
+
+/*
+* @brief 设置控制类型
+*/
+inline void Class_Lift::Set_Control_Type(Enum_Lift_Control_Type __type)
+{
+    Lift_Control_Type = __type;
+}
+
+/**
+ * @brief 设置导轮速度
+ * 
+ */
+inline void Class_Lift::Set_Move_Speed(float __speed)
+{
+    Move_Speed[0] = __speed;
+    Move_Speed[1] = __speed;
+}
+
 
 #endif //  CRT_LIFT_H

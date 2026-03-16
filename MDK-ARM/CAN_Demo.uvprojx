@@ -615,6 +615,16 @@
               <FileType>8</FileType>
               <FilePath>..\User_alg\kalman_filter.cpp</FilePath>
             </File>
+            <File>
+              <FileName>alg_fsm.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\User_alg\alg_fsm.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>alg_fsm.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\User_alg\alg_fsm.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
