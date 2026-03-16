@@ -27,11 +27,7 @@ void Chassis_Device_CAN1_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
     {
         case (0x201):  
         {
-<<<<<<< HEAD
-                chariot.Chassis.Motor_Wheel[0].CAN_RxCpltCallback(CAN_RxMessage->Data);
-=======
             chariot.Chassis.Motor_Wheel[0].CAN_RxCpltCallback(CAN_RxMessage->Data);
->>>>>>> d6d6a17 (R2_Code)
         }
         break;
 		case (0x202):
@@ -62,38 +58,22 @@ void Chassis_Device_CAN2_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
     {
     case (0x201):  
     {
-<<<<<<< HEAD
-        chariot.Lift.Motor_Lift_Left.CAN_RxCpltCallback(CAN_RxMessage->Data);
-=======
         chariot.Lift.Motor_Lift_L.CAN_RxCpltCallback(CAN_RxMessage->Data);
->>>>>>> d6d6a17 (R2_Code)
     }
     break;
     case (0x202):
     {
-<<<<<<< HEAD
-        chariot.Lift.Motor_Lift_Right.CAN_RxCpltCallback(CAN_RxMessage->Data);
-=======
         chariot.Lift.Motor_Lift_R.CAN_RxCpltCallback(CAN_RxMessage->Data);
->>>>>>> d6d6a17 (R2_Code)
     }
     break;
     case (0x203):
     {
-<<<<<<< HEAD
-        chariot.Lift.Motor_Move_Left.CAN_RxCpltCallback(CAN_RxMessage->Data);
-=======
         chariot.Lift.Motor_Move_L.CAN_RxCpltCallback(CAN_RxMessage->Data);
->>>>>>> d6d6a17 (R2_Code)
     }
     break;
     case (0x204):
     {
-<<<<<<< HEAD
-        chariot.Lift.Motor_Move_Right.CAN_RxCpltCallback(CAN_RxMessage->Data);
-=======
         chariot.Lift.Motor_Move_R.CAN_RxCpltCallback(CAN_RxMessage->Data);
->>>>>>> d6d6a17 (R2_Code)
     }
     break;
 
@@ -111,13 +91,9 @@ void DR16_UART3_Callback(uint8_t *Buffer, uint16_t Length)
     //底盘 云台 发射机构 的控制策略
     chariot.TIM_Control_Callback();
 }
-<<<<<<< HEAD
-uint16_t mod50 = 0;
-=======
 
 uint16_t mod50 = 0;
 
->>>>>>> d6d6a17 (R2_Code)
 void Task_1ms_Callback()
 {
 		mod50++;
