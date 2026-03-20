@@ -152,7 +152,12 @@ class Class_Lift
     //设置导轮速度
     inline void Set_Move_Speed(float __speed);
 
+    inline void Yaw_Flag_True();
+
+    
     private:
+
+    bool Yaw_Flag = false; //是否进行yaw控制的标志位，true为进行，false为不进行
 
 /*-----------------------电控参数---------------------------*/  
     //同步带行程 单位m
@@ -281,5 +286,13 @@ inline void Class_Lift::Set_Move_Speed(float __speed)
     Move_Speed[1] = __speed;
 }
 
+/**
+ * @brief 设置yaw控制标志位
+ * 
+ */
+inline void Class_Lift::Yaw_Flag_True()
+{
+    Yaw_Flag = true;
+}
 
 #endif //  CRT_LIFT_H

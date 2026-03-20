@@ -74,7 +74,7 @@ void Class_Lift::Caliberate()
 */
 bool Class_Lift::Is_Caliberate_Finished()
 {
-		if(Math_Abs(Now_Distance[0]) >= Distance_Caliberate && Math_Abs(Motor_Lift_L.Get_Now_Current()) >= Caliberate_Torque[0])
+    if(Math_Abs(Now_Distance[0]) >= Distance_Caliberate && Math_Abs(Motor_Lift_L.Get_Now_Current()) >= Caliberate_Torque[0])
     {
         Caliberate_Flag[0] = true;
     }
@@ -107,9 +107,9 @@ void Class_Lift::Caliberate_Cancel()
 void Class_Lift::Up()
 {
     //防止超出上限
-    float temp_distance_l = (Target_Distance[0] < Target_Distance_Limit) ?Target_Distance[0]: Target_Distance_Limit;
+    float temp_distance_l = (Math_Abs(Target_Distance[0]) < Target_Distance_Limit) ?Target_Distance[0]: Target_Distance_Limit;
     
-    float temp_distance_r = (Target_Distance[1] < Target_Distance_Limit) ?Target_Distance[1]: Target_Distance_Limit;
+    float temp_distance_r = (Math_Abs(Target_Distance[1]) < Target_Distance_Limit) ?Target_Distance[1]: Target_Distance_Limit;
 
 
     //跑行程环
@@ -244,7 +244,7 @@ void Class_Lift::Down_Cancel()
 }
 
 
-/*-----------------------定时器回调函数---------------------------*/
+/*-----------------------回调函数---------------------------*/
 /**
  * @brief 定时器回调函数
  */
@@ -268,15 +268,17 @@ void Class_Lift::Down_Cancel()
     Motor_Move_R.TIM_Calculate_PeriodElapsedCallback();
 
  }
-bool caliberate_flag ;
- 
- void Class_FSM_Lift::Lift_TIM_Status_PeriodElapsedCallback()
+
+
+/**
+ * @brief 状态机回调函数
+ */
+void Class_FSM_Lift::Lift_TIM_Status_PeriodElapsedCallback()
  {
     Status[Now_Status_Serial].Count_Time++;
 
-    switch(Lift_Status)
+    switch(Now_Status_Serial)
     {
-        caliberate_flag	= Lift->Is_Caliberate_Finished();
         case Lift_Status_INIT :
         {   
             if(!Lift->Is_Caliberate_Finished())
@@ -285,18 +287,20 @@ bool caliberate_flag ;
             }
 
             //查看校准是否完成
-            if(Lift->Is_Caliberate_Finished())
+            else if(Lift->Is_Caliberate_Finished())
             {
                 
                 Lift->Caliberate_Cancel();
-
+                
                 //跳转条件
-                if(Lift->Lift_Control_Type == Lift_Control_Type_UP)
+                if(Lift->Yaw_Flag)
                 {
                     //设置同步带偏移
                     Lift->Set_Offset(Lift->Get_Now_Distance_L(),Lift->Get_Now_Distance_R());
-                    Lift_Status = Lift_Status_UP;
-                    Set_Status(1);
+
+                    Status[Now_Status_Serial].Count_Time = 0;
+                    Set_Status(Lift_Status_UP);
+                    
                 }
                 
                 
@@ -315,10 +319,11 @@ bool caliberate_flag ;
             {   
                 Lift->Up_Cancel();
 
-                if(Lift->Lift_Control_Type == Lift_Control_Type_MOVE)
+                if(Lift->Yaw_Flag)
                 {
-                    Lift_Status = Lift_Status_MOVING;
-                    Set_Status(2);
+                    Status[Now_Status_Serial].Count_Time = 0;
+                    Set_Status(Lift_Status_MOVING);
+                    
                 }
                
                 
@@ -329,24 +334,23 @@ bool caliberate_flag ;
 
         case Lift_Status_MOVING :
         {
-            if(Lift->Lift_Control_Type == Lift_Control_Type_MOVE)
-            {
+
                 Lift->Move();
-            }
+
             //if(Lift->Is_Move_Finished())
             //先用遥控器判断
-            else if(Lift->Lift_Control_Type == Lift_Control_Type_DOWN)
-            {
-                Lift->Move_Cancel();
+ 
+            //Lift->Move_Cancel();
 
-                if(Lift->Lift_Control_Type == Lift_Control_Type_DOWN)
+                if(Lift->Yaw_Flag)
                 {
-                    Lift_Status = Lift_Status_DOWN;
-                    Set_Status(3);
+                    Status[Now_Status_Serial].Count_Time = 0;
+                    Set_Status(Lift_Status_DOWN);
+                   
                 }
 
                 
-            }
+        
         }
 
         break;
@@ -358,16 +362,14 @@ bool caliberate_flag ;
             {
                 Lift->Down();
             }
-
-            if(Lift->Is_Down_Finished())
+            else if(Lift->Is_Down_Finished())
             {
 
                 Lift->Down_Cancel();
 
-                if(Lift->Lift_Control_Type == Lift_Control_Type_UP)
+                if(Lift->Yaw_Flag)
                 {
-                    Lift_Status = Lift_Status_UP;
-                    Set_Status(1);
+                    Set_Status(Lift_Status_UP);
                 }
                 
             }

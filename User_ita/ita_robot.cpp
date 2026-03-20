@@ -180,25 +180,13 @@ void Class_Chariot::Control_Chassis()
 
         if (DR16.Get_Left_Switch() == DR16_Switch_Status_UP)  //左上 抬升up
         {
-
-            Lift.Set_Control_Type(Lift_Control_Type_UP);
-
+            if(DR16.Get_Yaw() > 0.95)
+            {
+                Lift.Yaw_Flag_True();
+            }
         }
 
-        else if (DR16.Get_Left_Switch() == DR16_Switch_Status_MIDDLE)  //左中 抬升move
-        {
 
-            Lift.Set_Control_Type(Lift_Control_Type_MOVE);
-            Lift.Set_Move_Speed(lift_move_speed);
-
-        }
-
-        else if (DR16.Get_Left_Switch() == DR16_Switch_Status_DOWN)  //左下 抬升down
-        {
-
-            Lift.Set_Control_Type(Lift_Control_Type_DOWN);
-
-        }
     }
     
     
