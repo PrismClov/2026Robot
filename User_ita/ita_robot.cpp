@@ -30,7 +30,7 @@ void Class_Chariot::Init(float __Dead_Zone)
 {
     DR16.Init(&huart5);
 
-    Chassis.Init();
+    Chassis.Init(16.0f, 16.0f, 8.0f);
     
     Dead_Zone = __Dead_Zone;
 
@@ -124,7 +124,7 @@ void Class_Chariot::_Chassis_Control()
         dr16_yaw = (Math_Abs(DR16.Get_Yaw()) > Dead_Zone) ? DR16.Get_Yaw() : 0;
         //设定矩形到圆形映射进行控制
         chassis_velocity_x = dr16_l_y * sqrt(1.0f - dr16_l_x * dr16_l_x / 2.0f) * Chassis.Get_Velocity_X_Max() ;
-        chassis_velocity_y = -dr16_l_x * sqrt(1.0f - dr16_l_y * dr16_l_y / 2.0f) * Chassis.Get_Velocity_Y_Max() ;
+        chassis_velocity_y = dr16_l_x * sqrt(1.0f - dr16_l_y * dr16_l_y / 2.0f) * Chassis.Get_Velocity_Y_Max() ;
         chassis_omega = dr16_yaw * Chassis.Get_Omega_Max();
         chassis_angle += chassis_omega;
         //键盘遥控器操作逻辑
@@ -148,6 +148,13 @@ void Class_Chariot::_Chassis_Control()
             Chassis.Set_Target_Velocity_Y(chassis_velocity_y);
             Chassis.Set_Target_Omega(chassis_omega); 
         }
+
+        if(DR16.Get_Left_Switch()==DR16_Switch_Status_UP)  //左上 失能
+        {
+            //KFS夹取
+            //KFS.Set_KFS_Control_Type(KFS_Control_Type_CLAMP);
+        }
+
     }
     
     

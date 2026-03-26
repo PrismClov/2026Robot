@@ -49,7 +49,12 @@ Class_Chariot chariot;
 // 全局初始化完成标志位
 bool init_finished = false;
 uint32_t flag = 0;
-
+float angle_forearm = 3.22f;
+float omemga_forearm = 0.0f;
+float kp_forearm = 0.0f;
+float kd_forearm = 0.0f;
+float torque_forearm = 0.0f;
+float gravity_K = 0.0f;
 
 Class_Motor_DM_Normal Motor_Boom;
 Class_RobStride_Motor Motor_Forearm;
@@ -67,9 +72,6 @@ void Device_FDCAN1_Callback(Struct_FDCAN_Rx_Buffer *FDCAN_RxMessage)
 
     switch (FDCAN_RxMessage->Header.Identifier)
     {
-        
-
-
         //M2006 电机数据反馈
         case 0x201:
         {
@@ -92,6 +94,10 @@ void Device_FDCAN1_Callback(Struct_FDCAN_Rx_Buffer *FDCAN_RxMessage)
           break;
         }
 
+        case 0x205:
+        {
+          break;
+        }
         
         
         default:
@@ -143,9 +149,17 @@ void Device_FDCAN2_Callback(Struct_FDCAN_Rx_Buffer *FDCAN_RxMessage)
         }
         case 0xFD:
         {
-          Motor_Forearm.CAN_RxCpltCallback_MIT(FDCAN_RxMessage->Data);
-          break;
+
+            Motor_Forearm.CAN_RxCpltCallback(FDCAN_RxMessage->Header.Identifier, FDCAN_RxMessage->Data);
+            break;
         }
+    }
+
+    static uint8_t FDCAN_ID = FDCAN_RxMessage->Header.Identifier >> 8;
+    static uint8_t Master_ID = FDCAN_RxMessage->Header.Identifier;
+    switch (FDCAN_ID)
+    {
+        
     }
 }
 
@@ -341,8 +355,9 @@ void Task100us_TIM4_Callback()
  *
  */
 uint8_t mod100 = 0;
-static float angle_boom = 0;
-static float angle_forearm = 0;
+static float angle_now_boom = 0;
+static float angle_now_forearm = 0;
+
 void Task1ms_TIM5_Callback()
 {
 		DWT_Update();
@@ -360,9 +375,15 @@ void Task1ms_TIM5_Callback()
     Motor_Forearm.TIM_Alive_PeriodElapsedCallback();
 
     //获取当前角度
-    angle_boom = Motor_Boom.Get_Now_Angle();
-    angle_forearm = Motor_Forearm.Get_Now_Angle();
-    chariot.TIM_2ms_Calculate_PeriodElapsedCallback();
+    angle_now_boom = Motor_Boom.Get_Now_Angle();
+    angle_now_forearm = Motor_Forearm.Get_Now_Angle();
+    //Motor_Forearm.CAN_Send_Motion_Control(angle_forearm, omemga_forearm, torque_forearm, kp_forearm, kd_forearm);
+    //Motor_Forearm.Set_Motor_Mode_Private(CAN_Motor_Mode_MIT);
+    torque_forearm = gravity_K * cos(Motor_Forearm.Get_Now_Angle() - 3.22);
+    //Motor_Forearm.CAN_Send_Motion_Control_MIT(angle_forearm, omemga_forearm, torque_forearm, kp_forearm, kd_forearm);
+
+    Motor_Boom.TIM_Send_PeriodElapsedCallback();
+   chariot.TIM_2ms_Calculate_PeriodElapsedCallback();
 }
 /**
  * @brief 初始化任务
@@ -384,7 +405,7 @@ void Task_Init()
     TIM_Init(&htim4, Task100us_TIM4_Callback);
     TIM_Init(&htim5, Task1ms_TIM5_Callback);
 		chariot.Init(0.03);
-    Motor_Forearm.Init(&hfdcan2, 0x7F, 0xFD);
+    Motor_Forearm.Init(&hfdcan2, 0x7F, 0xFD , CAN_Motor_Mode_MIT);
     Motor_Boom.Init(&hfdcan2, 0x00, 0x01);
 		// 外部中断初始化(舵轮光电门校准)
     GPIO_EXTI_Init(GPIO_PIN_10, GPIO_EXTI10_Callback);
@@ -405,7 +426,7 @@ void Task_Init()
     HAL_TIM_Base_Start_IT(&htim5);
     // 标记初始化完成
     init_finished = true;
-		HAL_Delay(2000);
+
 }
 
 /**

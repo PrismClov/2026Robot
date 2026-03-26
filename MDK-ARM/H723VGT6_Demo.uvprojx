@@ -918,6 +918,16 @@
               <FileType>8</FileType>
               <FilePath>..\User_dvc\Robstride01.cpp</FilePath>
             </File>
+            <File>
+              <FileName>dvc_motor_rs.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\User_dvc\dvc_motor_rs.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>dvc_motor_rs.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\User_dvc\dvc_motor_rs.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

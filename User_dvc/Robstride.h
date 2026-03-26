@@ -91,8 +91,8 @@ enum Enum_CAN_Mode
 class Class_RobStride_Motor
 {
 public:
-    // 初始化，默认开启MIT模式
-    void Init(FDCAN_HandleTypeDef *hfdcan, uint8_t __CAN_ID, uint8_t __Master_ID = 0x00);
+
+    void Init(FDCAN_HandleTypeDef *hfdcan, uint8_t __CAN_ID, uint8_t __Master_ID = 0x00 , Enum_CAN_Mode __CAN_Mode = CAN_Motor_Mode_Private);
 
     // Getters
     inline float Get_Now_Angle() { return Rx_Data.Now_Angle; }
@@ -111,8 +111,9 @@ public:
     /* 发送指令函数 */
 
     // 1. 运控模式 (类似于达妙MIT模式)
-    void CAN_Send_Motion_Control(float Angle, float Omega, float Torque, float Kp, float Kd);
-    
+    void CAN_Send_Motion_Control_Private(float Angle, float Omega, float Torque, float Kp, float Kd);
+    void CAN_Send_Motion_Control_MIT(float Angle, float Omega, float Torque, float Kp, float Kd);
+\
     // 2. 基础控制指令
     void CAN_Send_Enable();
     void CAN_Send_MIT_Enable();
@@ -120,14 +121,14 @@ public:
     void CAN_Send_Set_Zero();
     void CAN_Send_Get_ID();
     void Set_Motor_Mode_Private(Enum_CAN_Mode __CAN_Mode);
-    
+    void CAN_Config_RunMode(uint8_t mode);
+    void CAN_Send_Position_Control(float target_pos, float target_vel);
     // 3. 参数读写 (单次触发)
     void CAN_Send_Set_Param(uint16_t Index, float Value);
     void CAN_Send_Get_Param(uint16_t Index);
 
     // 回调与周期处理
-    void CAN_RxCpltCallback_Private(uint32_t ExtId, uint8_t *Rx_Data);
-    void CAN_RxCpltCallback_MIT(uint8_t *Rx_Data);
+    void CAN_RxCpltCallback(uint32_t ExtId, uint8_t *Rx_Data);
     void TIM_Alive_PeriodElapsedCallback();
 
 protected:
@@ -135,7 +136,7 @@ protected:
     Struct_FDCAN_Manage_Object *FDCAN_Manage_Object;
     uint8_t CAN_ID;        // 电机ID
     uint8_t Master_ID;     // 主机ID
-
+    Enum_CAN_Mode CAN_Mode; // CAN协议模式
     // 内部状态
     Enum_RobStride_Status Motor_Status = RobStride_Status_DISABLE;
     Struct_RobStride_Rx_Data Rx_Data;
@@ -153,7 +154,8 @@ protected:
 
     // 内部协议工具
     uint32_t Build_ExtID(uint8_t Comm_Type, uint16_t Data = 0);
-    void Data_Process(uint32_t ExtId, uint8_t *Data);
+    void Data_Process_Private(uint32_t ExtId, uint8_t *Data);
+    void Data_Process_MIT(uint8_t *Data);
 };
 
 #endif

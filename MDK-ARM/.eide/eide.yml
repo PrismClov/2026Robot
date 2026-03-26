@@ -99,6 +99,8 @@ virtualFolder:
         - path: ../User_dvc/dvc_motor_dm.h
         - path: ../User_dvc/Robstride.h
         - path: ../User_dvc/Robstride01.cpp
+        - path: ../User_dvc/dvc_motor_rs.cpp
+        - path: ../User_dvc/dvc_motor_rs.h
       folders: []
     - name: User_ita
       files:
