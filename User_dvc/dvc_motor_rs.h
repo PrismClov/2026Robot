@@ -2,7 +2,7 @@
 
 * @file dvc_motor_rs.h
 
-* @author hzy 
+* @author hzy by yssickjgd
 
 * @brief 灵足电机配置与操作
 
@@ -197,6 +197,7 @@ struct Struct_Motor_RS_CAN_Tx_Data_Normal_MIT
     uint8_t K_D_3_0_Control_Torque_11_8;
 
     uint8_t Control_Torque_7_0;
+    
 }__attribute__((packed));
 
 

@@ -17,8 +17,4 @@ version: "2.1"
 options:
     H723VGT6_Demo:
         files: {}
-        virtualPathFiles:
-            <virtual_root>/Application/User/Core/dma.c: ""
-            <virtual_root>/Application/User/Core/usart.c: ""
-            <virtual_root>/Drivers/STM32H7xx_HAL_Driver/stm32h7xx_hal_uart.c: ""
-            <virtual_root>/Drivers/STM32H7xx_HAL_Driver/stm32h7xx_hal_uart_ex.c: ""
+        virtualPathFiles: {}

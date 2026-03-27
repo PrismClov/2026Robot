@@ -18,7 +18,7 @@
 #include "dvc_dr16.h"
 #include "dvc_motor_dji.h"
 #include "dvc_motor_dm.h"
-#include "RobStride.h"
+
 
 /* Exported macros -----------------------------------------------------------*/
 
@@ -50,7 +50,7 @@ enum Enum_Active_Controller
 class Class_Chariot
 {
 public:
-		void Init(float _Dead_Zone);
+    void Init(float _Dead_Zone);
     //遥控器
     Class_DR16 DR16;
     //全向轮底盘
@@ -74,7 +74,7 @@ public:
     void Judge_DR16_Control_Type();
     void Judge_Active_Controller();
     void TIM_Control_Callback();
-		void TIM_Unline_Protect_PeriodElapsedCallback();
+    void TIM_Unline_Protect_PeriodElapsedCallback();
 
 protected:
     //DR16控制数据来源
@@ -90,7 +90,7 @@ protected:
     float Dead_Zone;
 
 
-		void _Status_Control();
+    void _Status_Control();
 
     void _Chassis_Control();
 

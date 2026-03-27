@@ -40,28 +40,18 @@
 #include "drv_bsp.h"
 #include "ita_robot.h"
 #include "dvc_motor_rs.h"
-
+#include "crt_weapons.h"
 /* Private macros ------------------------------------------------------------*/
 // static float vbat = 0;
 /* Private types -------------------------------------------------------------*/
 
 /* Private variables ---------------------------------------------------------*/
 Class_Chariot chariot;
+Class_Weapon_Grab Weapon_Grab;
 // 全局初始化完成标志位
 bool init_finished = false;
 uint32_t flag = 0;
-float angle_forearm = 3.22f;
-float omemga_forearm = 0.0f;
-float kp_forearm = 0.0f;
-float kd_forearm = 0.0f;
-float torque_forearm = 0.0f;
-float gravity_K = 0.0f;
 
-Class_Motor_DM_Normal Motor_Boom;
-Class_RobStride_Motor Motor_Forearm;
-
-Class_Motor_RS_Private Motor_RS_Private;
-Class_Motor_RS_MIT Motor_RS_MIT;
 /* Private function declarations ---------------------------------------------*/
 
 /* Function prototypes -------------------------------------------------------*/
@@ -118,59 +108,55 @@ void Device_FDCAN2_Callback(Struct_FDCAN_Rx_Buffer *FDCAN_RxMessage)
 {
   switch (FDCAN_RxMessage->Header.Identifier)
   {
-  // Vesc 电调数据反馈
-  case 0x931:
-  case 0x1031:
-  {
-    chariot.Chassis.Motor_Wheel[0].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
-    break;
-  }
-  case 0x932:
-  case 0x1032:
-  {
-    chariot.Chassis.Motor_Wheel[1].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
-    break;
-  }
-  case 0x933:
-  case 0x1033:
-  {
-    chariot.Chassis.Motor_Wheel[2].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
-    break;
-  }
-  case 0x934:
-  case 0x1034:
-  {
-    chariot.Chassis.Motor_Wheel[3].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
-    break;
-  }
+    // Vesc 电调数据反馈
+    case 0x931:
+    case 0x1031:
+    {
+      chariot.Chassis.Motor_Wheel[0].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+      break;
+    }
+    case 0x932:
+    case 0x1032:
+    {
+      chariot.Chassis.Motor_Wheel[1].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+      break;
+    }
+    case 0x933:
+    case 0x1033:
+    {
+      chariot.Chassis.Motor_Wheel[2].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+      break;
+    }
+    case 0x934:
+    case 0x1034:
+    {
+      chariot.Chassis.Motor_Wheel[3].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+      break;
+    }
 
-  // 达妙电机数据反馈 ID未确定
-  case 0x00:
-  {
-    Motor_Boom.CAN_RxCpltCallback(FDCAN_RxMessage->Data);
-    break;
-  }
-  case 0xFD: // 0xF0 0xF1 0xF2
-  {
-    Motor_Forearm.CAN_RxCpltCallback(FDCAN_RxMessage->Header.Identifier, FDCAN_RxMessage->Data);
-    Motor_RS_MIT.CAN_RxCpltCallback(FDCAN_RxMessage->Data);
-    break;
-  }
-	case 0xF2:
-		    Motor_Forearm.CAN_RxCpltCallback(FDCAN_RxMessage->Header.Identifier, FDCAN_RxMessage->Data);
-    Motor_RS_MIT.CAN_RxCpltCallback(FDCAN_RxMessage->Data);
-    break;
-  }
+    // 达妙电机数据反馈 ID未确定
+    case 0x00:
+    {
+      Weapon_Grab.Motor_Boom.CAN_RxCpltCallback(FDCAN_RxMessage->Data);
+      break;
+    }
+    case 0xF0: // 0xF0 0xF1 0xF2
+    {
+      Weapon_Grab.Motor_Forearm.CAN_RxCpltCallback(FDCAN_RxMessage->Data);
+      break;
+    }
+    case 0xF1:
+    {
+      Weapon_Grab.Motor_Rotate.CAN_RxCpltCallback(FDCAN_RxMessage->Data);
+      break;
+    }
 
-  static uint8_t FDCAN_ID = FDCAN_RxMessage->Header.Identifier >> 8;
-  static uint8_t Master_ID = FDCAN_RxMessage->Header.Identifier;
-  switch (FDCAN_ID)
-  {
-  case 0x7F:
-  {
-    Motor_RS_Private.CAN_RxCpltCallback(FDCAN_RxMessage->Data);
-    break;
-  }
+    static uint8_t FDCAN_ID = FDCAN_RxMessage->Header.Identifier >> 8;
+    static uint8_t Master_ID = FDCAN_RxMessage->Header.Identifier;
+    switch (FDCAN_ID)
+    {
+
+    }
   }
 }
 
@@ -374,29 +360,11 @@ void Task1ms_TIM5_Callback()
   if (mod100 >= 100)
   {
     chariot.TIM_100ms_Alive_PeriodElapsedCallback();
+    Weapon_Grab.TIM_Alive_PeriodElapsedCallback();
     mod100 = 0;
   }
-  Motor_RS_Private.CAN_Send_Set_CAN_Protocol(Motor_RS_Control_Method_MIT);
-  Motor_Boom.TIM_Alive_PeriodElapsedCallback();
-  // Motor_Forearm.TIM_Alive_PeriodElapsedCallback();
-  Motor_RS_MIT.TIM_Alive_PeriodElapsedCallback();
-//  Motor_RS_MIT.CAN_Send_Set_Rx_ID(0xF0);
-//  Motor_RS_MIT.CAN_Send_Set_Tx_ID(0x70);
-//  Motor_RS_MIT.CAN_Send_Set_Rx_ID(0xF1);
-//  Motor_RS_MIT.CAN_Send_Set_Tx_ID(0x71);
-  Motor_RS_MIT.CAN_Send_Set_Rx_ID(0xF2);
-  Motor_RS_MIT.CAN_Send_Set_Tx_ID(0x72);
-//Motor_RS_Private.TIM_Alive_PeriodElapsedCallback();
 
-  // 获取当前角度
-  angle_now_boom = Motor_Boom.Get_Now_Angle();
-  angle_now_forearm = Motor_Forearm.Get_Now_Angle();
-  // Motor_Forearm.CAN_Send_Motion_Control(angle_forearm, omemga_forearm, torque_forearm, kp_forearm, kd_forearm);
-  // Motor_Forearm.Set_Motor_Mode_Private(CAN_Motor_Mode_MIT);
-  torque_forearm = gravity_K * cos(Motor_Forearm.Get_Now_Angle() - 3.22);
-  // Motor_Forearm.CAN_Send_Motion_Control_MIT(angle_forearm, omemga_forearm, torque_forearm, kp_forearm, kd_forearm);
-
-  Motor_Boom.TIM_Send_PeriodElapsedCallback();
+  Weapon_Grab.TIM_Weapon_Grab_PeriodElapsedCallback();
   chariot.TIM_2ms_Calculate_PeriodElapsedCallback();
 }
 /**
@@ -419,10 +387,7 @@ void Task_Init()
   TIM_Init(&htim4, Task100us_TIM4_Callback);
   TIM_Init(&htim5, Task1ms_TIM5_Callback);
   chariot.Init(0.03);
-  Motor_Forearm.Init(&hfdcan2, 0x7F, 0xFD, CAN_Motor_Mode_MIT);
-  Motor_Boom.Init(&hfdcan2, 0x00, 0x01);
-  Motor_RS_MIT.Init(&hfdcan2, 0xFD, 0x7F, Motor_RS_Control_Method_NORMAL);
-  Motor_RS_Private.Init(&hfdcan2, 0xFD, 0x7F, Motor_RS_Control_Method_NORMAL);
+  Weapon_Grab.Init();
   // 外部中断初始化(舵轮光电门校准)
   GPIO_EXTI_Init(GPIO_PIN_10, GPIO_EXTI10_Callback);
   GPIO_EXTI_Init(GPIO_PIN_11, GPIO_EXTI11_Callback);
