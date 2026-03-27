@@ -1,0 +1,5 @@
+--cpu Cortex-M7.fp.dp -g --apcs=interwork 
+-I.\RTE\_H723VGT6_Demo
+-ID:\Keil_v5\ARM\PACK\ARM\CMSIS\6.3.0\CMSIS\Core\Include
+--pd "__UVISION_VERSION SETA 543" --pd "STM32H723xx SETA 1" --pd "_RTE_ SETA 1"
+--list startup_stm32h723xx.lst --xref -o h723vgt6_demo\startup_stm32h723xx.o --depend h723vgt6_demo\startup_stm32h723xx.d "startup_stm32h723xx.s"

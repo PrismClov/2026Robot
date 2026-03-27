@@ -36,6 +36,7 @@
 
 
 /* Exported types ------------------------------------------------------------*/
+
 /**
 
 * @brief 灵足电机扩展帧通信帧
@@ -307,7 +308,7 @@ class Class_Motor_RS_MIT
 {
     public:
     
-    void Init(FDCAN_HandleTypeDef *hfdcan, uint8_t __CAN_Rx_ID, uint8_t __CAN_Tx_ID, Enum_Motor_RS_Control_Method __Motor_RS_Control_Method = Motor_RS_Control_Method_NORMAL, float __Angle_Max = 12.57f, float __Omega_Max = 33.0f, float __Torque_Max = 14.0f, float __Current_Max = 10.261194f);
+    void Init(FDCAN_HandleTypeDef *hfdcan, uint8_t __CAN_Tx_ID, uint8_t __CAN_Rx_ID, Enum_Motor_RS_Control_Method __Motor_RS_Control_Method = Motor_RS_Control_Method_NORMAL, float __Angle_Max = 12.57f, float __Omega_Max = 33.0f, float __Torque_Max = 14.0f, float __Current_Max = 10.261194f);
     
     inline float Get_Angle_Max();
     
@@ -511,7 +512,7 @@ class Class_Motor_RS_Private
     public:
 
 
-    void Init(FDCAN_HandleTypeDef *hfdcan, uint32_t __CAN_Rx_ID, uint32_t __CAN_Tx_ID, Enum_Motor_RS_Control_Method __Motor_RS_Control_Method = Motor_RS_Control_Method_NORMAL, float __Angle_Max = 12.57f, float __Omega_Max = 33.0f, float __Torque_Max = 14.0f, float __Current_Max = 10.261194f);
+    void Init(FDCAN_HandleTypeDef *hfdcan, uint32_t __CAN_Tx_ID, uint32_t __CAN_Rx_ID, Enum_Motor_RS_Control_Method __Motor_RS_Control_Method = Motor_RS_Control_Method_NORMAL, float __Angle_Max = 12.57f, float __Omega_Max = 33.0f, float __Torque_Max = 14.0f, float __Current_Max = 10.261194f);
     
 
     uint32_t Build_ExtID(uint8_t Comm_Type, uint16_t Data);

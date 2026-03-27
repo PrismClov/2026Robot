@@ -326,7 +326,7 @@ void Class_Motor_RS_MIT::Data_Process()
     Struct_Motor_RS_CAN_Rx_Data_MIT *tmp_buffer = (Struct_Motor_RS_CAN_Rx_Data_MIT *)FDCAN_Manage_Object->Rx_Buffer.Data;
 
     // 电机ID不匹配, 则不进行处理
-    if(tmp_buffer->CAN_ID != (CAN_Tx_ID & 0x0f))
+    if(tmp_buffer->CAN_ID != CAN_Tx_ID )
     {
         return;
     }
@@ -337,24 +337,12 @@ void Class_Motor_RS_MIT::Data_Process()
     tmp_torque = ((tmp_buffer->Omega_3_0_Torque_11_8 & 0x0f) << 8) | (tmp_buffer->Torque_7_0);
     Math_Endian_Reverse_16((void *)&tmp_buffer->Temp_Reverse, &tmp_temperature);
 
-    // 计算圈数与总角度值
-    delta_encoder = tmp_encoder - Rx_Data.Pre_Encoder;
-    if (delta_encoder < -(1 << 15))
-    {
-        // 正方向转过了一圈
-        Rx_Data.Total_Round++;
-    }
-    else if (delta_encoder > (1 << 15))
-    {
-        // 反方向转过了一圈
-        Rx_Data.Total_Round--;
-    }
-    Rx_Data.Total_Encoder = Rx_Data.Total_Round * (1 << 16) + tmp_encoder - ((1 << 15) - 1);
+
 
     // 计算电机本身信息
-    Rx_Data.Now_Angle = (float)(Rx_Data.Total_Encoder) / (float)((1 << 16) - 1) * Angle_Max * 2.0f;
-    Rx_Data.Now_Omega = Math_Int_To_Float(tmp_omega, 0, (1 << 12) - 1, 0, Omega_Max);
-    Rx_Data.Now_Torque = Math_Int_To_Float(tmp_torque, 0, (1 << 12) - 1, 0, Torque_Max);
+    Rx_Data.Now_Angle = Math_Int_To_Float(tmp_encoder, 0, 65535, - Angle_Max, Angle_Max);
+    Rx_Data.Now_Omega = Math_Int_To_Float(tmp_omega, 0, 4096, - Omega_Max, Omega_Max);
+    Rx_Data.Now_Torque = Math_Int_To_Float(tmp_torque, 0, 4096, - Torque_Max, Torque_Max);
     Rx_Data.Now_Temperature = tmp_temperature * 0.1f;
 
     // 存储预备信息
@@ -444,8 +432,9 @@ void Class_Motor_RS_Private::Init(FDCAN_HandleTypeDef *hfdcan, uint32_t __CAN_Rx
     {
         FDCAN_Manage_Object = &FDCAN3_Manage_Object;
     }
-
+		CAN_Tx_ID = __CAN_Tx_ID;
     CAN_Rx_ID = __CAN_Rx_ID;
+
 
     Motor_RS_Control_Method = __Motor_RS_Control_Method;
     Angle_Max = __Angle_Max;
@@ -536,7 +525,7 @@ void Class_Motor_RS_Private::CAN_Send_Set_Tx_ID(uint8_t __Tx_ID)
 {   
     // 直接传入拼好的 16 位 Data，高 8 位是新 ID，低 8 位是主站 ID
     uint16_t data_field = (__Tx_ID << 8) | CAN_Rx_ID; 
-    uint32_t send_id = Build_ExtID(RS_Comm_SetPosZero, data_field);
+    uint32_t send_id = Build_ExtID(RS_Comm_SetCanID, data_field);
     uint8_t tx_data[8] = {0};
     tx_data[0] = 0x01;
     FDCAN_Send_Data(FDCAN_Manage_Object->FDCAN_Handler, send_id, tx_data, FDCAN_ID_Extended, 8);
@@ -551,7 +540,7 @@ void Class_Motor_RS_Private::CAN_Send_Set_Tx_ID(uint8_t __Tx_ID)
  */
 void Class_Motor_RS_Private::CAN_Send_Set_CAN_Protocol(Enum_Motor_RS_CAN_Protocol __CAN_Protocol)
 {
-    uint32_t send_id = Build_ExtID(RS_Comm_SetPosZero, CAN_Rx_ID); 
+    uint32_t send_id = Build_ExtID(RS_Comm_MotorModeSet, CAN_Rx_ID); 
     //01 02 03 04 05 06 F_CMD  
     uint8_t tx_data[8] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, (uint8_t)__CAN_Protocol,0x00};
     FDCAN_Send_Data(FDCAN_Manage_Object->FDCAN_Handler, send_id, tx_data, FDCAN_ID_Extended, 8);
@@ -639,24 +628,10 @@ void Class_Motor_RS_Private::Data_Process()
     Math_Endian_Reverse_16((void *)&tmp_buffer->Torque_Reverse, &tmp_torque);
     Math_Endian_Reverse_16((void *)&tmp_buffer->Temp_Reverse, &tmp_temperature);
 
-    // 计算圈数与总角度值
-    delta_encoder = tmp_encoder - Rx_Data.Pre_Encoder;
-    if (delta_encoder < -(1 << 15))
-    {
-        // 正方向转过了一圈
-        Rx_Data.Total_Round++;
-    }
-    else if (delta_encoder > (1 << 15))
-    {
-        // 反方向转过了一圈
-        Rx_Data.Total_Round--;
-    }
-    Rx_Data.Total_Encoder = Rx_Data.Total_Round * (1 << 16) + tmp_encoder - ((1 << 15) - 1);
 
-    // 计算电机本身信息
-    Rx_Data.Now_Angle = (float)(Rx_Data.Total_Encoder) / (float)(65535) * Angle_Max * 2.0f;
-    Rx_Data.Now_Omega = Math_Int_To_Float(tmp_omega, 0, 65535, 0, Omega_Max);
-    Rx_Data.Now_Torque = Math_Int_To_Float(tmp_torque, 0, 65535, 0, Torque_Max);
+    Rx_Data.Now_Angle = Math_Int_To_Float(tmp_encoder, 0, 65535, - Angle_Max, Angle_Max);
+    Rx_Data.Now_Omega = Math_Int_To_Float(tmp_omega, 0, 65535, - Omega_Max, Omega_Max);
+    Rx_Data.Now_Torque = Math_Int_To_Float(tmp_torque, 0, 65535, - Torque_Max, Torque_Max);
     Rx_Data.Now_Temperature = tmp_temperature * 0.1f;
 
     // 存储预备信息

@@ -77,7 +77,7 @@ uint32_t Class_RobStride_Motor::Build_ExtID(uint8_t Comm_Type, uint16_t Data)
 void Class_RobStride_Motor::CAN_Send_Get_ID()
 {
     uint8_t tx_data[8] = {0};
-    uint32_t send_id = Build_ExtID(RS_Comm_GetID, Master_ID);
+    uint32_t send_id = Build_ExtID(RobStride_Comm_GetID, Master_ID);
     FDCAN_Send_Data(FDCAN_Manage_Object->FDCAN_Handler, send_id, tx_data, FDCAN_ID_Extended, 8);
 }
 /**
@@ -94,7 +94,7 @@ void Class_RobStride_Motor::CAN_Send_Motion_Control_Private(float Angle, float O
 
     // 构造ID (运控模式下ID包含扭矩信息)
     uint16_t torque_int = Math_Float_To_Int(Torque, T_MIN, T_MAX, 0, 0xFFFF);
-    uint32_t send_id = Build_ExtID(RS_Comm_MotionControl, torque_int);
+    uint32_t send_id = Build_ExtID(RobStride_Comm_MotionControl, torque_int);
 
     // 填充数据段
     uint8_t tx_data[8];
@@ -200,7 +200,7 @@ void Class_RobStride_Motor::CAN_Send_Position_Control( float target_pos, float t
  */
 void Class_RobStride_Motor::CAN_Send_Enable()
 {
-    uint32_t send_id = Build_ExtID(RS_Comm_MotorEnable, Master_ID);
+    uint32_t send_id = Build_ExtID(RobStride_Comm_MotorEnable, Master_ID);
     uint8_t tx_data[8] = {0};
     FDCAN_Send_Data(FDCAN_Manage_Object->FDCAN_Handler, send_id, tx_data, FDCAN_ID_Extended, 8);
 }
@@ -219,7 +219,7 @@ void Class_RobStride_Motor::CAN_Send_MIT_Enable()
  */
 void Class_RobStride_Motor::CAN_Send_Stop(uint8_t clear_error)
 {
-    uint32_t send_id = Build_ExtID(RS_Comm_MotorStop, Master_ID);
+    uint32_t send_id = Build_ExtID(RobStride_Comm_MotorStop, Master_ID);
     uint8_t tx_data[8] = {0};
     tx_data[0] = clear_error; 
     FDCAN_Send_Data(FDCAN_Manage_Object->FDCAN_Handler, send_id, tx_data, FDCAN_ID_Extended, 8);
@@ -317,7 +317,7 @@ void Class_RobStride_Motor::TIM_Alive_PeriodElapsedCallback()
     // 如果掉线且需要运行，可在此尝试自动重连
     if (Motor_Status == RobStride_Status_DISABLE)
     {
-        //CAN_Send_Enable();
+        CAN_Send_Enable();
         CAN_Send_MIT_Enable();
     }
 }
@@ -328,7 +328,7 @@ void Class_RobStride_Motor::TIM_Alive_PeriodElapsedCallback()
  */
 void Class_RobStride_Motor::Set_Motor_Mode_Private(Enum_CAN_Mode __CAN_Mode)
 {
-    uint32_t send_id = Build_ExtID(RS_Comm_MotorModeSet, Master_ID);
+    uint32_t send_id = Build_ExtID(RobStride_Comm_MotorModeSet, Master_ID);
     uint8_t tx_data[8] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, __CAN_Mode, 0x00};
     FDCAN_Send_Data(FDCAN_Manage_Object->FDCAN_Handler, send_id, tx_data, FDCAN_ID_Extended, 8);
 }

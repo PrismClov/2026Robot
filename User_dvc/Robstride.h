@@ -44,20 +44,20 @@ enum Enum_RobStride_Status
  */
 enum Enum_RobStride_Communication_Type
 {
-    RS_Comm_GetID = 0x00,                    // 获取设备的ID和64位MCU唯一标识符
-    RS_Comm_MotionControl = 0x01,            // 运控模式用来向主机发送控制指令
-    RS_Comm_MotorRequest = 0x02,             // 用来向主机反馈电机运行状态
-    RS_Comm_MotorEnable = 0x03,              // 电机使能运行
-    RS_Comm_MotorStop = 0x04,                // 电机停止运行
-    RS_Comm_SetPosZero = 0x06,               // 设置电机机械零位
-    RS_Comm_SetCanID = 0x07,                 // 更改当前电机CAN_ID
-    RS_Comm_GetSingleParam = 0x11,           // 读取单个参数
-    RS_Comm_SetSingleParam = 0x12,           // 设定单个参数
-    RS_Comm_ErrorFeedback = 0x15,            // 故障反馈帧
-    RS_Comm_MotorDataSave = 0x16,            // 电机数据保存帧 (驱动版本 >= 0.13.0)
-    RS_Comm_BaudRateChange = 0x17,           // 电机波特率修改帧，重新上电生效
-    RS_Comm_ProactiveEscalationSet = 0x18,   // 电机主动上报
-    RS_Comm_MotorModeSet = 0x19,             // 电机协议修改帧，重新上电生效
+    RobStride_Comm_GetID = 0x00,                    // 获取设备的ID和64位MCU唯一标识符
+    RobStride_Comm_MotionControl = 0x01,            // 运控模式用来向主机发送控制指令
+    RobStride_Comm_MotorRequest = 0x02,             // 用来向主机反馈电机运行状态
+    RobStride_Comm_MotorEnable = 0x03,              // 电机使能运行
+    RobStride_Comm_MotorStop = 0x04,                // 电机停止运行
+    RobStride_Comm_SetPosZero = 0x06,               // 设置电机机械零位
+    RobStride_Comm_SetCanID = 0x07,                 // 更改当前电机CAN_ID
+    RobStride_Comm_GetSingleParam = 0x11,           // 读取单个参数
+    RobStride_Comm_SetSingleParam = 0x12,           // 设定单个参数
+    RobStride_Comm_ErrorFeedback = 0x15,            // 故障反馈帧
+    RobStride_Comm_MotorDataSave = 0x16,            // 电机数据保存帧 (驱动版本 >= 0.13.0)
+    RobStride_Comm_BaudRateChange = 0x17,           // 电机波特率修改帧，重新上电生效
+    RobStride_Comm_ProactiveEscalationSet = 0x18,   // 电机主动上报
+    RobStride_Comm_MotorModeSet = 0x19,             // 电机协议修改帧，重新上电生效
 };
 
 /**
