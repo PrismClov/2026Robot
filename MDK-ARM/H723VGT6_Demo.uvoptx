@@ -119,6 +119,11 @@
       <TargetDriverDllRegistry>
         <SetRegEntry>
           <Number>0</Number>
+          <Key>DLGUARM</Key>
+          <Name>旜?</Name>
+        </SetRegEntry>
+        <SetRegEntry>
+          <Number>0</Number>
           <Key>ARMRTXEVENTFLAGS</Key>
           <Name>-L70 -Z18 -C0 -M0 -T1</Name>
         </SetRegEntry>
@@ -235,6 +240,31 @@
           <WinNumber>1</WinNumber>
           <ItemText>\\H723VGT6_Demo\../User_tsk/tsk_config_and_callback.cpp\Motor_Boom.K_P</ItemText>
         </Ww>
+        <Ww>
+          <count>17</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>Motor_RS_Forearm</ItemText>
+        </Ww>
+        <Ww>
+          <count>18</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>Motor_RS_Private</ItemText>
+        </Ww>
+        <Ww>
+          <count>19</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>Motor_RS_MIT</ItemText>
+        </Ww>
+        <Ww>
+          <count>20</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>\\H723VGT6_Demo\../User_tsk/tsk_config_and_callback.cpp\Motor_RS_Private.Motor_RS_Control_Method</ItemText>
+        </Ww>
+        <Ww>
+          <count>21</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>\\H723VGT6_Demo\../User_tsk/tsk_config_and_callback.cpp\Motor_RS_MIT.Motor_RS_Status</ItemText>
+        </Ww>
       </WatchWindow1>
       <WatchWindow2>
         <Ww>
@@ -266,6 +296,16 @@
           <count>5</count>
           <WinNumber>2</WinNumber>
           <ItemText>FDCAN_ID</ItemText>
+        </Ww>
+        <Ww>
+          <count>6</count>
+          <WinNumber>2</WinNumber>
+          <ItemText>\\H723VGT6_Demo\../User_tsk/tsk_config_and_callback.cpp\Motor_RS_Private.Rx_Data.Total_Encoder,0x0A</ItemText>
+        </Ww>
+        <Ww>
+          <count>7</count>
+          <WinNumber>2</WinNumber>
+          <ItemText>tmp_buffer</ItemText>
         </Ww>
       </WatchWindow2>
       <Tracepoint>
