@@ -172,7 +172,7 @@ protected:
     float Now_Steer_Angle[4] = {0.0f, 0.0f, 0.0f,0.0f};
 
     // 轮组方位角
-    float Steer_Azimuth[4] = {-0.75,-2.30,2.30,0.75};
+    float Steer_Azimuth[4] = {-0.75,-2.30,0.75,2.30};  // 轮组方位角，单位为弧度，顺时针为正，前x左y上z
     
     // 初始化相关常量
     // 当前速度X

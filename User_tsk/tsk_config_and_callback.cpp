@@ -51,6 +51,10 @@ Class_Weapon_Grab Weapon_Grab;
 // 全局初始化完成标志位
 bool init_finished = false;
 uint32_t flag = 0;
+uint8_t exti10_flag = 0;
+uint8_t exti11_flag = 0;
+uint8_t exti12_flag = 0;
+uint8_t exti14_flag = 0;
 
 /* Private function declarations ---------------------------------------------*/
 
@@ -145,7 +149,7 @@ void Device_FDCAN2_Callback(Struct_FDCAN_Rx_Buffer *FDCAN_RxMessage)
       Weapon_Grab.Motor_Forearm.CAN_RxCpltCallback(FDCAN_RxMessage->Data);
       break;
     }
-    case 0xF1:
+    case 0xFD:
     {
       Weapon_Grab.Motor_Rotate.CAN_RxCpltCallback(FDCAN_RxMessage->Data);
       break;
@@ -298,8 +302,10 @@ void Orin_UART10_Callback(uint8_t *Buffer, uint16_t Length) // 测试串口有�
  * @brief GPIO0外部中断回调函数
  * 处理0号舵向电机PMT45的外部中断
  */
+
 void GPIO_EXTI10_Callback()
 {
+  exti10_flag++;
   chariot.Chassis.Steer_PMT45[0].PMT45_EXTI_Callback_Steer();
 }
 
@@ -307,32 +313,37 @@ void GPIO_EXTI10_Callback()
  * @brief GPIO1外部中断回调函数
  * 处理1号舵向电机PMT45的外部中断
  */
+
 void GPIO_EXTI11_Callback()
 {
-
+  exti11_flag++;
   chariot.Chassis.Steer_PMT45[1].PMT45_EXTI_Callback_Steer();
 }
 /**
  * @brief GPIO2外部中断回调函数
  * 处理2号舵向电机PMT45的外部中断
  */
+
 void GPIO_EXTI12_Callback()
 {
+  exti12_flag++;
   chariot.Chassis.Steer_PMT45[2].PMT45_EXTI_Callback_Steer();
 }
 /**
  * @brief GPIO3外部中断回调函数
  * 处理3号舵向电机PMT45的外部中断
  */
+
 void GPIO_EXTI14_Callback()
 {
+	exti14_flag++;
   chariot.Chassis.Steer_PMT45[3].PMT45_EXTI_Callback_Steer();
 }
 /**
  * @brief TIM4任务回调函数
  *
  */
-uint8_t PC10, PC11, PC12, PE14;
+uint8_t PC10, PC11, PC12, PE14,PE00,PE01;
 void Task100us_TIM4_Callback()
 {
   // todo
@@ -340,6 +351,9 @@ void Task100us_TIM4_Callback()
   PC11 = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_11);
   PC12 = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_12);
   PE14 = HAL_GPIO_ReadPin(GPIOE, GPIO_PIN_14);
+	PE00 = HAL_GPIO_ReadPin(GPIOE, GPIO_PIN_0);
+	PE01 = HAL_GPIO_ReadPin(GPIOE, GPIO_PIN_1);
+
 }
 
 /**
@@ -347,8 +361,7 @@ void Task100us_TIM4_Callback()
  *
  */
 uint8_t mod100 = 0;
-static float angle_now_boom = 0;
-static float angle_now_forearm = 0;
+
 
 void Task1ms_TIM5_Callback()
 {
@@ -363,6 +376,8 @@ void Task1ms_TIM5_Callback()
     Weapon_Grab.TIM_Alive_PeriodElapsedCallback();
     mod100 = 0;
   }
+//  Weapon_Grab.Motor_Rotate.CAN_Send_Set_Rx_ID(0xF1);
+//  Weapon_Grab.Motor_Rotate.CAN_Send_Set_Tx_ID(0x71);
 
   Weapon_Grab.TIM_Weapon_Grab_PeriodElapsedCallback();
   chariot.TIM_2ms_Calculate_PeriodElapsedCallback();

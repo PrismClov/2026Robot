@@ -32,15 +32,15 @@
 void Class_Weapon_Grab::Init()
 {
 
-    Motor_Boom.Init(&hfdcan1,0x00, 0x01);
+    Motor_Boom.Init(&hfdcan2,0x00, 0x01);
     Motor_Boom.Set_K_P(0.0f);
     Motor_Boom.Set_K_D(0.0f);
 
-    Motor_Forearm.Init(&hfdcan1,0xF0, 0x70);
+    Motor_Forearm.Init(&hfdcan2,0xF0, 0x70);
     Motor_Forearm.Set_K_P(0.0f);
     Motor_Forearm.Set_K_D(0.0f);
 
-    Motor_Rotate.Init(&hfdcan1,0xF1, 0x71);
+    Motor_Rotate.Init(&hfdcan2,0xFD, 0x7F);
     Motor_Rotate.Set_K_P(0.0f);
     Motor_Rotate.Set_K_D(0.0f);
 
@@ -58,10 +58,13 @@ void Class_Weapon_Grab::TIM_Weapon_Grab_PeriodElapsedCallback()
 {
     FSM_Weapon_Grab.Weapon_Grab_TIM_Status_PeriodElapsedCallback();
 
+//		Motor_Boom.CAN_Send_Save_Zero();
+//		Motor_Forearm.CAN_Send_Save_Zero();
+//		Motor_Rotate.CAN_Send_Save_Zero();
     // 电机发送数据
-    // Motor_Boom.TIM_Send_PeriodElapsedCallback();
-    // Motor_Forearm.TIM_Send_PeriodElapsedCallback();
-    // Motor_Rotate.TIM_Send_PeriodElapsedCallback();
+			Motor_Boom.TIM_Send_PeriodElapsedCallback();
+   Motor_Forearm.TIM_Send_PeriodElapsedCallback();
+    Motor_Rotate.TIM_Send_PeriodElapsedCallback();
 }
 
 /**
