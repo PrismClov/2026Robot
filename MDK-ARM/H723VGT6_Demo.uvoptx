@@ -319,6 +319,11 @@
           <WinNumber>1</WinNumber>
           <ItemText>PE01</ItemText>
         </Ww>
+        <Ww>
+          <count>34</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>temp</ItemText>
+        </Ww>
       </WatchWindow1>
       <WatchWindow2>
         <Ww>
