@@ -112,13 +112,20 @@ private:
         {0.0f, 0.0f, 0.0f},  // Init
         {0.8f, 0.0f, 0.0f},  // Grab
         {1.2f, 0.0f, 0.0f},  // Lift
-        {1.2f, 0.0f, -1.3f}, // Rotate
+        {1.2f, 0.0f, -1.4f}, // Rotate
         {0.0f, 0.0f, 0.0f},  // Fold
         {0.0f, 0.0f, 0.0f}   // Release
     };
 
     const float Position_Threshold = 0.05f; // 位置误差阈值 m
-    const float Omega_Threshold = 0.01f;    // 速度误差阈值 rad/s
+    const float Omega_Threshold = 0.05f;    // 速度误差阈值 rad/s
+
+    float boom_horizontal_angle = 0.0f;
+    float forearm_horizontal_angle = 0.0f;
+    float boom_compensation = 0.0f;
+    float forearm_compensation = 0.0f;
+    float k1 = -2.0f;
+    float k2 = 1.0f;
 };
 
 /**

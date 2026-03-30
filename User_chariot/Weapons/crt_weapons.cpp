@@ -31,17 +31,21 @@ void Class_Weapon_Grab::Init()
 {
 
     Motor_Boom.Init(&hfdcan2, 0x00, 0x01);
-    Motor_Boom.Set_K_P(0.0f);
+    Motor_Boom.Set_K_P(150.0f);
     Motor_Boom.Set_K_D(0.0f);
 
     Motor_Forearm.Init(&hfdcan2, 0xF0, 0x70);
-    Motor_Forearm.Set_K_P(0.0f);
-    Motor_Forearm.Set_K_D(0.0f);
+    Motor_Forearm.Set_K_P(100.0f);
+    Motor_Forearm.Set_K_D(5.0f);
 
     Motor_Rotate.Init(&hfdcan2, 0xFD, 0x7F);
-    Motor_Rotate.Set_K_P(0.0f);
-    Motor_Rotate.Set_K_D(0.0f);
-
+    Motor_Rotate.Set_K_P(150.0f);
+    Motor_Rotate.Set_K_D(5.0f);
+	
+    Motor_Boom.CAN_Send_Save_Zero();
+    Motor_Forearm.CAN_Send_Save_Zero();
+    Motor_Rotate.CAN_Send_Save_Zero();
+	
     FSM_Weapon_Grab.Weapon_Grab = this;
 
     FSM_Weapon_Grab.Init(5, 0);
@@ -54,9 +58,9 @@ void Class_Weapon_Grab::TIM_Weapon_Grab_PeriodElapsedCallback()
 {
     FSM_Weapon_Grab.Weapon_Grab_TIM_Status_PeriodElapsedCallback();
 
-    //		Motor_Boom.CAN_Send_Save_Zero();
-    //		Motor_Forearm.CAN_Send_Save_Zero();
-    //		Motor_Rotate.CAN_Send_Save_Zero();
+//    Motor_Boom.CAN_Send_Save_Zero();
+//    Motor_Forearm.CAN_Send_Save_Zero();
+//    Motor_Rotate.CAN_Send_Save_Zero();
     // 电机发送数据
     Motor_Boom.TIM_Send_PeriodElapsedCallback();
     Motor_Forearm.TIM_Send_PeriodElapsedCallback();
@@ -73,6 +77,7 @@ void Class_Weapon_Grab::TIM_Alive_PeriodElapsedCallback()
     Motor_Rotate.TIM_Alive_PeriodElapsedCallback();
 }
 
+
 /**
  * @brief 夹取状态任务
  */
@@ -83,6 +88,14 @@ void Class_Weapon_Grab::Weapon_Grab_Status_Task()
     Motor_Forearm.Set_Control_Angle(Position_Target_Angle[FSM_Weapon_Grab.Get_Now_Status_Serial()][1]);
     Motor_Rotate.Set_Control_Angle(Position_Target_Angle[FSM_Weapon_Grab.Get_Now_Status_Serial()][2]);
 
+    boom_horizontal_angle = 1.2f - Motor_Boom.Get_Now_Angle();                         // 大臂与水平的夹角
+    forearm_horizontal_angle = boom_horizontal_angle - Motor_Forearm.Get_Now_Angle() - 0.1f; // 前臂与水平的夹角
+
+    forearm_compensation = k1 * cos(forearm_horizontal_angle);
+    boom_compensation = k2 * cos(boom_horizontal_angle) - forearm_compensation;
+
+    Motor_Boom.Set_Control_Torque(boom_compensation);
+    Motor_Forearm.Set_Control_Torque(forearm_compensation);
     // 气缸动作可以添加
     // Pump_Set_State(Pump_State_Grab[FSM_Weapon_Grab.Get_Now_Status_Serial()]]);
 }
@@ -133,58 +146,58 @@ void Class_FSM_Weapon_Grab::Weapon_Grab_TIM_Status_PeriodElapsedCallback()
             }
         }
     }
-        case Weapon_Grab_Status_Grab:
+    case Weapon_Grab_Status_Grab:
+    {
+        Weapon_Grab->Weapon_Grab_Status_Task();
+
+        if (Weapon_Grab->Is_Action_Finished())
         {
-            Weapon_Grab->Weapon_Grab_Status_Task();
 
-            if (Weapon_Grab->Is_Action_Finished())
+            Status[Now_Status_Serial].Count_Time = 0;
+            if (temp == 2)
             {
-
-                Status[Now_Status_Serial].Count_Time = 0;
-                if(temp == 2)
-                {
-                    Set_Status(Weapon_Grab_Status_Lift);
-                }
+                Set_Status(Weapon_Grab_Status_Lift);
             }
         }
-        case Weapon_Grab_Status_Lift:
+    }
+    case Weapon_Grab_Status_Lift:
+    {
+        Weapon_Grab->Weapon_Grab_Status_Task();
+
+        if (Weapon_Grab->Is_Action_Finished())
         {
-            Weapon_Grab->Weapon_Grab_Status_Task();
 
-            if (Weapon_Grab->Is_Action_Finished())
+            Status[Now_Status_Serial].Count_Time = 0;
+            if (temp == 3)
             {
-
-                Status[Now_Status_Serial].Count_Time = 0;
-                if(temp == 3)
-                {
-                    Set_Status(Weapon_Grab_Status_Rotate);
-                }
+                Set_Status(Weapon_Grab_Status_Rotate);
             }
         }
-        case Weapon_Grab_Status_Rotate:
+    }
+    case Weapon_Grab_Status_Rotate:
+    {
+        Weapon_Grab->Weapon_Grab_Status_Task();
+
+        if (Weapon_Grab->Is_Action_Finished())
         {
-            Weapon_Grab->Weapon_Grab_Status_Task();
 
-            if (Weapon_Grab->Is_Action_Finished())
+            Status[Now_Status_Serial].Count_Time = 0;
+            if (temp == 4)
             {
-
-                Status[Now_Status_Serial].Count_Time = 0;
-                if(temp == 4)
-                {
-                    Set_Status(Weapon_Grab_Status_Fold);
-                }
+                Set_Status(Weapon_Grab_Status_Fold);
             }
         }
-        case Weapon_Grab_Status_Fold:
+    }
+    case Weapon_Grab_Status_Fold:
+    {
+        Weapon_Grab->Weapon_Grab_Status_Task();
+
+        if (Weapon_Grab->Is_Action_Finished())
         {
-            Weapon_Grab->Weapon_Grab_Status_Task();
 
-            if (Weapon_Grab->Is_Action_Finished())
-            {
-
-                Status[Now_Status_Serial].Count_Time = 0;
-                // Set_Status(Weapon_Grab_Status_Release);
-            }
+            Status[Now_Status_Serial].Count_Time = 0;
+            // Set_Status(Weapon_Grab_Status_Release);
         }
+    }
     }
 }

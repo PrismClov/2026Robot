@@ -18,17 +18,11 @@
 
 */
 
-
-
 #ifndef DVC_MOTOR_DM_H
 
 #define DVC_MOTOR_DM_H
 
-
-
 /* Includes ------------------------------------------------------------------*/
-
-
 
 #include "alg_pid.h"
 
@@ -36,15 +30,9 @@
 
 #include "drv_math.h"
 
-
-
 /* Exported macros -----------------------------------------------------------*/
 
-
-
 /* Exported types ------------------------------------------------------------*/
-
-
 
 /**
 
@@ -58,13 +46,11 @@ enum Enum_Motor_DM_Status
 
 {
 
-Motor_DM_Status_DISABLE = 0,
+    Motor_DM_Status_DISABLE = 0,
 
-Motor_DM_Status_ENABLE,
+    Motor_DM_Status_ENABLE,
 
 };
-
-
 
 /**
 
@@ -78,25 +64,23 @@ enum Enum_Motor_DM_Motor_ID_1_To_4 : uint8_t
 
 {
 
-Motor_DM_ID_0x301 = 1,
+    Motor_DM_ID_0x301 = 1,
 
-Motor_DM_ID_0x302,
+    Motor_DM_ID_0x302,
 
-Motor_DM_ID_0x303,
+    Motor_DM_ID_0x303,
 
-Motor_DM_ID_0x304,
+    Motor_DM_ID_0x304,
 
-Motor_DM_ID_0x305,
+    Motor_DM_ID_0x305,
 
-Motor_DM_ID_0x306,
+    Motor_DM_ID_0x306,
 
-Motor_DM_ID_0x307,
+    Motor_DM_ID_0x307,
 
-Motor_DM_ID_0x308,
+    Motor_DM_ID_0x308,
 
 };
-
-
 
 /**
 
@@ -110,27 +94,25 @@ enum Enum_Motor_DM_Control_Status_Normal
 
 {
 
-Motor_DM_Control_Status_DISABLE = 0x0,
+    Motor_DM_Control_Status_DISABLE = 0x0,
 
-Motor_DM_Control_Status_ENABLE,
+    Motor_DM_Control_Status_ENABLE,
 
-Motor_DM_Control_Status_OVERVOLTAGE = 0x8,
+    Motor_DM_Control_Status_OVERVOLTAGE = 0x8,
 
-Motor_DM_Control_Status_UNDERVOLTAGE,
+    Motor_DM_Control_Status_UNDERVOLTAGE,
 
-Motor_DM_Control_Status_OVERCURRENT,
+    Motor_DM_Control_Status_OVERCURRENT,
 
-Motor_DM_Control_Status_MOS_OVERTEMPERATURE,
+    Motor_DM_Control_Status_MOS_OVERTEMPERATURE,
 
-Motor_DM_Control_Status_ROTOR_OVERTEMPERATURE,
+    Motor_DM_Control_Status_ROTOR_OVERTEMPERATURE,
 
-Motor_DM_Control_Status_LOSE_CONNECTION,
+    Motor_DM_Control_Status_LOSE_CONNECTION,
 
-Motor_DM_Control_Status_MOS_OVERLOAD,
+    Motor_DM_Control_Status_MOS_OVERLOAD,
 
 };
-
-
 
 /**
 
@@ -144,23 +126,21 @@ enum Enum_Motor_DM_Control_Method
 
 {
 
-Motor_DM_Control_Method_NORMAL_MIT = 0,
+    Motor_DM_Control_Method_NORMAL_MIT = 0,
 
-Motor_DM_Control_Method_NORMAL_ANGLE_OMEGA,
+    Motor_DM_Control_Method_NORMAL_ANGLE_OMEGA,
 
-Motor_DM_Control_Method_NORMAL_OMEGA,
+    Motor_DM_Control_Method_NORMAL_OMEGA,
 
-Motor_DM_Control_Method_NORMAL_EMIT,
+    Motor_DM_Control_Method_NORMAL_EMIT,
 
-Motor_DM_Control_Method_1_TO_4_CURRENT,
+    Motor_DM_Control_Method_1_TO_4_CURRENT,
 
-Motor_DM_Control_Method_1_TO_4_OMEGA,
+    Motor_DM_Control_Method_1_TO_4_OMEGA,
 
-Motor_DM_Control_Method_1_TO_4_ANGLE,
+    Motor_DM_Control_Method_1_TO_4_ANGLE,
 
 };
-
-
 
 /**
 
@@ -174,25 +154,23 @@ struct Struct_Motor_DM_CAN_Rx_Data_Normal
 
 {
 
-uint8_t CAN_ID : 4;
+    uint8_t CAN_ID : 4;
 
-uint8_t Control_Status_Enum : 4;
+    uint8_t Control_Status_Enum : 4;
 
-uint16_t Angle_Reverse;
+    uint16_t Angle_Reverse;
 
-uint8_t Omega_11_4;
+    uint8_t Omega_11_4;
 
-uint8_t Omega_3_0_Torque_11_8;
+    uint8_t Omega_3_0_Torque_11_8;
 
-uint8_t Torque_7_0;
+    uint8_t Torque_7_0;
 
-uint8_t MOS_Temperature;
+    uint8_t MOS_Temperature;
 
-uint8_t Rotor_Temperature;
+    uint8_t Rotor_Temperature;
 
 } __attribute__((packed));
-
-
 
 /**
 
@@ -206,23 +184,21 @@ struct Struct_Motor_DM_CAN_Rx_Data_1_To_4
 
 {
 
-uint16_t Encoder_Reverse;
+    uint16_t Encoder_Reverse;
 
-// 角速度100倍
+    // 角速度100倍
 
-int16_t Omega_Reverse;
+    int16_t Omega_Reverse;
 
-// 电流值, mA
+    // 电流值, mA
 
-int16_t Current_Reverse;
+    int16_t Current_Reverse;
 
-uint8_t Rotor_Temperature;
+    uint8_t Rotor_Temperature;
 
-uint8_t MOS_Temperature;
+    uint8_t MOS_Temperature;
 
 } __attribute__((packed));
-
-
 
 /**
 
@@ -236,23 +212,21 @@ struct Struct_Motor_DM_CAN_Tx_Data_Normal_MIT
 
 {
 
-uint16_t Control_Angle_Reverse;
+    uint16_t Control_Angle_Reverse;
 
-uint8_t Control_Omega_11_4;
+    uint8_t Control_Omega_11_4;
 
-uint8_t Control_Omega_3_0_K_P_11_8;
+    uint8_t Control_Omega_3_0_K_P_11_8;
 
-uint8_t K_P_7_0;
+    uint8_t K_P_7_0;
 
-uint8_t K_D_11_4;
+    uint8_t K_D_11_4;
 
-uint8_t K_D_3_0_Control_Torque_11_8;
+    uint8_t K_D_3_0_Control_Torque_11_8;
 
-uint8_t Control_Torque_7_0;
+    uint8_t Control_Torque_7_0;
 
 } __attribute__((packed));
-
-
 
 /**
 
@@ -266,13 +240,11 @@ struct Struct_Motor_DM_CAN_Tx_Data_Normal_Angle_Omega
 
 {
 
-float Control_Angle;
+    float Control_Angle;
 
-float Control_Omega;
+    float Control_Omega;
 
 } __attribute__((packed));
-
-
 
 /**
 
@@ -286,11 +258,9 @@ struct Struct_Motor_DM_CAN_Tx_Data_Normal_Omega
 
 {
 
-float Control_Omega;
+    float Control_Omega;
 
 } __attribute__((packed));
-
-
 
 /**
 
@@ -304,19 +274,17 @@ struct Struct_Motor_DM_CAN_Tx_Data_Normal_EMIT
 
 {
 
-float Control_Angle;
+    float Control_Angle;
 
-// 限定速度用, rad/s的100倍
+    // 限定速度用, rad/s的100倍
 
-uint16_t Control_Omega;
+    uint16_t Control_Omega;
 
-// 限定电流用, 电流最大值的10000倍
+    // 限定电流用, 电流最大值的10000倍
 
-uint16_t Control_Current;
+    uint16_t Control_Current;
 
 } __attribute__((packed));
-
-
 
 /**
 
@@ -330,27 +298,24 @@ struct Struct_Motor_DM_Rx_Data_Normal
 
 {
 
-Enum_Motor_DM_Control_Status_Normal Control_Status;
+    Enum_Motor_DM_Control_Status_Normal Control_Status;
 
-float Now_Angle;
+    float Now_Angle;
 
-float Now_Omega;
+    float Now_Omega;
 
-float Now_Torque;
+    float Now_Torque;
 
-float Now_MOS_Temperature;
+    float Now_MOS_Temperature;
 
-float Now_Rotor_Temperature;
+    float Now_Rotor_Temperature;
 
-uint32_t Pre_Encoder;
+    uint32_t Pre_Encoder;
 
-int32_t Total_Encoder;
+    int32_t Total_Encoder;
 
-int32_t Total_Round;
-
+    int32_t Total_Round;
 };
-
-
 
 /**
 
@@ -364,25 +329,22 @@ struct Struct_Motor_DM_Rx_Data_1_To_4
 
 {
 
-float Now_Angle;
+    float Now_Angle;
 
-float Now_Omega;
+    float Now_Omega;
 
-float Now_Current;
+    float Now_Current;
 
-float Now_MOS_Temperature;
+    float Now_MOS_Temperature;
 
-float Now_Rotor_Temperature;
+    float Now_Rotor_Temperature;
 
-uint32_t Pre_Encoder;
+    uint32_t Pre_Encoder;
 
-int32_t Total_Encoder;
+    int32_t Total_Encoder;
 
-int32_t Total_Round;
-
+    int32_t Total_Round;
 };
-
-
 
 /**
 
@@ -401,264 +363,165 @@ class Class_Motor_DM_Normal
 {
 
 public:
+    void Init(FDCAN_HandleTypeDef *hfdcan, uint8_t __CAN_Rx_ID, uint8_t __CAN_Tx_ID, Enum_Motor_DM_Control_Method __Motor_DM_Control_Method = Motor_DM_Control_Method_NORMAL_MIT, float __Angle_Max = 12.5f, float __Omega_Max = 25.0f, float __Torque_Max = 10.0f, float __Current_Max = 10.261194f);
 
+    inline float Get_Angle_Max();
 
+    inline float Get_Omega_Max();
 
-void Init(FDCAN_HandleTypeDef *hfdcan, uint8_t __CAN_Rx_ID, uint8_t __CAN_Tx_ID, Enum_Motor_DM_Control_Method __Motor_DM_Control_Method = Motor_DM_Control_Method_NORMAL_MIT, float __Angle_Max = 12.5f, float __Omega_Max = 25.0f, float __Torque_Max = 10.0f, float __Current_Max = 10.261194f);
+    inline float Get_Torque_Max();
 
+    inline float Get_Current_Max();
 
+    inline Enum_Motor_DM_Status Get_Status();
 
-inline float Get_Angle_Max();
+    inline Enum_Motor_DM_Control_Status_Normal Get_Control_Status();
 
+    inline float Get_Now_Angle();
 
+    inline float Get_Now_Omega();
 
-inline float Get_Omega_Max();
+    inline float Get_Now_Torque();
 
+    inline float Get_Now_MOS_Temperature();
 
+    inline float Get_Now_Rotor_Temperature();
 
-inline float Get_Torque_Max();
+    inline Enum_Motor_DM_Control_Method Get_Control_Method();
 
+    inline float Get_Control_Angle();
 
+    inline float Get_Control_Omega();
 
-inline float Get_Current_Max();
+    inline float Get_Control_Torque();
 
+    inline float Get_Control_Current();
 
+    inline float Get_K_P();
 
-inline Enum_Motor_DM_Status Get_Status();
+    inline float Get_K_D();
 
+    inline void Set_Control_Angle(float __Control_Angle);
 
+    inline void Set_Control_Omega(float __Control_Omega);
 
-inline Enum_Motor_DM_Control_Status_Normal Get_Control_Status();
+    inline void Set_Control_Torque(float __Control_Torque);
 
+    inline void Set_Control_Current(float __Control_Current);
 
+    inline void Set_K_P(float __K_P);
 
-inline float Get_Now_Angle();
+    inline void Set_K_D(float __K_D);
 
+    void CAN_RxCpltCallback(uint8_t *Rx_Data);
 
+    void CAN_Send_Clear_Error();
 
-inline float Get_Now_Omega();
+    void CAN_Send_Enter();
 
+    void CAN_Send_Exit();
 
+    void CAN_Send_Save_Zero();
 
-inline float Get_Now_Torque();
+    void TIM_Alive_PeriodElapsedCallback();
 
-
-
-inline float Get_Now_MOS_Temperature();
-
-
-
-inline float Get_Now_Rotor_Temperature();
-
-
-
-inline Enum_Motor_DM_Control_Method Get_Control_Method();
-
-
-
-inline float Get_Control_Angle();
-
-
-
-inline float Get_Control_Omega();
-
-
-
-inline float Get_Control_Torque();
-
-
-
-inline float Get_Control_Current();
-
-
-
-inline float Get_K_P();
-
-
-
-inline float Get_K_D();
-
-
-
-inline void Set_Control_Angle(float __Control_Angle);
-
-
-
-inline void Set_Control_Omega(float __Control_Omega);
-
-
-
-inline void Set_Control_Torque(float __Control_Torque);
-
-
-
-inline void Set_Control_Current(float __Control_Current);
-
-
-
-inline void Set_K_P(float __K_P);
-
-
-
-inline void Set_K_D(float __K_D);
-
-
-
-void CAN_RxCpltCallback(uint8_t *Rx_Data);
-
-
-
-void CAN_Send_Clear_Error();
-
-
-
-void CAN_Send_Enter();
-
-
-
-void CAN_Send_Exit();
-
-
-
-void CAN_Send_Save_Zero();
-
-
-
-void TIM_Alive_PeriodElapsedCallback();
-
-
-
-void TIM_Send_PeriodElapsedCallback();
-
-
+    void TIM_Send_PeriodElapsedCallback();
 
 protected:
+    // 初始化相关变量
 
-// 初始化相关变量
+    // 绑定的CAN
 
+    Struct_FDCAN_Manage_Object *FDCAN_Manage_Object;
 
+    // 收数据绑定的CAN ID, 与上位机驱动参数Master_ID保持一致
 
-// 绑定的CAN
+    uint16_t CAN_Rx_ID;
 
-Struct_FDCAN_Manage_Object *FDCAN_Manage_Object;
+    // 发数据绑定的CAN ID, 是上位机驱动参数CAN_ID加上控制模式的偏移量
 
-// 收数据绑定的CAN ID, 与上位机驱动参数Master_ID保持一致
+    uint16_t CAN_Tx_ID;
 
-uint16_t CAN_Rx_ID;
+    // 最大位置, 与上位机控制幅值PMAX保持一致
 
-// 发数据绑定的CAN ID, 是上位机驱动参数CAN_ID加上控制模式的偏移量
+    float Angle_Max;
 
-uint16_t CAN_Tx_ID;
+    // 最大速度, 与上位机控制幅值VMAX保持一致
 
-// 最大位置, 与上位机控制幅值PMAX保持一致
+    float Omega_Max;
 
-float Angle_Max;
+    // 最大扭矩, 与上位机控制幅值TMAX保持一致
 
-// 最大速度, 与上位机控制幅值VMAX保持一致
+    float Torque_Max;
 
-float Omega_Max;
+    // 最大电流, 与上位机串口中上电打印电流保持一致
 
-// 最大扭矩, 与上位机控制幅值TMAX保持一致
+    float Current_Max;
 
-float Torque_Max;
+    // 常量
 
-// 最大电流, 与上位机串口中上电打印电流保持一致
+    // 内部变量
 
-float Current_Max;
+    // 当前时刻的电机接收flag
 
+    uint32_t Flag = 0;
 
+    // 前一时刻的电机接收flag
 
-// 常量
+    uint32_t Pre_Flag = 0;
 
+    // 发送缓冲区
 
+    uint8_t Tx_Data[8];
 
-// 内部变量
+    // 读变量
 
+    // 电机状态
 
+    Enum_Motor_DM_Status Motor_DM_Status = Motor_DM_Status_DISABLE;
 
-// 当前时刻的电机接收flag
+    // 电机对外接口信息
 
-uint32_t Flag = 0;
+    Struct_Motor_DM_Rx_Data_Normal Rx_Data;
 
-// 前一时刻的电机接收flag
+    // 写变量
 
-uint32_t Pre_Flag = 0;
+    // 读写变量
 
+    // 电机控制方式
 
+    Enum_Motor_DM_Control_Method Motor_DM_Control_Method = Motor_DM_Control_Method_NORMAL_MIT;
 
-// 发送缓冲区
+    // 角度, rad, 目标角度
 
-uint8_t Tx_Data[8];
+    float Control_Angle = 0.0f;
 
+    // 角速度, rad/s, MIT模式和速度模式是目标角速度, 其余模式是限幅
 
+    float Control_Omega = 0.0f;
 
-// 读变量
+    // 扭矩, Nm, MIT模式是目标扭矩, EMIT模式无效, 其余模式是限幅
 
+    float Control_Torque = 0.0f;
 
+    // 电流, A, EMIT模式是限幅, 其余模式无效
 
-// 电机状态
+    float Control_Current = 0.0f;
 
-Enum_Motor_DM_Status Motor_DM_Status = Motor_DM_Status_DISABLE;
+    // K_P, 0~500, MIT模式有效
 
-// 电机对外接口信息
+    float K_P = 0.0f;
 
-Struct_Motor_DM_Rx_Data_Normal Rx_Data;
+    // K_D, 0~5, MIT模式有效
 
+    float K_D = 0.0f;
 
+    // 内部函数
 
-// 写变量
+    void Data_Process();
 
-
-
-// 读写变量
-
-
-
-// 电机控制方式
-
-Enum_Motor_DM_Control_Method Motor_DM_Control_Method = Motor_DM_Control_Method_NORMAL_MIT;
-
-
-
-// 角度, rad, 目标角度
-
-float Control_Angle = 0.0f;
-
-// 角速度, rad/s, MIT模式和速度模式是目标角速度, 其余模式是限幅
-
-float Control_Omega = 0.0f;
-
-// 扭矩, Nm, MIT模式是目标扭矩, EMIT模式无效, 其余模式是限幅
-
-float Control_Torque = 0.0f;
-
-// 电流, A, EMIT模式是限幅, 其余模式无效
-
-float Control_Current = 0.0f;
-
-// K_P, 0~500, MIT模式有效
-
-float K_P = 0.0f;
-
-// K_D, 0~5, MIT模式有效
-
-float K_D = 0.0f;
-
-
-
-// 内部函数
-
-
-
-void Data_Process();
-
-
-
-void Output();
-
+    void Output();
 };
-
-
 
 /**
 
@@ -675,253 +538,163 @@ class Class_Motor_DM_1_To_4
 {
 
 public:
+    // PID角度环控制
 
+    Class_PID PID_Angle;
 
+    // PID角速度环控制
 
-// PID角度环控制
+    Class_PID PID_Omega;
 
-Class_PID PID_Angle;
+    void Init(FDCAN_HandleTypeDef *hcan, Enum_Motor_DM_Motor_ID_1_To_4 __CAN_Rx_ID, Enum_Motor_DM_Control_Method __Motor_DM_Control_Method = Motor_DM_Control_Method_1_TO_4_ANGLE, int32_t __Encoder_Offset = 0, float __Current_Max = 10.261194f);
 
-// PID角速度环控制
+    inline float Get_Current_Max();
 
-Class_PID PID_Omega;
+    inline float Get_Theoretical_Output_Current_Max();
 
+    inline Enum_Motor_DM_Status Get_Status();
 
+    inline float Get_Now_Angle();
 
-void Init(FDCAN_HandleTypeDef *hcan, Enum_Motor_DM_Motor_ID_1_To_4 __CAN_Rx_ID, Enum_Motor_DM_Control_Method __Motor_DM_Control_Method = Motor_DM_Control_Method_1_TO_4_ANGLE, int32_t __Encoder_Offset = 0, float __Current_Max = 10.261194f);
+    inline float Get_Now_Omega();
 
+    inline float Get_Now_Current();
 
+    inline float Get_Now_MOS_Temperature();
 
-inline float Get_Current_Max();
+    inline float Get_Now_Rotor_Temperature();
 
+    inline Enum_Motor_DM_Control_Method Get_Control_Method();
 
+    inline float Get_Target_Angle();
 
-inline float Get_Theoretical_Output_Current_Max();
+    inline float Get_Target_Omega();
 
+    inline float Get_Target_Current();
 
+    inline float Get_Feedforward_Omega();
 
-inline Enum_Motor_DM_Status Get_Status();
+    inline float Get_Feedforward_Current();
 
+    inline void Set_Control_Method(Enum_Motor_DM_Control_Method __DM_Motor_Control_Method);
 
+    inline void Set_Target_Angle(float __Target_Angle);
 
-inline float Get_Now_Angle();
+    inline void Set_Target_Omega(float __Target_Omega);
 
+    inline void Set_Target_Current(float __Target_Current);
 
+    inline void Set_Feedforward_Omega(float __Feedforward_Omega);
 
-inline float Get_Now_Omega();
+    inline void Set_Feedforward_Current(float __Feedforward_Current);
 
+    void CAN_RxCpltCallback(uint8_t *Rx_Data);
 
+    void TIM_100ms_Alive_PeriodElapsedCallback();
 
-inline float Get_Now_Current();
-
-
-
-inline float Get_Now_MOS_Temperature();
-
-
-
-inline float Get_Now_Rotor_Temperature();
-
-
-
-inline Enum_Motor_DM_Control_Method Get_Control_Method();
-
-
-
-inline float Get_Target_Angle();
-
-
-
-inline float Get_Target_Omega();
-
-
-
-inline float Get_Target_Current();
-
-
-
-inline float Get_Feedforward_Omega();
-
-
-
-inline float Get_Feedforward_Current();
-
-
-
-inline void Set_Control_Method(Enum_Motor_DM_Control_Method __DM_Motor_Control_Method);
-
-
-
-inline void Set_Target_Angle(float __Target_Angle);
-
-
-
-inline void Set_Target_Omega(float __Target_Omega);
-
-
-
-inline void Set_Target_Current(float __Target_Current);
-
-
-
-inline void Set_Feedforward_Omega(float __Feedforward_Omega);
-
-
-
-inline void Set_Feedforward_Current(float __Feedforward_Current);
-
-
-
-void CAN_RxCpltCallback(uint8_t *Rx_Data);
-
-
-
-void TIM_100ms_Alive_PeriodElapsedCallback();
-
-
-
-void TIM_1ms_Calculate_PeriodElapsedCallback();
-
-
+    void TIM_1ms_Calculate_PeriodElapsedCallback();
 
 protected:
+    // 初始化相关变量
 
-// 初始化相关变量
+    // 绑定的CAN
 
+    Struct_FDCAN_Manage_Object *FDCAN_Manage_Object;
 
+    // 收数据绑定的CAN ID, 达妙系列0x301~0x308
 
-// 绑定的CAN
+    Enum_Motor_DM_Motor_ID_1_To_4 CAN_Rx_ID;
 
-Struct_FDCAN_Manage_Object *FDCAN_Manage_Object;
+    // 编码器偏移
 
-// 收数据绑定的CAN ID, 达妙系列0x301~0x308
+    int32_t Encoder_Offset;
 
-Enum_Motor_DM_Motor_ID_1_To_4 CAN_Rx_ID;
+    // 发送缓存区
 
-// 编码器偏移
+    uint8_t *Tx_Data;
 
-int32_t Encoder_Offset;
+    // 最大电流
 
-// 发送缓存区
+    float Current_Max;
 
-uint8_t *Tx_Data;
+    // 常量
 
-// 最大电流
+    // 一圈编码器刻度
 
-float Current_Max;
+    uint16_t Encoder_Num_Per_Round = 8192;
 
+    // 电流到输出的转化系数
 
+    float Current_To_Out = 16384.0f / 10.261194f;
 
-// 常量
+    // 理论最大输出电流
 
+    float Theoretical_Output_Current_Max = 10.261194f;
 
+    // 内部变量
 
-// 一圈编码器刻度
+    // 当前时刻的电机接收flag
 
-uint16_t Encoder_Num_Per_Round = 8192;
+    uint32_t Flag = 0;
 
+    // 前一时刻的电机接收flag
 
+    uint32_t Pre_Flag = 0;
 
-// 电流到输出的转化系数
+    // 输出量
 
-float Current_To_Out = 16384.0f / 10.261194f;
+    float Out = 0.0f;
 
-// 理论最大输出电流
+    // 读变量
 
-float Theoretical_Output_Current_Max = 10.261194f;
+    // 电机状态
 
+    Enum_Motor_DM_Status Motor_DM_Status = Motor_DM_Status_DISABLE;
 
+    // 电机对外接口信息
 
-// 内部变量
+    Struct_Motor_DM_Rx_Data_1_To_4 Rx_Data;
 
+    // 写变量
 
+    // 读写变量
 
-// 当前时刻的电机接收flag
+    // 电机控制方式
 
-uint32_t Flag = 0;
+    Enum_Motor_DM_Control_Method Motor_DM_Control_Method = Motor_DM_Control_Method_1_TO_4_ANGLE;
 
-// 前一时刻的电机接收flag
+    // 目标的角度
 
-uint32_t Pre_Flag = 0;
+    float Target_Angle = 0.0f;
 
-// 输出量
+    // 目标的速度, rad/s
 
-float Out = 0.0f;
+    float Target_Omega = 0.0f;
 
+    // 目标的电流, A
 
+    float Target_Current = 0.0f;
 
-// 读变量
+    // 前馈的速度, rad/s
 
+    float Feedforward_Omega = 0.0f;
 
+    // 前馈的电流, A
 
-// 电机状态
+    float Feedforward_Current = 0.0f;
 
-Enum_Motor_DM_Status Motor_DM_Status = Motor_DM_Status_DISABLE;
+    // 内部函数
 
-// 电机对外接口信息
+    void Data_Process();
 
-Struct_Motor_DM_Rx_Data_1_To_4 Rx_Data;
+    void PID_Calculate();
 
-
-
-// 写变量
-
-
-
-// 读写变量
-
-
-// 电机控制方式
-
-Enum_Motor_DM_Control_Method Motor_DM_Control_Method = Motor_DM_Control_Method_1_TO_4_ANGLE;
-
-// 目标的角度
-
-float Target_Angle = 0.0f;
-
-// 目标的速度, rad/s
-
-float Target_Omega = 0.0f;
-
-// 目标的电流, A
-
-float Target_Current = 0.0f;
-
-// 前馈的速度, rad/s
-
-float Feedforward_Omega = 0.0f;
-
-// 前馈的电流, A
-
-float Feedforward_Current = 0.0f;
-
-
-
-// 内部函数
-
-
-
-void Data_Process();
-
-
-
-void PID_Calculate();
-
-
-
-void Output();
-
+    void Output();
 };
-
-
 
 /* Exported variables --------------------------------------------------------*/
 
-
-
 /* Exported function declarations --------------------------------------------*/
-
-
 
 /**
 
@@ -937,11 +710,8 @@ inline float Class_Motor_DM_Normal::Get_Angle_Max()
 
 {
 
-return (Angle_Max);
-
+    return (Angle_Max);
 }
-
-
 
 /**
 
@@ -957,11 +727,8 @@ inline float Class_Motor_DM_Normal::Get_Omega_Max()
 
 {
 
-return (Omega_Max);
-
+    return (Omega_Max);
 }
-
-
 
 /**
 
@@ -977,11 +744,8 @@ inline float Class_Motor_DM_Normal::Get_Torque_Max()
 
 {
 
-return (Torque_Max);
-
+    return (Torque_Max);
 }
-
-
 
 /**
 
@@ -997,11 +761,8 @@ inline float Class_Motor_DM_Normal::Get_Current_Max()
 
 {
 
-return (Current_Max);
-
+    return (Current_Max);
 }
-
-
 
 /**
 
@@ -1017,11 +778,8 @@ inline Enum_Motor_DM_Status Class_Motor_DM_Normal::Get_Status()
 
 {
 
-return (Motor_DM_Status);
-
+    return (Motor_DM_Status);
 }
-
-
 
 /**
 
@@ -1037,11 +795,8 @@ inline Enum_Motor_DM_Control_Status_Normal Class_Motor_DM_Normal::Get_Control_St
 
 {
 
-return (Rx_Data.Control_Status);
-
+    return (Rx_Data.Control_Status);
 }
-
-
 
 /**
 
@@ -1054,14 +809,10 @@ return (Rx_Data.Control_Status);
 */
 
 inline float Class_Motor_DM_Normal::Get_Now_Angle()
-
 {
 
-return (Rx_Data.Now_Angle);
-
+    return (Rx_Data.Now_Angle);
 }
-
-
 
 /**
 
@@ -1074,14 +825,10 @@ return (Rx_Data.Now_Angle);
 */
 
 inline float Class_Motor_DM_Normal::Get_Now_Omega()
-
 {
 
-return (Rx_Data.Now_Omega);
-
+    return (Rx_Data.Now_Omega);
 }
-
-
 
 /**
 
@@ -1094,14 +841,10 @@ return (Rx_Data.Now_Omega);
 */
 
 inline float Class_Motor_DM_Normal::Get_Now_Torque()
-
 {
 
-return (Rx_Data.Now_Torque);
-
+    return (Rx_Data.Now_Torque);
 }
-
-
 
 /**
 
@@ -1114,14 +857,10 @@ return (Rx_Data.Now_Torque);
 */
 
 inline float Class_Motor_DM_Normal::Get_Now_MOS_Temperature()
-
 {
 
-return (Rx_Data.Now_MOS_Temperature);
-
+    return (Rx_Data.Now_MOS_Temperature);
 }
-
-
 
 /**
 
@@ -1134,14 +873,10 @@ return (Rx_Data.Now_MOS_Temperature);
 */
 
 inline float Class_Motor_DM_Normal::Get_Now_Rotor_Temperature()
-
 {
 
-return (Rx_Data.Now_Rotor_Temperature);
-
+    return (Rx_Data.Now_Rotor_Temperature);
 }
-
-
 
 /**
 
@@ -1154,14 +889,10 @@ return (Rx_Data.Now_Rotor_Temperature);
 */
 
 inline Enum_Motor_DM_Control_Method Class_Motor_DM_Normal::Get_Control_Method()
-
 {
 
-return (Motor_DM_Control_Method);
-
+    return (Motor_DM_Control_Method);
 }
-
-
 
 /**
 
@@ -1174,14 +905,10 @@ return (Motor_DM_Control_Method);
 */
 
 inline float Class_Motor_DM_Normal::Get_Control_Angle()
-
 {
 
-return (Control_Angle);
-
+    return (Control_Angle);
 }
-
-
 
 /**
 
@@ -1194,14 +921,10 @@ return (Control_Angle);
 */
 
 inline float Class_Motor_DM_Normal::Get_Control_Omega()
-
 {
 
-return (Control_Omega);
-
+    return (Control_Omega);
 }
-
-
 
 /**
 
@@ -1214,14 +937,10 @@ return (Control_Omega);
 */
 
 inline float Class_Motor_DM_Normal::Get_Control_Torque()
-
 {
 
-return (Control_Torque);
-
+    return (Control_Torque);
 }
-
-
 
 /**
 
@@ -1234,14 +953,10 @@ return (Control_Torque);
 */
 
 inline float Class_Motor_DM_Normal::Get_Control_Current()
-
 {
 
-return (Control_Current);
-
+    return (Control_Current);
 }
-
-
 
 /**
 
@@ -1254,14 +969,10 @@ return (Control_Current);
 */
 
 inline float Class_Motor_DM_Normal::Get_K_P()
-
 {
 
-return (K_P);
-
+    return (K_P);
 }
-
-
 
 /**
 
@@ -1274,14 +985,10 @@ return (K_P);
 */
 
 inline float Class_Motor_DM_Normal::Get_K_D()
-
 {
 
-return (K_D);
-
+    return (K_D);
 }
-
-
 
 /**
 
@@ -1294,14 +1001,10 @@ return (K_D);
 */
 
 inline void Class_Motor_DM_Normal::Set_Control_Angle(float __Control_Angle)
-
 {
 
-Control_Angle = __Control_Angle;
-
+    Control_Angle = __Control_Angle;
 }
-
-
 
 /**
 
@@ -1314,14 +1017,10 @@ Control_Angle = __Control_Angle;
 */
 
 inline void Class_Motor_DM_Normal::Set_Control_Omega(float __Control_Omega)
-
 {
 
-Control_Omega = __Control_Omega;
-
+    Control_Omega = __Control_Omega;
 }
-
-
 
 /**
 
@@ -1334,14 +1033,10 @@ Control_Omega = __Control_Omega;
 */
 
 inline void Class_Motor_DM_Normal::Set_Control_Torque(float __Control_Torque)
-
 {
 
-Control_Torque = __Control_Torque;
-
+    Control_Torque = __Control_Torque;
 }
-
-
 
 /**
 
@@ -1354,14 +1049,10 @@ Control_Torque = __Control_Torque;
 */
 
 inline void Class_Motor_DM_Normal::Set_Control_Current(float __Control_Current)
-
 {
 
-Control_Current = __Control_Current;
-
+    Control_Current = __Control_Current;
 }
-
-
 
 /**
 
@@ -1374,14 +1065,10 @@ Control_Current = __Control_Current;
 */
 
 inline void Class_Motor_DM_Normal::Set_K_P(float __K_P)
-
 {
 
-K_P = __K_P;
-
+    K_P = __K_P;
 }
-
-
 
 /**
 
@@ -1394,14 +1081,10 @@ K_P = __K_P;
 */
 
 inline void Class_Motor_DM_Normal::Set_K_D(float __K_D)
-
 {
 
-K_D = __K_D;
-
+    K_D = __K_D;
 }
-
-
 
 /**
 
@@ -1414,14 +1097,10 @@ K_D = __K_D;
 */
 
 inline float Class_Motor_DM_1_To_4::Get_Current_Max()
-
 {
 
-return (Current_Max);
-
+    return (Current_Max);
 }
-
-
 
 /**
 
@@ -1434,14 +1113,10 @@ return (Current_Max);
 */
 
 inline float Class_Motor_DM_1_To_4::Get_Theoretical_Output_Current_Max()
-
 {
 
-return (Theoretical_Output_Current_Max);
-
+    return (Theoretical_Output_Current_Max);
 }
-
-
 
 /**
 
@@ -1454,14 +1129,10 @@ return (Theoretical_Output_Current_Max);
 */
 
 inline Enum_Motor_DM_Status Class_Motor_DM_1_To_4::Get_Status()
-
 {
 
-return (Motor_DM_Status);
-
+    return (Motor_DM_Status);
 }
-
-
 
 /**
 
@@ -1474,14 +1145,10 @@ return (Motor_DM_Status);
 */
 
 inline float Class_Motor_DM_1_To_4::Get_Now_Angle()
-
 {
 
-return (Rx_Data.Now_Angle);
-
+    return (Rx_Data.Now_Angle);
 }
-
-
 
 /**
 
@@ -1494,14 +1161,10 @@ return (Rx_Data.Now_Angle);
 */
 
 inline float Class_Motor_DM_1_To_4::Get_Now_Omega()
-
 {
 
-return (Rx_Data.Now_Omega);
-
+    return (Rx_Data.Now_Omega);
 }
-
-
 
 /**
 
@@ -1514,14 +1177,10 @@ return (Rx_Data.Now_Omega);
 */
 
 inline float Class_Motor_DM_1_To_4::Get_Now_Current()
-
 {
 
-return (Rx_Data.Now_Current);
-
+    return (Rx_Data.Now_Current);
 }
-
-
 
 /**
 
@@ -1534,14 +1193,10 @@ return (Rx_Data.Now_Current);
 */
 
 inline float Class_Motor_DM_1_To_4::Get_Now_MOS_Temperature()
-
 {
 
-return (Rx_Data.Now_MOS_Temperature);
-
+    return (Rx_Data.Now_MOS_Temperature);
 }
-
-
 
 /**
 
@@ -1554,14 +1209,10 @@ return (Rx_Data.Now_MOS_Temperature);
 */
 
 inline float Class_Motor_DM_1_To_4::Get_Now_Rotor_Temperature()
-
 {
 
-return (Rx_Data.Now_Rotor_Temperature);
-
+    return (Rx_Data.Now_Rotor_Temperature);
 }
-
-
 
 /**
 
@@ -1574,14 +1225,10 @@ return (Rx_Data.Now_Rotor_Temperature);
 */
 
 inline Enum_Motor_DM_Control_Method Class_Motor_DM_1_To_4::Get_Control_Method()
-
 {
 
-return (Motor_DM_Control_Method);
-
+    return (Motor_DM_Control_Method);
 }
-
-
 
 /**
 
@@ -1597,11 +1244,8 @@ inline float Class_Motor_DM_1_To_4::Get_Target_Angle()
 
 {
 
-return (Target_Angle);
-
+    return (Target_Angle);
 }
-
-
 
 /**
 
@@ -1614,14 +1258,10 @@ return (Target_Angle);
 */
 
 inline float Class_Motor_DM_1_To_4::Get_Target_Omega()
-
 {
 
-return (Target_Omega);
-
+    return (Target_Omega);
 }
-
-
 
 /**
 
@@ -1637,11 +1277,8 @@ inline float Class_Motor_DM_1_To_4::Get_Target_Current()
 
 {
 
-return (Target_Current);
-
+    return (Target_Current);
 }
-
-
 
 /**
 
@@ -1657,8 +1294,7 @@ inline float Class_Motor_DM_1_To_4::Get_Feedforward_Omega()
 
 {
 
-return (Feedforward_Omega);
-
+    return (Feedforward_Omega);
 }
 
 #endif
