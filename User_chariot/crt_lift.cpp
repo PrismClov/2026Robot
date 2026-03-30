@@ -17,17 +17,17 @@ void Class_Lift::Init()
     Motor_Move_R.Init(&hcan2,Motor_DJI_ID_0x204);
 
     //PID初始化
-    Motor_Lift_L.PID_Omega.Init(2.0f, 0.0,0.0);
+    Motor_Lift_L.PID_Omega.Init(6.0f, 0.1f, 0.00f, 200.0f);
 
-    Motor_Lift_R.PID_Omega.Init(2.0f, 0.0,0.0);
+    Motor_Lift_R.PID_Omega.Init(6.0f, 0.1f, 0.00f, 200.0f);
 
-    PID_Distance_L.Init(-160.0f, 0.0f, 0.0f, 0.0f, 0.0f, 14.0);
+    PID_Distance_L.Init(-60.0f, 0.07f, 0.02f, 0.0f, 0.0f, 3.0f);
 
-    PID_Distance_R.Init(-160.0f, 0.0f, 0.0f, 0.0f, 0.0f, 14.0 );
+    PID_Distance_R.Init(-60.0f, 0.07f, 0.02f, 0.0f, 0.0f, 3.0f );
 
-    Motor_Move_L.PID_Omega.Init(2.0,0.0,0.0);
+    Motor_Move_L.PID_Omega.Init(5.0f, 0.0f, 0.0f);
 
-    Motor_Move_R.PID_Omega.Init(2.0,0.0,0.0);
+    Motor_Move_R.PID_Omega.Init(2.0f, 0.0f, 0.0f);
 
 
     //状态机初始化
@@ -135,7 +135,7 @@ bool Class_Lift::Is_Up_Finished()
 {
     bool res = false;
 
-    if(Math_Abs(Now_Distance[0] - Target_Distance[0]) <= Distance_Error && Math_Abs(Now_Distance[1] - Target_Distance[1]) <= Distance_Error)
+    if(Now_Distance[0] <= - 0.26 && Now_Distance[1] <= -0.26&&Motor_Lift_L.Get_Now_Omega() <= 0.05 && Motor_Lift_R.Get_Now_Omega() <= 0.05)
     {
         res = true;
     }
@@ -152,7 +152,8 @@ bool Class_Lift::Is_Up_Finished()
     //速度环锁死
     Motor_Lift_L.Set_Target_Omega(0.0f);
     
-    Motor_Lift_R.Set_Target_Omega(0.0f);
+    Motor_Lift_R.Set_Target_Omega(0.0f
+    );
 
  }
 
@@ -317,7 +318,7 @@ void Class_FSM_Lift::Lift_TIM_Status_PeriodElapsedCallback()
             }    
             else if(Lift->Is_Up_Finished())
             {   
-                Lift->Up_Cancel();
+                //Lift->Up_Cancel();
 
                 if(Lift->Yaw_Flag)
                 {
@@ -340,10 +341,11 @@ void Class_FSM_Lift::Lift_TIM_Status_PeriodElapsedCallback()
             //if(Lift->Is_Move_Finished())
             //先用遥控器判断
  
-            //Lift->Move_Cancel();
+            
 
-                if(Lift->Yaw_Flag)
+                if(Lift->Yaw_Flag&&Status[Now_Status_Serial].Count_Time>200)
                 {
+                    Lift->Move_Cancel();
                     Status[Now_Status_Serial].Count_Time = 0;
                     Set_Status(Lift_Status_DOWN);
                    
@@ -365,7 +367,7 @@ void Class_FSM_Lift::Lift_TIM_Status_PeriodElapsedCallback()
             else if(Lift->Is_Down_Finished())
             {
 
-                Lift->Down_Cancel();
+                //Lift->Down_Cancel();
 
                 if(Lift->Yaw_Flag)
                 {
@@ -375,10 +377,10 @@ void Class_FSM_Lift::Lift_TIM_Status_PeriodElapsedCallback()
             }
 
         }
-
         break;
-
+        
     }
+    Lift->Yaw_Flag = false;
 }
 
 

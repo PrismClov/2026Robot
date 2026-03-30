@@ -145,10 +145,14 @@ void Class_Chariot::Control_Chassis()
     
     if (Active_Controller == Controller_DR16 && DR16_Control_Type == DR16_Control_Type_REMOTE)
     {
-        float dr16_l_x, dr16_l_y, dr16_yaw;    
+        float dr16_l_x, dr16_l_y, dr16_r_x, dr16_r_y, dr16_yaw;    
         //排除遥控器死区
         dr16_l_x = (Math_Abs(DR16.Get_Left_X()) > Dead_Zone) ? DR16.Get_Left_X() : 0;
         dr16_l_y = (Math_Abs(DR16.Get_Left_Y()) > Dead_Zone) ? DR16.Get_Left_Y() : 0;
+
+        dr16_r_x = (Math_Abs(DR16.Get_Right_X()) > Dead_Zone) ? DR16.Get_Right_X() : 0;
+        dr16_r_y = (Math_Abs(DR16.Get_Right_Y()) > Dead_Zone) ? DR16.Get_Right_Y() : 0;
+
         //yaw和xy的死区是否相同存疑
         dr16_yaw = (Math_Abs(DR16.Get_Yaw()) > Dead_Zone) ? DR16.Get_Yaw() : 0;
         //设定矩形到圆形映射进行控制
@@ -176,8 +180,8 @@ void Class_Chariot::Control_Chassis()
         }
 
         //抬升导轮速度
-        float lift_move_speed = dr16_l_x * sqrt(1.0f - dr16_l_y * dr16_l_y / 2.0f); //*Lift.Get_Velocity_Max();
-
+        float lift_move_speed = dr16_r_x * sqrt(1.0f - dr16_r_y * dr16_r_y / 2.0f) * Lift.Get_Velocity_Max();
+        Lift.Set_Move_Speed(lift_move_speed);
         if (DR16.Get_Left_Switch() == DR16_Switch_Status_UP)  //左上 抬升up
         {
             if(DR16.Get_Yaw() > 0.95)

@@ -154,21 +154,24 @@ class Class_Lift
 
     inline void Yaw_Flag_True();
 
+    inline float Get_Velocity_Max();
+
     
     private:
 
     bool Yaw_Flag = false; //是否进行yaw控制的标志位，true为进行，false为不进行
 
-/*-----------------------电控参数---------------------------*/  
+/*-----------------------电控参数---------------------------*/ 
+    float Max_Velocity = 200.0f; 
     //同步带行程 单位m
     float Now_Distance[2] = { 0.0f, 0.0f };
 
     //同步带上升目标距离，下降时加了负号
-    float Target_Distance[2] = { - 0.20f, - 0.20f };
+    float Target_Distance[2] = { - 0.28f, - 0.28f };
 
     float Target_Distance_Limit = 0.40f;
 
-    float Distance_Error = 0.003f;
+    float Distance_Error = 0.03f;
     //校准距离 贴地时剩余行程3cm
     float Distance_Caliberate = 0.03f;
 
@@ -283,7 +286,7 @@ inline void Class_Lift::Set_Control_Type(Enum_Lift_Control_Type __type)
 inline void Class_Lift::Set_Move_Speed(float __speed)
 {
     Move_Speed[0] = __speed;
-    Move_Speed[1] = __speed;
+    Move_Speed[1] = - __speed;
 }
 
 /**
@@ -295,4 +298,12 @@ inline void Class_Lift::Yaw_Flag_True()
     Yaw_Flag = true;
 }
 
+/**
+ * @brief 获取最大速度
+ * 
+ */
+inline float Class_Lift::Get_Velocity_Max()
+{
+    return Max_Velocity;
+}
 #endif //  CRT_LIFT_H
