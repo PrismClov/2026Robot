@@ -103,6 +103,7 @@ virtualFolder:
         - path: ../User_dvc/Robstride01.cpp
         - path: ../User_dvc/dvc_motor_rs.cpp
         - path: ../User_dvc/dvc_motor_rs.h
+        - path: ../User_dvc/dvc_airtool.cpp
       folders: []
     - name: User_ita
       files:
@@ -119,6 +120,7 @@ virtualFolder:
         - path: ../User_chariot/Weapons/crt_weapons.cpp
         - path: ../User_chariot/Chassis/crt_chassis.h
         - path: ../User_chariot/Weapons/crt_weapons.h
+        - path: ../User_chariot/KFS/KFS.cpp
       folders: []
     - name: ::CMSIS
       files: []
@@ -150,8 +152,10 @@ targets:
         - .cmsis/include
         - RTE/_H723VGT6_Demo
         - ../User_chariot/Weapons
+        - ../User_chariot/KFS
       libList: []
     excludeList: []
+    settings: {}
     toolchain: AC6
     toolchainConfigMap:
       AC5:

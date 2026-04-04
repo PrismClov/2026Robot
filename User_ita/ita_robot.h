@@ -18,7 +18,8 @@
 #include "dvc_dr16.h"
 #include "dvc_motor_dji.h"
 #include "dvc_motor_dm.h"
-
+#include "crt_weapons.h"
+#include "KFS.h"
 
 /* Exported macros -----------------------------------------------------------*/
 
@@ -55,6 +56,11 @@ public:
     Class_DR16 DR16;
     //全向轮底盘
     Class_Chassis Chassis;
+
+    //
+    Class_Weapon_Grab Weapon_Grab;
+    
+    Class_KFS KFS;
     
     inline float Get_Chassis_Target_Angle_Yaw();
 

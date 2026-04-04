@@ -34,7 +34,9 @@ void Class_Chariot::Init(float __Dead_Zone)
     
     Dead_Zone = __Dead_Zone;
 
+    Weapon_Grab.Init();
 
+    KFS.Init();
 }
 
 void Class_Chariot::TIM_100ms_Alive_PeriodElapsedCallback()
@@ -42,6 +44,8 @@ void Class_Chariot::TIM_100ms_Alive_PeriodElapsedCallback()
     DR16.TIM1msMod50_Alive_PeriodElapsedCallback();
 	
     Chassis.TIM_100ms_Alive_PeriodElapsedCallback();
+    
+    Weapon_Grab.TIM_Alive_PeriodElapsedCallback();
 }
 
 void Class_Chariot::TIM_Unline_Protect_PeriodElapsedCallback()
@@ -59,7 +63,10 @@ void Class_Chariot::TIM_Unline_Protect_PeriodElapsedCallback()
 void Class_Chariot::TIM_2ms_Calculate_PeriodElapsedCallback()
 {
     Chassis.TIM_2ms_Control_PeriodElapsedCallback();
-
+    
+    Weapon_Grab.TIM_Weapon_Grab_PeriodElapsedCallback();
+    
+    KFS.TIM_KFS_PeriodElapsedCallback();
 }
 void Class_Chariot::Judge_DR16_Control_Type()
 {

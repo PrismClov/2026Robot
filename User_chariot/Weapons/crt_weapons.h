@@ -18,6 +18,7 @@
 #include "dvc_motor_dm.h"
 #include "dvc_motor_rs.h"
 #include "alg_fsm.h"
+#include "dvc_airtool.h"
 
 /* Exported macros -----------------------------------------------------------*/
 
@@ -67,6 +68,8 @@ public:
     Class_Motor_RS_MIT Motor_Rotate;
 
     Class_FSM_Weapon_Grab FSM_Weapon_Grab;
+
+    Class_AIRPUMP AIRPUMP_Weapon_Grab;
 
     friend class Class_FSM_Weapon_Grab;
 

@@ -94,6 +94,7 @@ void Device_FDCAN1_Callback(Struct_FDCAN_Rx_Buffer *FDCAN_RxMessage)
 
   case 0x205:
   {
+    chariot.KFS.Motor_KFS_Rotate.FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
     break;
   }
 
@@ -373,13 +374,13 @@ void Task1ms_TIM5_Callback()
   if (mod100 >= 100)
   {
     chariot.TIM_100ms_Alive_PeriodElapsedCallback();
-    Weapon_Grab.TIM_Alive_PeriodElapsedCallback();
+    
     mod100 = 0;
   }
 //  Weapon_Grab.Motor_Rotate.CAN_Send_Set_Rx_ID(0xF1);
 //  Weapon_Grab.Motor_Rotate.CAN_Send_Set_Tx_ID(0x71);
 
-  Weapon_Grab.TIM_Weapon_Grab_PeriodElapsedCallback();
+ 
   chariot.TIM_2ms_Calculate_PeriodElapsedCallback();
 }
 /**
@@ -402,7 +403,7 @@ void Task_Init()
   TIM_Init(&htim4, Task100us_TIM4_Callback);
   TIM_Init(&htim5, Task1ms_TIM5_Callback);
   chariot.Init(0.03);
-  Weapon_Grab.Init();
+ 
   // 外部中断初始化(舵轮光电门校准)
   GPIO_EXTI_Init(GPIO_PIN_10, GPIO_EXTI10_Callback);
   GPIO_EXTI_Init(GPIO_PIN_11, GPIO_EXTI11_Callback);

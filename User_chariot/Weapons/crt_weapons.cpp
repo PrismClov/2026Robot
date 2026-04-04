@@ -49,6 +49,8 @@ void Class_Weapon_Grab::Init()
     FSM_Weapon_Grab.Weapon_Grab = this;
 
     FSM_Weapon_Grab.Init(5, 0);
+
+    AIRPUMP_Weapon_Grab.Init(GPIOC, GPIO_PIN_14);
 }
 
 /**
