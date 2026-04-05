@@ -83,9 +83,8 @@ void FDCAN_Init(FDCAN_HandleTypeDef *hfdcan, FDCAN_Call_Back Callback_Function)
     {
         FDCAN3_Manage_Object.FDCAN_Handler = hfdcan;
         FDCAN3_Manage_Object.Callback_Function = Callback_Function;
-        FDCAN_Filter_Mask_Config(hfdcan, FDCAN_FILTER(2) | FDCAN_FIFO_0 | FDCAN_STDID | FDCAN_DATA_TYPE, 0, 0);
-				FDCAN_Filter_Mask_Config(hfdcan, FDCAN_FILTER(3) | FDCAN_FIFO_0 | FDCAN_EXTID | FDCAN_DATA_TYPE, 0, 0);
-			//FDCAN_Filter_Mask_Config(hfdcan, FDCAN_FILTER(15) | FDCAN_FIFO_1 | FDCAN_STDID | FDCAN_DATA_TYPE, 0, 0);
+        FDCAN_Filter_Mask_Config(hfdcan, FDCAN_FILTER(0) | FDCAN_FIFO_0 | FDCAN_STDID | FDCAN_DATA_TYPE, 0, 0);
+        FDCAN_Filter_Mask_Config(hfdcan, FDCAN_FILTER(1) | FDCAN_FIFO_1 | FDCAN_EXTID | FDCAN_DATA_TYPE, 0, 0);
     }
 		
 		HAL_FDCAN_Start(hfdcan);

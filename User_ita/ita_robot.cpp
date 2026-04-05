@@ -158,8 +158,9 @@ void Class_Chariot::_Chassis_Control()
 
         if(DR16.Get_Left_Switch()==DR16_Switch_Status_UP)  //左上 失能
         {
-            //KFS夹取
-            //KFS.Set_KFS_Control_Type(KFS_Control_Type_CLAMP);
+            //夹取kfs
+            Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
+            KFS.KFS_Yaw_Flag_True();
         }
 
     }

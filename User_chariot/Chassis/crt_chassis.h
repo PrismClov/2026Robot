@@ -13,7 +13,7 @@
  * @brief 轮组编号
  * 1[0] 4[3]
  * 2[1] 3[2]
- * 前x左y上z
+ * 前x右y上z
  */
 
 #ifndef CRT_CHASSIS_H
@@ -120,7 +120,7 @@ public:
     // 轮向电机
     Class_Motor_MKSESC Motor_Wheel[4];
 
-    void Init(float __Velocity_X_Max = 4.0f, float __Velocity_Y_Max = 4.0f, float __Omega_Max = 8.0f);
+    void Init(float __Velocity_X_Max = 8.0f, float __Velocity_Y_Max = 8.0f, float __Omega_Max = 16.0f);
 		
     inline float Get_Velocity_X_Max();
 		
@@ -172,7 +172,7 @@ protected:
     float Now_Steer_Angle[4] = {0.0f, 0.0f, 0.0f,0.0f};
 
     // 轮组方位角
-    float Steer_Azimuth[4] = {-0.75,-2.30,0.75,2.30};  // 轮组方位角，单位为弧度，顺时针为正，前x左y上z
+    float Steer_Azimuth[4] = {- 0.785, - 2.356, - 3.925, - 5.495};  // 轮组方位角，单位为弧度，顺时针为正，前x右y上z
     
     // 初始化相关常量
     // 当前速度X

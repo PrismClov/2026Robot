@@ -13,7 +13,7 @@
  * @brief 轮组编号
  * 1[0] 4[3]
  * 2[1] 3[2]
- * 前x左y上z
+ * 前x右y上z
  */
 
 
@@ -233,13 +233,19 @@ void Class_Chassis::Self_Resolution()
     float tmp_velocity_x = 0.0f;
     float tmp_velocity_y = 0.0f;
     float tmp_omega = 0.0f;
-
+    float tmp_motor_wheel_omega[4] = {0.0f};
+    for (int i = 0; i < 4; i++)
+    {
+        tmp_motor_wheel_omega[i] = Motor_Wheel[i].Get_Now_Omega();
+    }
+    // tmp_motor_wheel_omega[1] = - tmp_motor_wheel_omega[1];
+    // tmp_motor_wheel_omega[2] = - tmp_motor_wheel_omega[2];
     for (int i = 0; i < 4; i++)
     {
         // 待验证是否正确
-        tmp_velocity_x += (Motor_Wheel[i].Get_Now_Omega() / Wheel_Motor_Reduction * arm_cos_f32(Now_Steer_Angle[i]) * Wheel_Radius) / 4.0f;
-        tmp_velocity_y += (Motor_Wheel[i].Get_Now_Omega() / Wheel_Motor_Reduction * arm_sin_f32(Now_Steer_Angle[i]) * Wheel_Radius) / 4.0f;
-        tmp_omega += (Motor_Wheel[i].Get_Now_Omega() / Wheel_Motor_Reduction * arm_sin_f32(Now_Steer_Angle[i] - Steer_Azimuth[i]) * Wheel_Radius / Wheel_To_Core_Distance[i]) / 4.0f;
+        tmp_velocity_x += (tmp_motor_wheel_omega[i] / Wheel_Motor_Reduction * arm_cos_f32(Now_Steer_Angle[i]) * Wheel_Radius) / 4.0f;
+        tmp_velocity_y += (tmp_motor_wheel_omega[i] / Wheel_Motor_Reduction * arm_sin_f32(Now_Steer_Angle[i]) * Wheel_Radius) / 4.0f;
+        tmp_omega += (tmp_motor_wheel_omega[i] / Wheel_Motor_Reduction * arm_sin_f32(Now_Steer_Angle[i] - Steer_Azimuth[i]) * Wheel_Radius / Wheel_To_Core_Distance[i]) / 4.0f;
     }
 
     // 更新类成员变量（可在此处加入滤波）
@@ -247,7 +253,7 @@ void Class_Chassis::Self_Resolution()
     Now_Velocity_Y = tmp_velocity_y;
     Now_Omega = tmp_omega;
 		
-		Steer_Angle_Self_Resolution();
+    Steer_Angle_Self_Resolution();
 
     // 解算自身Yaw轴角度
    // Angle_Yaw = OPS9.Get_Position_Angle();
@@ -496,9 +502,11 @@ void Class_Chassis::Output_To_Motor()
             Motor_Steer[i].Set_Control_Method(Motor_DJI_Control_Method_ANGLE);
             Motor_Wheel[i].Set_Control_Method(Motor_MKSESC_Control_Method_Current);
         }
-
+        // Target_Wheel_Current[1] = - Target_Wheel_Current[1];
+        // Target_Wheel_Current[2] = - Target_Wheel_Current[2];
         for (int i = 0; i < 4; i++)
         {
+
             Motor_Steer[i].Set_Target_Angle(Target_Steer_Angle[i]);
             Motor_Steer[i].PID_Angle.Set_Now(Now_Steer_Angle[i]);
             

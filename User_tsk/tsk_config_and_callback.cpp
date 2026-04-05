@@ -139,22 +139,7 @@ void Device_FDCAN2_Callback(Struct_FDCAN_Rx_Buffer *FDCAN_RxMessage)
       break;
     }
 
-    // 达妙电机数据反馈 ID未确定
-    case 0x00:
-    {
-      Weapon_Grab.Motor_Boom.CAN_RxCpltCallback(FDCAN_RxMessage->Data);
-      break;
-    }
-    case 0xF0: // 0xF0 0xF1 0xF2
-    {
-      Weapon_Grab.Motor_Forearm.CAN_RxCpltCallback(FDCAN_RxMessage->Data);
-      break;
-    }
-    case 0xFD:
-    {
-      Weapon_Grab.Motor_Rotate.CAN_RxCpltCallback(FDCAN_RxMessage->Data);
-      break;
-    }
+
 
     static uint8_t FDCAN_ID = FDCAN_RxMessage->Header.Identifier >> 8;
     static uint8_t Master_ID = FDCAN_RxMessage->Header.Identifier;
@@ -174,6 +159,22 @@ void Device_FDCAN3_Callback(Struct_FDCAN_Rx_Buffer *FDCAN_RxMessage)
 {
   switch (FDCAN_RxMessage->Header.Identifier)
   {
+        // 达妙电机数据反馈 ID未确定
+    case 0x00:
+    {
+      chariot.Weapon_Grab.Motor_Boom.CAN_RxCpltCallback(FDCAN_RxMessage->Data);
+      break;
+    }
+    case 0xF0: // 0xF0 0xF1 0xF2
+    {
+      chariot.Weapon_Grab.Motor_Forearm.CAN_RxCpltCallback(FDCAN_RxMessage->Data);
+      break;
+    }
+    case 0xFD:
+    {
+      chariot.Weapon_Grab.Motor_Rotate.CAN_RxCpltCallback(FDCAN_RxMessage->Data);
+      break;
+    }
   // 舵向编码器返回数据处理
   case (0x001):
   {
@@ -396,7 +397,7 @@ void Task_Init()
   // CAN总线初始化
   FDCAN_Init(&hfdcan1, Device_FDCAN1_Callback);
   FDCAN_Init(&hfdcan2, Device_FDCAN2_Callback);
-
+	FDCAN_Init(&hfdcan3, Device_FDCAN3_Callback);
   // UART初始化
   UART_Init(&huart5, DR16_UART5_Callback, 36);
   // 定时器初始化

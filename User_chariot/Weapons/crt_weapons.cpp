@@ -30,15 +30,15 @@
 void Class_Weapon_Grab::Init()
 {
 
-    Motor_Boom.Init(&hfdcan2, 0x00, 0x01);
+    Motor_Boom.Init(&hfdcan3, 0x00, 0x01);
     Motor_Boom.Set_K_P(150.0f);
     Motor_Boom.Set_K_D(0.0f);
 
-    Motor_Forearm.Init(&hfdcan2, 0xF0, 0x70);
+    Motor_Forearm.Init(&hfdcan3, 0xF0, 0x70);
     Motor_Forearm.Set_K_P(100.0f);
     Motor_Forearm.Set_K_D(5.0f);
 
-    Motor_Rotate.Init(&hfdcan2, 0xFD, 0x7F);
+    Motor_Rotate.Init(&hfdcan3, 0xFD, 0x7F);
     Motor_Rotate.Set_K_P(150.0f);
     Motor_Rotate.Set_K_D(5.0f);
 
