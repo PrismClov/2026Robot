@@ -65,6 +65,7 @@ uint8_t exti14_flag = 0;
  *
  * @param FDCAN_RxMessage FDCAN1收到的消息
  */
+uint8_t data[8] = {0};
 void Device_FDCAN1_Callback(Struct_FDCAN_Rx_Buffer *FDCAN_RxMessage)
 {
 
@@ -374,15 +375,15 @@ void Task1ms_TIM5_Callback()
   mod100++;
   if (mod100 >= 100)
   {
-    chariot.TIM_100ms_Alive_PeriodElapsedCallback();
+    //chariot.TIM_100ms_Alive_PeriodElapsedCallback();
     
     mod100 = 0;
   }
 //  Weapon_Grab.Motor_Rotate.CAN_Send_Set_Rx_ID(0xF1);
 //  Weapon_Grab.Motor_Rotate.CAN_Send_Set_Tx_ID(0x71);
 
- 
-  chariot.TIM_2ms_Calculate_PeriodElapsedCallback();
+  FDCAN_Send_Data(&hfdcan1, 0x01, data, FDCAN_ID_Standard, 8);
+  //chariot.TIM_2ms_Calculate_PeriodElapsedCallback();
 }
 /**
  * @brief 初始化任务

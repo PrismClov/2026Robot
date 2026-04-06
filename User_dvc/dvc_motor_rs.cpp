@@ -128,24 +128,8 @@ void Class_Motor_RS_MIT::Init(FDCAN_HandleTypeDef *hfdcan, uint8_t __CAN_Rx_ID, 
     }
 
     CAN_Rx_ID = __CAN_Rx_ID;
-    switch (__Motor_RS_Control_Method)
-    {
-        case (Motor_RS_Control_Method_NORMAL):
-        {
-            CAN_Tx_ID = __CAN_Tx_ID;
-            break;
-        }
-        case (Motor_RS_Control_Method_CSP):
-        {
-        CAN_Tx_ID = __CAN_Tx_ID + 0x100;
-        break;
-        }
-        case (Motor_RS_Control_Method_OMEGA):
-        {
-        CAN_Tx_ID = __CAN_Tx_ID + 0x200;
-        break;
-        }
-    }
+    CAN_Tx_ID = __CAN_Tx_ID;
+
 
     Motor_RS_Control_Method = __Motor_RS_Control_Method;
     Angle_Max = __Angle_Max;
@@ -386,20 +370,20 @@ void Class_Motor_RS_MIT::Output()
         case (Motor_RS_Control_Method_CSP):
         {
             Struct_Motor_RS_CAN_Tx_Data_CSP_MIT *tmp_buffer = (Struct_Motor_RS_CAN_Tx_Data_CSP_MIT *)Tx_Data;
-            tmp_buffer->Control_Angle = Math_Endian_Reverse_16(&Control_Angle, nullptr);
-            tmp_buffer->Control_Omega = Math_Endian_Reverse_16(&Control_Omega, nullptr);
-
-            FDCAN_Send_Data(FDCAN_Manage_Object->FDCAN_Handler, CAN_Tx_ID, Tx_Data, FDCAN_ID_Standard, 8);
+            tmp_buffer->Control_Angle = Control_Angle;
+            tmp_buffer->Control_Omega = Control_Omega;
+            uint16_t send_id = CAN_Tx_ID + 0x100; // CSP模式的CAN ID是在正常模式的基础上加0x100
+            FDCAN_Send_Data(FDCAN_Manage_Object->FDCAN_Handler, send_id, Tx_Data, FDCAN_ID_Standard, 8);
             break;
         }
 
         case (Motor_RS_Control_Method_OMEGA):
         {
             Struct_Motor_RS_CAN_Tx_Data_Omega_MIT *tmp_buffer = (Struct_Motor_RS_CAN_Tx_Data_Omega_MIT *)Tx_Data;
-            tmp_buffer->Control_Omega = Math_Endian_Reverse_16(&Control_Omega, nullptr);
-            tmp_buffer->Control_Current_Limit = Math_Endian_Reverse_16(&Control_Current, nullptr);
-
-            FDCAN_Send_Data(FDCAN_Manage_Object->FDCAN_Handler, CAN_Tx_ID, Tx_Data, FDCAN_ID_Standard, 8);
+            tmp_buffer->Control_Omega = Control_Omega;
+            tmp_buffer->Control_Current_Limit = Control_Current;
+            uint16_t send_id = CAN_Tx_ID + 0x200; // 速度模式的CAN ID是在正常模式的基础上加0x200
+            FDCAN_Send_Data(FDCAN_Manage_Object->FDCAN_Handler, send_id, Tx_Data, FDCAN_ID_Standard, 8);
             break;
         }
     }
