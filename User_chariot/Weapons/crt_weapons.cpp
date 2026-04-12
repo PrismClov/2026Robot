@@ -65,7 +65,9 @@ void Class_Weapon_Grab::TIM_Weapon_Grab_PeriodElapsedCallback()
     //    Motor_Rotate.CAN_Send_Save_Zero();
     // 电机发送数据
     Motor_Boom.TIM_Send_PeriodElapsedCallback();
+
     Motor_Forearm.TIM_Send_PeriodElapsedCallback();
+
     Motor_Rotate.TIM_Send_PeriodElapsedCallback();
 }
 
@@ -82,12 +84,65 @@ void Class_Weapon_Grab::TIM_Alive_PeriodElapsedCallback()
 /**
  * @brief 夹取状态任务
  */
+uint8_t status = 0;
+bool pump = false;
 void Class_Weapon_Grab::Weapon_Grab_Status_Task()
 {
+    status = FSM_Weapon_Grab.Get_Now_Status_Serial();
+    pump = Pump_Status[status];
+    // 气泵动作
+    if (Pump_Status[FSM_Weapon_Grab.Get_Now_Status_Serial()])
+    {
+        AIRPUMP_Weapon_Grab.AIRPUMP_Open();
+    }
+    else
+    {
+        AIRPUMP_Weapon_Grab.AIRPUMP_Close();
+    }
+
     // 电机动作
-    Motor_Boom.Set_Control_Angle(Position_Target_Angle[FSM_Weapon_Grab.Get_Now_Status_Serial()][0]);
-    Motor_Forearm.Set_Control_Angle(Position_Target_Angle[FSM_Weapon_Grab.Get_Now_Status_Serial()][1]);
-    Motor_Rotate.Set_Control_Angle(Position_Target_Angle[FSM_Weapon_Grab.Get_Now_Status_Serial()][2]);
+    // 如果当前角度与目标角度的差值小于阈值，则切换到位置控制，否则保持速度控制
+    if (Math_Abs(Motor_Boom.Get_Now_Angle() - Position_Target_Angle[FSM_Weapon_Grab.Get_Now_Status_Serial()][0]) < Omega_To_Position_Threshold)
+    {
+        Motor_Boom.Set_K_P(150.0f);
+        Motor_Boom.Set_K_D(5.0f);
+        Motor_Boom.Set_Control_Omega(0.0f);
+        Motor_Boom.Set_Control_Angle(Position_Target_Angle[FSM_Weapon_Grab.Get_Now_Status_Serial()][0]);
+    }
+    else
+    {
+        Motor_Boom.Set_K_P(0.0f);
+        Motor_Boom.Set_K_D(5.0f);
+        Motor_Boom.Set_Control_Omega(Target_Omega_Boom * ((Motor_Boom.Get_Now_Angle() - Position_Target_Angle[FSM_Weapon_Grab.Get_Now_Status_Serial()][0]) < 0 ? 1 : -1));
+    }
+
+    if (Math_Abs(Motor_Forearm.Get_Now_Angle() - Position_Target_Angle[FSM_Weapon_Grab.Get_Now_Status_Serial()][1]) < Omega_To_Position_Threshold)
+    {
+        Motor_Forearm.Set_K_P(150.0f);
+        Motor_Forearm.Set_K_D(5.0f);
+        Motor_Forearm.Set_Control_Omega(0.0f);
+        Motor_Forearm.Set_Control_Angle(Position_Target_Angle[FSM_Weapon_Grab.Get_Now_Status_Serial()][1]);
+    }
+    else
+    {
+        Motor_Forearm.Set_K_P(50.0f);
+        Motor_Forearm.Set_K_D(5.0f);
+        Motor_Forearm.Set_Control_Angle(Position_Target_Angle[FSM_Weapon_Grab.Get_Now_Status_Serial()][1]);
+    }
+
+    if (Math_Abs(Motor_Rotate.Get_Now_Angle() - Position_Target_Angle[FSM_Weapon_Grab.Get_Now_Status_Serial()][2]) < Omega_To_Position_Threshold)
+    {
+        Motor_Rotate.Set_K_P(150.0f);
+        Motor_Rotate.Set_K_D(5.0f);
+        Motor_Rotate.Set_Control_Omega(0.0f);
+        Motor_Rotate.Set_Control_Angle(Position_Target_Angle[FSM_Weapon_Grab.Get_Now_Status_Serial()][2]);
+    }
+    else
+    {
+        Motor_Rotate.Set_K_P(50.0f);
+        Motor_Rotate.Set_K_D(5.0f);
+        Motor_Rotate.Set_Control_Angle(Position_Target_Angle[FSM_Weapon_Grab.Get_Now_Status_Serial()][2]);
+    }
 
     boom_horizontal_angle = 1.2f - Motor_Boom.Get_Now_Angle();                               // 大臂与水平的夹角
     forearm_horizontal_angle = boom_horizontal_angle - Motor_Forearm.Get_Now_Angle() - 0.1f; // 前臂与水平的夹角
@@ -96,9 +151,7 @@ void Class_Weapon_Grab::Weapon_Grab_Status_Task()
     boom_compensation = k2 * cos(boom_horizontal_angle) - forearm_compensation;
 
     Motor_Boom.Set_Control_Torque(boom_compensation);
-    Motor_Forearm.Set_Control_Torque(forearm_compensation);
-    // 气缸动作可以添加
-    // Pump_Set_State(Pump_State_Grab[FSM_Weapon_Grab.Get_Now_Status_Serial()]]);
+    Motor_Forearm.Set_Control_Torque(forearm_compensation); // 前臂重力补偿
 }
 
 /**
@@ -148,7 +201,7 @@ void Class_FSM_Weapon_Grab::Weapon_Grab_TIM_Status_PeriodElapsedCallback()
             }
         }
     }
-    case Weapon_Grab_Status_Grab:
+    case Weapon_Grab_Status_Move_To_Grab:
     {
         Weapon_Grab->Weapon_Grab_Status_Task();
 
@@ -157,6 +210,20 @@ void Class_FSM_Weapon_Grab::Weapon_Grab_TIM_Status_PeriodElapsedCallback()
 
             Status[Now_Status_Serial].Count_Time = 0;
             if (temp == 2)
+            {
+                Set_Status(Weapon_Grab_Status_Grab);
+            }
+        }
+    }
+    case Weapon_Grab_Status_Grab:
+    {
+        Weapon_Grab->Weapon_Grab_Status_Task();
+
+        if (Weapon_Grab->Is_Action_Finished())
+        {
+
+            Status[Now_Status_Serial].Count_Time = 0;
+            if (temp == 3)
             {
                 Set_Status(Weapon_Grab_Status_Lift);
             }
@@ -170,7 +237,7 @@ void Class_FSM_Weapon_Grab::Weapon_Grab_TIM_Status_PeriodElapsedCallback()
         {
 
             Status[Now_Status_Serial].Count_Time = 0;
-            if (temp == 3)
+            if (temp == 4)
             {
                 Set_Status(Weapon_Grab_Status_Rotate);
             }
@@ -184,7 +251,7 @@ void Class_FSM_Weapon_Grab::Weapon_Grab_TIM_Status_PeriodElapsedCallback()
         {
 
             Status[Now_Status_Serial].Count_Time = 0;
-            if (temp == 4)
+            if (temp == 5)
             {
                 Set_Status(Weapon_Grab_Status_Fold);
             }
