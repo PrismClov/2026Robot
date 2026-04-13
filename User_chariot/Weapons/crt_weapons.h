@@ -136,8 +136,8 @@ private:
 
     float Omega_To_Position_Threshold = 0.1f; // 速度环转位置环的阈值
     float Target_Omega_Boom = 10.0f;                // 目标速度 
-    float Target_Omega_Forearm = 0.3f;       
-    float Target_Omega_Rotate = 0.0f;     
+    float Target_Omega_Forearm = 1.5f;       
+    float Target_Omega_Rotate = 2.5f;     
 
     float boom_horizontal_angle = 0.0f;
     float forearm_horizontal_angle = 0.0f;

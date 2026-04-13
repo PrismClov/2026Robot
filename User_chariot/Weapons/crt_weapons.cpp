@@ -42,8 +42,6 @@ void Class_Weapon_Grab::Init()
     Motor_Rotate.Set_K_P(150.0f);
     Motor_Rotate.Set_K_D(5.0f);
 
-    Motor_Boom.CAN_Send_Save_Zero();
-    Motor_Forearm.CAN_Send_Save_Zero();
     Motor_Rotate.CAN_Send_Save_Zero();
 
     FSM_Weapon_Grab.Weapon_Grab = this;
@@ -125,9 +123,9 @@ void Class_Weapon_Grab::Weapon_Grab_Status_Task()
     }
     else
     {
-        Motor_Forearm.Set_K_P(50.0f);
+        Motor_Forearm.Set_K_P(0.0f);
         Motor_Forearm.Set_K_D(5.0f);
-        Motor_Forearm.Set_Control_Angle(Position_Target_Angle[FSM_Weapon_Grab.Get_Now_Status_Serial()][1]);
+        Motor_Forearm.Set_Control_Omega(Target_Omega_Forearm * ((Motor_Forearm.Get_Now_Angle() - Position_Target_Angle[FSM_Weapon_Grab.Get_Now_Status_Serial()][1]) < 0 ? 1 : -1));
     }
 
     if (Math_Abs(Motor_Rotate.Get_Now_Angle() - Position_Target_Angle[FSM_Weapon_Grab.Get_Now_Status_Serial()][2]) < Omega_To_Position_Threshold)
@@ -139,9 +137,9 @@ void Class_Weapon_Grab::Weapon_Grab_Status_Task()
     }
     else
     {
-        Motor_Rotate.Set_K_P(50.0f);
+        Motor_Rotate.Set_K_P(0.0f);
         Motor_Rotate.Set_K_D(5.0f);
-        Motor_Rotate.Set_Control_Angle(Position_Target_Angle[FSM_Weapon_Grab.Get_Now_Status_Serial()][2]);
+        Motor_Rotate.Set_Control_Omega(Target_Omega_Rotate * ((Motor_Rotate.Get_Now_Angle() - Position_Target_Angle[FSM_Weapon_Grab.Get_Now_Status_Serial()][2]) < 0 ? 1 : -1));
     }
 
     boom_horizontal_angle = 1.2f - Motor_Boom.Get_Now_Angle();                               // 大臂与水平的夹角
