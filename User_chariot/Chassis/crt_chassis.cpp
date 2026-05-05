@@ -3,7 +3,7 @@
  * @author hzy by Lucy (2478427315@qq.com)
  * @brief 舵轮底盘电控
  * @version 0.1
- * @date 2026-01-18 
+ * @date 2026-01-18
  *
  * @copyright Robopioneer (c) 2025-2026
  *
@@ -15,7 +15,6 @@
  * 2[1] 3[2]
  * 前x右y上z
  */
-
 
 /* Includes ------------------------------------------------------------------*/
 
@@ -50,7 +49,7 @@ void Class_PMT45_Steer::Init_Steer(GPIO_TypeDef *__GPIOx, uint16_t __GPIO_Pin, u
 void Class_PMT45_Steer::PMT45_EXTI_Callback_Steer()
 {
     Start_TimeMs = DWT_GetCurrentTimeMs();
-    //防止上电瞬间引起的电平变化触发中断
+    // 防止上电瞬间引起的电平变化触发中断
     if (Start_TimeMs > 1000)
     {
         Now_Time = HAL_GetTick();
@@ -86,7 +85,7 @@ void Class_PMT45_Steer::PMT45_EXTI_Callback_Steer()
  */
 void Class_Chassis::Init(float __Velocity_X_Max, float __Velocity_Y_Max, float __Omega_Max)
 {
-	
+
     Velocity_X_Max = __Velocity_X_Max;
     Velocity_Y_Max = __Velocity_Y_Max;
     Omega_Max = __Omega_Max;
@@ -113,11 +112,8 @@ void Class_Chassis::Init(float __Velocity_X_Max, float __Velocity_Y_Max, float _
     Steer_PMT45[2].Init_Steer(GPIOC, GPIO_PIN_12, 2);
     Steer_PMT45[3].Init_Steer(GPIOE, GPIO_PIN_14, 3);
 
-
     // 定位器初始化
-    //OPS9.Init(&huart7);
-
-
+    // OPS9.Init(&huart7);
 
     // 舵向电机初始化   使用2006电机角度环 实际角度设为校准后的角度
 
@@ -125,21 +121,18 @@ void Class_Chassis::Init(float __Velocity_X_Max, float __Velocity_Y_Max, float _
     Motor_Steer[0].Init(&hfdcan1, Motor_DJI_ID_0x201, Motor_DJI_Control_Method_OMEGA);
     Motor_Steer[0].PID_Angle.Init(23.0f, 0.0f, 0.0f, 0.0f, 0.0f, 60.0f, 0.002f, 0.0f, 0.0f, 0.0f, 0.0f, PID_D_First_DISABLE);
     Motor_Steer[0].PID_Omega.Init(1.3f, 0.0f, 0.0f, 0.0f, 3.0f, 6.0f, 0.002f);
-    
+
     Motor_Steer[1].Init(&hfdcan1, Motor_DJI_ID_0x202, Motor_DJI_Control_Method_OMEGA);
     Motor_Steer[1].PID_Angle.Init(23.0f, 0.0f, 0.0f, 0.0f, 0.0f, 60.0f, 0.002f, 0.0f, 0.0f, 0.0f, 0.0f, PID_D_First_DISABLE);
     Motor_Steer[1].PID_Omega.Init(1.3f, 0.0f, 0.0f, 0.0f, 3.0f, 6.0f, 0.002f);
-    
+
     Motor_Steer[2].Init(&hfdcan1, Motor_DJI_ID_0x203, Motor_DJI_Control_Method_OMEGA);
     Motor_Steer[2].PID_Angle.Init(23.0f, 0.0f, 0.0f, 0.0f, 0.0f, 60.0f, 0.002f, 0.0f, 0.0f, 0.0f, 0.0f, PID_D_First_DISABLE);
     Motor_Steer[2].PID_Omega.Init(1.3f, 0.0f, 0.0f, 0.0f, 3.0f, 6.0f, 0.002f);
-    
-    
+
     Motor_Steer[3].Init(&hfdcan1, Motor_DJI_ID_0x204, Motor_DJI_Control_Method_OMEGA);
     Motor_Steer[3].PID_Angle.Init(23.0f, 0.0f, 0.0f, 0.0f, 0.0f, 60.0f, 0.002f, 0.0f, 0.0f, 0.0f, 0.0f, PID_D_First_DISABLE);
     Motor_Steer[3].PID_Omega.Init(1.3f, 0.0f, 0.0f, 0.0f, 3.0f, 6.0f, 0.002f);
-    
-
 
     // 轮向电机初始化
 
@@ -149,7 +142,6 @@ void Class_Chassis::Init(float __Velocity_X_Max, float __Velocity_Y_Max, float _
     Motor_Wheel[1].Init(&hfdcan2, 0x032, 7, 6.2831, 200, 50, 30, Motor_MKSESC_Control_Method_Current);
     Motor_Wheel[2].Init(&hfdcan2, 0x033, 7, 6.2831, 50, 50, 30, Motor_MKSESC_Control_Method_Current);
     Motor_Wheel[3].Init(&hfdcan2, 0x034, 7, 6.2831, 50, 50, 30, Motor_MKSESC_Control_Method_Current);
-
 }
 
 /**
@@ -163,15 +155,14 @@ void Class_Chassis::TIM_100ms_Alive_PeriodElapsedCallback()
         Motor_Steer[i].TIM_100ms_Alive_PeriodElapsedCallback();
         Motor_Wheel[i].TIM_100ms_Alive_PeriodElapsedCallback();
     }
-
 }
 /**
  * @brief TIM定时器中断控制回调函数
  *
  */
 void Class_Chassis::TIM_2ms_Control_PeriodElapsedCallback()
-{   
-    //自身解算
+{
+    // 自身解算
     Self_Resolution();
 
     // 运动学逆解算，解算出转向电机的角速度和舵向电机的角度
@@ -197,30 +188,29 @@ void Class_Chassis::Steer_Angle_Set(uint8_t __Steer_Motor_ID)
 {
 
     // 添加边界检查
-    uint16_t id_cnt_max = sizeof(Steer_Calibration_Error)/sizeof(Steer_Calibration_Error[0]);
-    if(__Steer_Motor_ID >= id_cnt_max) 
+    uint16_t id_cnt_max = sizeof(Steer_Calibration_Error) / sizeof(Steer_Calibration_Error[0]);
+    if (__Steer_Motor_ID >= id_cnt_max)
         return;
-    
-    if(!Steer_Calibration_Status[__Steer_Motor_ID])
-	{	
+
+    if (!Steer_Calibration_Status[__Steer_Motor_ID])
+    {
         // 记录角度
-		Steer_Calibration_Error[__Steer_Motor_ID] = Motor_Steer[__Steer_Motor_ID].Get_Now_Angle();
-		//设置标定标志位
-		Steer_Calibration_Status[__Steer_Motor_ID] = Chassis_Steer_Calibration_Type_CALIBRATED;  
-    }     
-    
+        Steer_Calibration_Error[__Steer_Motor_ID] = Motor_Steer[__Steer_Motor_ID].Get_Now_Angle();
+        // 设置标定标志位
+        Steer_Calibration_Status[__Steer_Motor_ID] = Chassis_Steer_Calibration_Type_CALIBRATED;
+    }
+
     // 判断是否全部标定完成
-    bool all_calibrated =   Steer_Calibration_Status[0] == Chassis_Steer_Calibration_Type_CALIBRATED &&
-                            Steer_Calibration_Status[1] == Chassis_Steer_Calibration_Type_CALIBRATED &&
-                            Steer_Calibration_Status[2] == Chassis_Steer_Calibration_Type_CALIBRATED &&
-                            Steer_Calibration_Status[3] == Chassis_Steer_Calibration_Type_CALIBRATED;
+    bool all_calibrated = Steer_Calibration_Status[0] == Chassis_Steer_Calibration_Type_CALIBRATED &&
+                          Steer_Calibration_Status[1] == Chassis_Steer_Calibration_Type_CALIBRATED &&
+                          Steer_Calibration_Status[2] == Chassis_Steer_Calibration_Type_CALIBRATED &&
+                          Steer_Calibration_Status[3] == Chassis_Steer_Calibration_Type_CALIBRATED;
 
     // 每进入一次中断便判断是否全部初始化
-    if(Chassis_Control_Type == Chassis_Control_Type_UNCALIBRATED && all_calibrated)
+    if (Chassis_Control_Type == Chassis_Control_Type_UNCALIBRATED && all_calibrated)
     {
         Chassis_Control_Type = Chassis_Control_Type_NORMAL;
     }
-    
 }
 
 /**
@@ -252,11 +242,11 @@ void Class_Chassis::Self_Resolution()
     Now_Velocity_X = tmp_velocity_x;
     Now_Velocity_Y = tmp_velocity_y;
     Now_Omega = tmp_omega;
-		
+
     Steer_Angle_Self_Resolution();
 
     // 解算自身Yaw轴角度
-   // Angle_Yaw = OPS9.Get_Position_Angle();
+    // Angle_Yaw = OPS9.Get_Position_Angle();
 }
 
 /**
@@ -265,14 +255,14 @@ void Class_Chassis::Self_Resolution()
  */
 void Class_Chassis::Steer_Angle_Self_Resolution()
 {
-    for(int i = 0; i < 4; i++)
+    for (int i = 0; i < 4; i++)
     {
         float tmp_angle;
 
         // 计算角度
-        tmp_angle =  Motor_Steer[i].Get_Now_Angle() - Steer_Calibration_Error[i] + Steer_Azimuth[i]*Steer_Motor_Reduction;
+        tmp_angle = Motor_Steer[i].Get_Now_Angle() - Steer_Calibration_Error[i] + Steer_Azimuth[i] * Steer_Motor_Reduction;
 
-        Now_Steer_Angle[i] = fmod(tmp_angle, (Steer_Motor_Reduction * 2.0f * PI)) / Steer_Motor_Reduction ;
+        Now_Steer_Angle[i] = fmod(tmp_angle, (Steer_Motor_Reduction * 2.0f * PI)) / Steer_Motor_Reduction;
 
         Now_Steer_Angle[i] = Math_Modulus_Normalization(Now_Steer_Angle[i], 2.0f * PI);
     }
@@ -292,7 +282,7 @@ void Class_Chassis::Kinematics_Inverse_Resolution()
         tmp_velocity_x = Target_Velocity_X - Target_Omega * Wheel_To_Core_Distance[i] * arm_sin_f32(Steer_Azimuth[i]);
         tmp_velocity_y = Target_Velocity_Y + Target_Omega * Wheel_To_Core_Distance[i] * arm_cos_f32(Steer_Azimuth[i]);
         arm_sqrt_f32(tmp_velocity_x * tmp_velocity_x + tmp_velocity_y * tmp_velocity_y, &tmp_velocity_modulus);
-    
+
         // 根据线速度决定轮向电机角速度
         Target_Wheel_Omega[i] = tmp_velocity_modulus / Wheel_Radius;
 
@@ -308,7 +298,7 @@ void Class_Chassis::Kinematics_Inverse_Resolution()
             Target_Steer_Angle[i] = atan2f(tmp_velocity_y, tmp_velocity_x);
         }
     }
-
+    // 就近转位
     _Steer_Motor_Kinematics_Nearest_Transposition();
 }
 
@@ -335,7 +325,7 @@ void Class_Chassis::_Steer_Motor_Kinematics_Nearest_Transposition()
             Target_Wheel_Omega[i] *= -1.0f;
         }
     }
-}	
+}
 
 /**
  * @brief 输出到动力学状态
@@ -345,37 +335,37 @@ void Class_Chassis::Output_To_Dynamics()
 {
     switch (Chassis_Control_Type)
     {
-    // 未标定状态和失能状态下不进行控制
-    case(Chassis_Control_Type_UNCALIBRATED):
+        // 未标定状态和失能状态下不进行控制
+        case (Chassis_Control_Type_UNCALIBRATED):
         case (Chassis_Control_Type_DISABLE):
-    {
-        // 底盘失能
-        for (int i = 0; i < 4; i++)
         {
-            PID_Velocity_X.Set_Integral_Error(0.0f);
-            PID_Velocity_Y.Set_Integral_Error(0.0f);
-            PID_Omega.Set_Integral_Error(0.0f);
+            // 底盘失能
+            for (int i = 0; i < 4; i++)
+            {
+                PID_Velocity_X.Set_Integral_Error(0.0f);
+                PID_Velocity_Y.Set_Integral_Error(0.0f);
+                PID_Omega.Set_Integral_Error(0.0f);
+            }
+
+            break;
         }
+        case (Chassis_Control_Type_NORMAL):
+        {
 
-        break;
-    }
-    case (Chassis_Control_Type_NORMAL):
-    {
+            PID_Velocity_X.Set_Target(Target_Velocity_X);
+            PID_Velocity_X.Set_Now(Now_Velocity_X);
+            PID_Velocity_X.TIM_Calculate_PeriodElapsedCallback();
 
-        PID_Velocity_X.Set_Target(Target_Velocity_X);
-        PID_Velocity_X.Set_Now(Now_Velocity_X);
-        PID_Velocity_X.TIM_Calculate_PeriodElapsedCallback();
+            PID_Velocity_Y.Set_Target(Target_Velocity_Y);
+            PID_Velocity_Y.Set_Now(Now_Velocity_Y);
+            PID_Velocity_Y.TIM_Calculate_PeriodElapsedCallback();
 
-        PID_Velocity_Y.Set_Target(Target_Velocity_Y);
-        PID_Velocity_Y.Set_Now(Now_Velocity_Y);
-        PID_Velocity_Y.TIM_Calculate_PeriodElapsedCallback();
+            PID_Omega.Set_Target(Target_Omega);
+            PID_Omega.Set_Now(Now_Omega);
+            PID_Omega.TIM_Calculate_PeriodElapsedCallback();
 
-        PID_Omega.Set_Target(Target_Omega);
-        PID_Omega.Set_Now(Now_Omega);
-        PID_Omega.TIM_Calculate_PeriodElapsedCallback();
-
-        break;
-    }
+            break;
+        }
     }
 }
 
@@ -401,49 +391,48 @@ void Class_Chassis::Dynamics_Inverse_Resolution()
     for (int i = 0; i < 4; i++)
     {
         // 摩擦力转换至扭矩
-				Target_Wheel_Current[i] = tmp_force[i] * Wheel_Radius + Wheel_Speed_Limit_Factor * (Target_Wheel_Omega[i] - Motor_Wheel[i].Get_Now_Omega());            
-        
-//            // 普通控制模式，应用原有的静摩擦和动摩擦前馈
-//            if (Target_Wheel_Omega[i] < 40.0f && Target_Wheel_Omega[i] > 3.0f)
-//            {
-//                Target_Wheel_Current[i] += Static_Resistance_Wheel_Current[i];
-//            }
-//            else if (Target_Wheel_Omega[i] > -40.0f && Target_Wheel_Omega[i] < -3.0f)
-//            {
-//                Target_Wheel_Current[i] -= Static_Resistance_Wheel_Current[i];
-//            }
-            
-            // 动摩擦阻力前馈
-            if (Target_Wheel_Omega[i] > Wheel_Resistance_Omega_Threshold)
-            {
-                Target_Wheel_Current[i] += Dynamic_Resistance_Wheel_Current[i];
-            }
-            else if (Target_Wheel_Omega[i] < -Wheel_Resistance_Omega_Threshold)
-            {
-                Target_Wheel_Current[i] -= Dynamic_Resistance_Wheel_Current[i];
-            }
-            else
-            {
-                Target_Wheel_Current[i] += Motor_Wheel[i].Get_Now_Omega() / Wheel_Resistance_Omega_Threshold * Dynamic_Resistance_Wheel_Current[i];
-            }
-						
-						// 低电流前馈控制模式
-            if (Math_Abs(Target_Wheel_Current[i]) < Low_Current_Deadzone) 
-								Target_Wheel_Current[i] = 0.0f;
-						
-            else if (Math_Abs(Target_Wheel_Current[i]) < Low_Current_Threshold)
-            {
-                // 如果电流小于阈值，添加前馈
-                if (Target_Wheel_Current[i] > 0)
-                {
-                    Target_Wheel_Current[i] += Low_Current_Feedforward[i];
-                }
-                else if (Target_Wheel_Current[i] < 0)
-                {
-                    Target_Wheel_Current[i] -= Low_Current_Feedforward[i];
-                }
-            }
-        
+        Target_Wheel_Current[i] = tmp_force[i] * Wheel_Radius + Wheel_Speed_Limit_Factor * (Target_Wheel_Omega[i] - Motor_Wheel[i].Get_Now_Omega());
+
+        //            // 普通控制模式，应用原有的静摩擦和动摩擦前馈
+        //            if (Target_Wheel_Omega[i] < 40.0f && Target_Wheel_Omega[i] > 3.0f)
+        //            {
+        //                Target_Wheel_Current[i] += Static_Resistance_Wheel_Current[i];
+        //            }
+        //            else if (Target_Wheel_Omega[i] > -40.0f && Target_Wheel_Omega[i] < -3.0f)
+        //            {
+        //                Target_Wheel_Current[i] -= Static_Resistance_Wheel_Current[i];
+        //            }
+
+        // 摩擦力前馈
+        float now_omega = Motor_Wheel[i].Get_Now_Omega();
+        float friction_ff = 0.0f;
+
+        if (Math_Abs(now_omega) > Wheel_Resistance_Omega_Threshold)
+        {
+            friction_ff = (now_omega > 0 ? Dynamic_Resistance_Wheel_Current[i] : -Dynamic_Resistance_Wheel_Current[i]);
+        }
+        else
+        {
+            // 线性过渡，边界连续
+            float ratio = Math_Abs(now_omega) / Wheel_Resistance_Omega_Threshold;
+            friction_ff = (now_omega > 0 ? ratio : -ratio) * Dynamic_Resistance_Wheel_Current[i];
+        }
+        Target_Wheel_Current[i] += friction_ff;
+
+        // 低速前馈，防止贴地打滑
+        float current_error = Target_Wheel_Current[i] - Motor_Wheel[i].Get_Now_Current(); // 若有电流反馈
+
+        if (Math_Abs(Target_Wheel_Current[i]) < Low_Current_Deadzone)
+        {
+            Target_Wheel_Current[i] = 0.0f;
+        }
+        else if (Math_Abs(Target_Wheel_Current[i]) < Low_Current_Threshold)
+        {
+            // 平滑过渡：从 Deadzone 开始线性增加前馈
+            float ratio = (Math_Abs(Target_Wheel_Current[i]) - Low_Current_Deadzone) / (Low_Current_Threshold - Low_Current_Deadzone);
+            float feedforward = ratio * Low_Current_Feedforward[i];
+            Target_Wheel_Current[i] += (Target_Wheel_Current[i] > 0 ? feedforward : -feedforward);
+        }
     }
 
     // 根据斜坡与压力进行电流限幅防止贴地打滑
@@ -459,75 +448,75 @@ void Class_Chassis::Output_To_Motor()
 {
     switch (Chassis_Control_Type)
     {
-    case (Chassis_Control_Type_UNCALIBRATED):
-    {
-        for(int i = 0; i < 4;i++)
+        case (Chassis_Control_Type_UNCALIBRATED):
         {
-        //对舵向电机单独校准
-        if(!Steer_Calibration_Status[i])
-        {
-            Motor_Steer[i].Set_Control_Method(Motor_DJI_Control_Method_OMEGA);
-            Motor_Steer[i].Set_Target_Omega(7.5f);
-        }
-        else
-        {
-            Motor_Steer[i].Set_Target_Omega(0.0f);
-        }  
-        }
-                     
-        break;
-    }
-    case (Chassis_Control_Type_DISABLE):
-    {
-        // 底盘失能
-        for (int i = 0; i < 4; i++)
-        {
-            Motor_Steer[i].Set_Control_Method(Motor_DJI_Control_Method_CURRENT);
-            Motor_Wheel[i].Set_Control_Method(Motor_MKSESC_Control_Method_Current);
-
-            Motor_Steer[i].PID_Angle.Set_Integral_Error(0.0f);
-            Motor_Steer[i].PID_Omega.Set_Integral_Error(0.0f);
-
-            Motor_Steer[i].Set_Target_Current(0.0f);
-            Motor_Wheel[i].Set_Control_Current(0.0f);
-        }
-
-        break;
-    }
-    case (Chassis_Control_Type_NORMAL):
-    {
-        // 舵轮模型
-        for (int i = 0; i < 4; i++)
-        {
-            Motor_Steer[i].Set_Control_Method(Motor_DJI_Control_Method_ANGLE);
-            Motor_Wheel[i].Set_Control_Method(Motor_MKSESC_Control_Method_Current);
-        }
-        // Target_Wheel_Current[1] = - Target_Wheel_Current[1];
-        // Target_Wheel_Current[2] = - Target_Wheel_Current[2];
-        for (int i = 0; i < 4; i++)
-        {
-
-            Motor_Steer[i].Set_Target_Angle(Target_Steer_Angle[i]);
-            Motor_Steer[i].PID_Angle.Set_Now(Now_Steer_Angle[i]);
-            
-
-            if(Math_Abs(Target_Wheel_Current[i]) >= Wheel_Current_Limit)
+            for (int i = 0; i < 4; i++)
             {
-                Motor_Wheel[i].Set_Control_Current(Target_Wheel_Current[i]);
+                // 对舵向电机单独校准
+                if (!Steer_Calibration_Status[i])
+                {
+                    Motor_Steer[i].Set_Control_Method(Motor_DJI_Control_Method_OMEGA);
+                    Motor_Steer[i].Set_Target_Omega(7.5f);
+                }
+                else
+                {
+                    Motor_Steer[i].Set_Target_Omega(0.0f);
+                }
             }
-            else
+
+            break;
+        }
+        case (Chassis_Control_Type_DISABLE):
+        {
+            // 底盘失能
+            for (int i = 0; i < 4; i++)
             {
+                Motor_Steer[i].Set_Control_Method(Motor_DJI_Control_Method_CURRENT);
+                Motor_Wheel[i].Set_Control_Method(Motor_MKSESC_Control_Method_Current);
+
+                Motor_Steer[i].PID_Angle.Set_Integral_Error(0.0f);
+                Motor_Steer[i].PID_Omega.Set_Integral_Error(0.0f);
+
+                Motor_Steer[i].Set_Target_Current(0.0f);
                 Motor_Wheel[i].Set_Control_Current(0.0f);
             }
-        }
 
-        break;
+            break;
+        }
+        case (Chassis_Control_Type_NORMAL):
+        {
+            // 舵轮模型
+            for (int i = 0; i < 4; i++)
+            {
+                Motor_Steer[i].Set_Control_Method(Motor_DJI_Control_Method_ANGLE);
+                Motor_Wheel[i].Set_Control_Method(Motor_MKSESC_Control_Method_Current);
+            }
+            for (int i = 0; i < 4; i++)
+            {
+                // 弧度制转换成角度制，提高控制精度
+                float tmp_target_steer_angle = Target_Steer_Angle[i] * RAD2VEL;
+                float tmp_now_steer_angle = Now_Steer_Angle[i] * RAD2VEL;
+
+                Motor_Steer[i].Set_Target_Angle(tmp_target_steer_angle);
+                Motor_Steer[i].PID_Angle.Set_Now(tmp_now_steer_angle);
+
+                if (Math_Abs(Target_Wheel_Current[i]) >= Wheel_Current_Limit)
+                {
+                    Motor_Wheel[i].Set_Control_Current(Target_Wheel_Current[i]);
+                }
+                else
+                {
+                    Motor_Wheel[i].Set_Control_Current(0.0f);
+                }
+            }
+
+            break;
+        }
     }
+    for (int i = 0; i < 4; i++)
+    {
+        Motor_Steer[i].TIM_Calculate_PeriodElapsedCallback();
     }
-		for(int i = 0; i < 4; i++)
-		{
-			Motor_Steer[i].TIM_Calculate_PeriodElapsedCallback();
-		}
 
     // 舵向电机数据发送
     FDCAN_Send_Data(&hfdcan1, 0x200, FDCAN1_0x200_Tx_Data);

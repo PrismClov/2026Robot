@@ -285,7 +285,8 @@ const float Wheel_To_Core_Distance[4] = {0.42426f,0.42426f,0.42426f,0.42426f,};
 const float Steer_Motor_Reduction = 47.0f / 18.0f;                                      
 // 轮向电机行星减速比
 const float Wheel_Motor_Reduction = 84.0f / 25.0f;
-
+//弧度制转角度制
+const float RAD2VEL =  180.0f / PI;
 /* Exported variables --------------------------------------------------------*/
 
 /* Exported function declarations --------------------------------------------*/
