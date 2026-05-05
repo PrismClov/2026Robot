@@ -41,7 +41,7 @@ class Class_KFS
     Enum_KFS_Control_Type KFS_Control_Type = KFS_Control_Type_Init;
     
     //KFS目标翻转角度
-    float Clamp_Angle = 0.0f;
+    float Clamp_Angle = 8.5f;
     
     //KFS目标旋转角度
     float Rotate_Angle = 0.0f;
