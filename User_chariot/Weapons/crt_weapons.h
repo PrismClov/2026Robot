@@ -30,12 +30,13 @@ class Class_Weapon_Grab;
  */
 enum Enum_Weapon_Grab_Status
 {
-    Weapon_Grab_Status_Init = 0, // 初始化
-    Weapon_Grab_Status_Grab,     // 抓取
-    Weapon_Grab_Status_Lift,     // 抬起
-    Weapon_Grab_Status_Rotate,   // 旋转
-    Weapon_Grab_Status_Fold,     // 翻折
-    Weapon_Grab_Status_Release,  // 释放
+    Weapon_Grab_Status_Init = 0,     // 初始化
+    Weapon_Grab_Status_Move_To_Grab, // 移动到夹取位置
+    Weapon_Grab_Status_Grab,         // 夹取
+    Weapon_Grab_Status_Lift,         // 抬起
+    Weapon_Grab_Status_Rotate,       // 旋转
+    Weapon_Grab_Status_Fold,         // 翻折
+    Weapon_Grab_Status_Release,      // 释放
 };
 
 /**
@@ -111,17 +112,32 @@ private:
     const float Boom_Length = 0.5f;    // 大臂长度 m
     const float Forearm_Length = 0.3f; // 前臂长度 m
 
-    float Position_Target_Angle[6][3] = {
+    float Position_Target_Angle[7][3] = {
         {0.0f, 0.0f, 0.0f},  // Init
-        {0.8f, 0.0f, 0.0f},  // Grab
-        {1.2f, 0.0f, 0.0f},  // Lift
-        {1.2f, 0.0f, -1.4f}, // Rotate
+        {1.1f, 0.0f, 0.0f},  // Move_To_Grab
+        {1.1f, 0.0f, 0.0f},  // Grab
+        {1.5f, 0.0f, 0.0f},  // Lift
+        {1.5f, 0.0f, -1.4f}, // Rotate
         {0.0f, 0.0f, 0.0f},  // Fold
         {0.0f, 0.0f, 0.0f}   // Release
     };
 
+    bool Pump_Status[7] = {
+        false, // Init
+        false, // Move_To_Grab
+        true,  // Grab
+        true,  // Lift
+        true,  // Rotate
+        true,  // Fold
+        false  // Release
+    };
     const float Position_Threshold = 0.05f; // 位置误差阈值 m
     const float Omega_Threshold = 0.05f;    // 速度误差阈值 rad/s
+
+    float Omega_To_Position_Threshold = 0.1f; // 速度环转位置环的阈值
+    float Target_Omega_Boom = 10.0f;                // 目标速度 
+    float Target_Omega_Forearm = 1.5f;       
+    float Target_Omega_Rotate = 2.5f;     
 
     float boom_horizontal_angle = 0.0f;
     float forearm_horizontal_angle = 0.0f;

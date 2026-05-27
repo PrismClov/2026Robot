@@ -4,8 +4,8 @@ void Class_KFS::Init()
 {
     Motor_KFS_Rotate.Init(&hfdcan1, Motor_DJI_ID_0x205, Motor_DJI_Control_Method_ANGLE);
     // 设定PID参数 角度环kp 6.0f 角速度环kd 6.0f
-    Motor_KFS_Rotate.PID_Angle.Init(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 30.0f, 0.002f, 0.0f, 0.0f, 0.0f, 0.0f, PID_D_First_DISABLE);
-    Motor_KFS_Rotate.PID_Omega.Init(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 30.0f, 0.002f, 0.0f, 0.0f, 0.0f, 0.0f, PID_D_First_DISABLE);
+    Motor_KFS_Rotate.PID_Angle.Init(5.0f, 0.0f, 0.0f, 0.0f, 0.0f, 5.0f, 0.002f, 0.0f, 0.0f, 0.0f, 0.0f, PID_D_First_DISABLE);
+    Motor_KFS_Rotate.PID_Omega.Init(4.0f, 0.0f, 0.0f, 0.0f, 0.0f, 30.0f, 0.002f, 0.0f, 0.0f, 0.0f, 0.0f, PID_D_First_DISABLE);
     AIRPUMP_KFS.Init(GPIOC, GPIO_PIN_13);
 
 }
