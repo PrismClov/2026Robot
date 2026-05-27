@@ -65,15 +65,6 @@ virtualFolder:
       files:
         - path: ../Drivers/CMSIS/DSP/Lib/ARM/arm_cortexM7lfsp_math.lib
       folders: []
-    - name: User_alg
-      files:
-        - path: ../User_alg/alg_pid.cpp
-        - path: ../User_alg/alg_pid.h
-        - path: ../User_alg/alg_slope.cpp
-        - path: ../User_alg/alg_slope.h
-        - path: ../User_alg/alg_fsm.cpp
-        - path: ../User_alg/alg_fsm.h
-      folders: []
     - name: User_drv
       files:
         - path: ../User_drv/drv_tim.cpp
@@ -85,6 +76,25 @@ virtualFolder:
         - path: ../User_drv/drv_bsp.cpp
         - path: ../User_drv/drv_can.cpp
         - path: ../User_drv/drv_uart.cpp
+      folders: []
+    - name: User_ita
+      files:
+        - path: ../User_ita/ita_robot.cpp
+        - path: ../User_ita/ita_robot.h
+      folders: []
+    - name: User_tsk
+      files:
+        - path: ../User_tsk/tsk_config_and_callback.cpp
+      folders: []
+    - name: User_chariot
+      files:
+        - path: ../User_chariot/Weapons/crt_weapons.cpp
+        - path: ../User_chariot/Chassis/crt_chassis.h
+        - path: ../User_chariot/Weapons/crt_weapons.h
+        - path: ../User_chariot/KFS/KFS.cpp
+      folders: []
+    - name: ::CMSIS
+      files: []
       folders: []
     - name: User_dvc
       files:
@@ -104,26 +114,16 @@ virtualFolder:
         - path: ../User_dvc/dvc_motor_rs.cpp
         - path: ../User_dvc/dvc_motor_rs.h
         - path: ../User_dvc/dvc_airtool.cpp
-      folders: []
-    - name: User_ita
-      files:
-        - path: ../User_ita/ita_robot.cpp
-        - path: ../User_ita/ita_robot.h
-      folders: []
-    - name: User_tsk
-      files:
-        - path: ../User_tsk/tsk_config_and_callback.cpp
-      folders: []
-    - name: User_chariot
-      files:
         - path: ../User_chariot/Chassis/crt_chassis.cpp
-        - path: ../User_chariot/Weapons/crt_weapons.cpp
-        - path: ../User_chariot/Chassis/crt_chassis.h
-        - path: ../User_chariot/Weapons/crt_weapons.h
-        - path: ../User_chariot/KFS/KFS.cpp
       folders: []
-    - name: ::CMSIS
-      files: []
+    - name: User_alg
+      files:
+        - path: ../User_alg/alg_pid.cpp
+        - path: ../User_alg/alg_pid.h
+        - path: ../User_alg/alg_slope.cpp
+        - path: ../User_alg/alg_slope.h
+        - path: ../User_alg/alg_fsm.cpp
+        - path: ../User_alg/alg_fsm.h
       folders: []
 dependenceList: []
 outDir: build

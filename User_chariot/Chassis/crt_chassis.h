@@ -107,7 +107,8 @@ public:
 
     // 底盘角速度PID
     Class_PID PID_Omega;
-
+    // 舵向电机角度PID
+    Class_PID Steer_Motor_Angle[4];
     // OPS9定位器
     //Class_OPS9 OPS9;
 
@@ -172,7 +173,7 @@ protected:
     float Now_Steer_Angle[4] = {0.0f, 0.0f, 0.0f,0.0f};
 
     // 轮组方位角
-    float Steer_Azimuth[4] = {- 0.785, - 2.356, - 3.925, - 5.495};  // 轮组方位角，单位为弧度，顺时针为正，前x右y上z
+    float Steer_Azimuth[4] = {- 0.785, - 2.356, 2.356, 0.75};  // 轮组方位角，单位为弧度，顺时针为正，前x右y上z
     
     // 初始化相关常量
     // 当前速度X

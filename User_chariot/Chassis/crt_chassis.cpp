@@ -123,20 +123,20 @@ void Class_Chassis::Init(float __Velocity_X_Max, float __Velocity_Y_Max, float _
 
     // 电机初始化
     Motor_Steer[0].Init(&hfdcan1, Motor_DJI_ID_0x201, Motor_DJI_Control_Method_OMEGA);
-    Motor_Steer[0].PID_Angle.Init(23.0f, 0.0f, 0.0f, 0.0f, 0.0f, 60.0f, 0.002f, 0.0f, 0.0f, 0.0f, 0.0f, PID_D_First_DISABLE);
+    Steer_Motor_Angle[0].Init(23.0f, 0.0f, 0.0f, 0.0f, 0.0f, 10.0f, 0.002f, 0.0f, 0.0f, 0.0f, 0.0f, PID_D_First_DISABLE);
     Motor_Steer[0].PID_Omega.Init(1.3f, 0.0f, 0.0f, 0.0f, 3.0f, 6.0f, 0.002f);
     
     Motor_Steer[1].Init(&hfdcan1, Motor_DJI_ID_0x202, Motor_DJI_Control_Method_OMEGA);
-    Motor_Steer[1].PID_Angle.Init(23.0f, 0.0f, 0.0f, 0.0f, 0.0f, 60.0f, 0.002f, 0.0f, 0.0f, 0.0f, 0.0f, PID_D_First_DISABLE);
+    Steer_Motor_Angle[1].Init(23.0f, 0.0f, 0.0f, 0.0f, 0.0f, 10.0f, 0.002f, 0.0f, 0.0f, 0.0f, 0.0f, PID_D_First_DISABLE);
     Motor_Steer[1].PID_Omega.Init(1.3f, 0.0f, 0.0f, 0.0f, 3.0f, 6.0f, 0.002f);
     
     Motor_Steer[2].Init(&hfdcan1, Motor_DJI_ID_0x203, Motor_DJI_Control_Method_OMEGA);
-    Motor_Steer[2].PID_Angle.Init(23.0f, 0.0f, 0.0f, 0.0f, 0.0f, 60.0f, 0.002f, 0.0f, 0.0f, 0.0f, 0.0f, PID_D_First_DISABLE);
+    Steer_Motor_Angle[2].Init(23.0f, 0.0f, 0.0f, 0.0f, 0.0f, 10.0f, 0.002f, 0.0f, 0.0f, 0.0f, 0.0f, PID_D_First_DISABLE);
     Motor_Steer[2].PID_Omega.Init(1.3f, 0.0f, 0.0f, 0.0f, 3.0f, 6.0f, 0.002f);
     
     
     Motor_Steer[3].Init(&hfdcan1, Motor_DJI_ID_0x204, Motor_DJI_Control_Method_OMEGA);
-    Motor_Steer[3].PID_Angle.Init(23.0f, 0.0f, 0.0f, 0.0f, 0.0f, 60.0f, 0.002f, 0.0f, 0.0f, 0.0f, 0.0f, PID_D_First_DISABLE);
+    Steer_Motor_Angle[3].Init(23.0f, 0.0f, 0.0f, 0.0f, 0.0f, 10.0f, 0.002f, 0.0f, 0.0f, 0.0f, 0.0f, PID_D_First_DISABLE);
     Motor_Steer[3].PID_Omega.Init(1.3f, 0.0f, 0.0f, 0.0f, 3.0f, 6.0f, 0.002f);
     
 
@@ -238,8 +238,7 @@ void Class_Chassis::Self_Resolution()
     {
         tmp_motor_wheel_omega[i] = Motor_Wheel[i].Get_Now_Omega();
     }
-    // tmp_motor_wheel_omega[1] = - tmp_motor_wheel_omega[1];
-    // tmp_motor_wheel_omega[2] = - tmp_motor_wheel_omega[2];
+
     for (int i = 0; i < 4; i++)
     {
         // 待验证是否正确
@@ -499,7 +498,6 @@ void Class_Chassis::Output_To_Motor()
         // 舵轮模型
         for (int i = 0; i < 4; i++)
         {
-            Motor_Steer[i].Set_Control_Method(Motor_DJI_Control_Method_ANGLE);
             Motor_Wheel[i].Set_Control_Method(Motor_MKSESC_Control_Method_Current);
         }
         // Target_Wheel_Current[1] = - Target_Wheel_Current[1];
@@ -507,9 +505,11 @@ void Class_Chassis::Output_To_Motor()
         for (int i = 0; i < 4; i++)
         {
 
-            Motor_Steer[i].Set_Target_Angle(Target_Steer_Angle[i]);
-            Motor_Steer[i].PID_Angle.Set_Now(Now_Steer_Angle[i]);
-            
+            Steer_Motor_Angle[i].Set_Target(Target_Steer_Angle[i]);
+            Steer_Motor_Angle[i].Set_Now(Now_Steer_Angle[i]);
+            Steer_Motor_Angle[i].TIM_Calculate_PeriodElapsedCallback();
+            Motor_Steer[i].Set_Target_Omega(Steer_Motor_Angle[i].Get_Out());
+            Motor_Wheel[i].Set_Control_Current(Target_Wheel_Current[i]);
 
             if(Math_Abs(Target_Wheel_Current[i]) >= Wheel_Current_Limit)
             {
@@ -524,10 +524,10 @@ void Class_Chassis::Output_To_Motor()
         break;
     }
     }
-		for(int i = 0; i < 4; i++)
-		{
-			Motor_Steer[i].TIM_Calculate_PeriodElapsedCallback();
-		}
+    for(int i = 0; i < 4; i++)
+    {
+        Motor_Steer[i].TIM_Calculate_PeriodElapsedCallback();
+    }
 
     // 舵向电机数据发送
     FDCAN_Send_Data(&hfdcan1, 0x200, FDCAN1_0x200_Tx_Data);

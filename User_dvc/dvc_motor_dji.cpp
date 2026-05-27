@@ -948,7 +948,7 @@ void Class_Motor_DJI_C610::PID_Calculate()
     case (Motor_DJI_Control_Method_ANGLE):
     {
         PID_Angle.Set_Target(Target_Angle);
-        //PID_Angle.Set_Now(Rx_Data.Now_Angle);
+        PID_Angle.Set_Now(Rx_Data.Now_Angle);
         PID_Angle.TIM_Calculate_PeriodElapsedCallback();
 
         Target_Omega = PID_Angle.Get_Out();
