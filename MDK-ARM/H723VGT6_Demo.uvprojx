@@ -520,16 +520,6 @@
               <FileType>8</FileType>
               <FilePath>..\User_dvc\dvc_airtool.cpp</FilePath>
             </File>
-            <File>
-              <FileName>dvc_encodeer_rudder.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\User_dvc\dvc_encodeer_rudder.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>dvc_encoder_rudder.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\User_dvc\dvc_encoder_rudder.h</FilePath>
-            </File>
           </Files>
         </Group>
         <Group>

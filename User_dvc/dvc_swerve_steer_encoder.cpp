@@ -1,5 +1,5 @@
 /**
- * @file dvc_encoder_rudder.cpp
+ * @file dvc_swerve_steer_encoder.cpp
  * @author hzy(2370905113@qq.com)
  * @brief 舵轮编码器(MT6515，单圈360°，can通信)
  * @version 0.1
@@ -9,11 +9,61 @@
  *
  */
 /* Includes ------------------------------------------------------------------*/
-#include "dvc_encoder_rudder.h"
+#include "dvc_swerve_steer_encoder.h"
+#include <stddef.h>
+#include <string.h>
 /* Private macros ------------------------------------------------------------*/
 
+namespace
+{
+    constexpr float kPi = 3.14159265358979323846f;
+    constexpr float kTwoPi = 2.0f * kPi;
+    constexpr float kEncoderRawMax = 65535.0f;
+}
 
 /* Private types -------------------------------------------------------------*/
+/**
+ * @brief 初始化舵轮 CAN 编码器
+ *
+ * @param hfdcan 绑定的 CAN 句柄
+ * @param __FDCAN_Encoder_ID 编码器绑定的 CAN ID
+ * @param __Gear_Ratio 编码器到输出端的齿轮比
+ */
+void Class_Encoder_Rudder::Init(FDCAN_HandleTypeDef *hfdcan, uint32_t __FDCAN_Encoder_ID, float __Gear_Ratio)
+{
+    if (hfdcan == nullptr)
+    {
+        return;
+    }
+
+    if (hfdcan->Instance == FDCAN1)
+    {
+        FDCAN_Manage_Object = &FDCAN1_Manage_Object;
+    }
+    else if (hfdcan->Instance == FDCAN2)
+    {
+        FDCAN_Manage_Object = &FDCAN2_Manage_Object;
+    }
+    else if (hfdcan->Instance == FDCAN3)
+    {
+        FDCAN_Manage_Object = &FDCAN3_Manage_Object;
+    }
+    else
+    {
+        FDCAN_Manage_Object = nullptr;
+        return;
+    }
+
+    FDCAN_Encoder_ID = __FDCAN_Encoder_ID;
+    Gear_Ratio = (__Gear_Ratio > 0.0f) ? __Gear_Ratio : 1.0f;
+
+    Encoder_Flag = 0;
+    Pre_Encoder_Flag = 0;
+    Encoder_Status = Encoder_Rudder_Status_DISABLE;
+
+    memset(&Rx_Data, 0, sizeof(Rx_Data));
+}
+
 /**
  * @brief 底层CAN数据接收回调函数
  *
@@ -53,6 +103,11 @@ void Class_Encoder_Rudder::TIM_100ms_Alive_PeriodElapsedCallback()
  */
 void Class_Encoder_Rudder::Data_Process()
 {
+    if (FDCAN_Manage_Object == nullptr)
+    {
+        return;
+    }
+
     Struct_Encoder_Rudder_CAN_RX_Data *tmp_buffer = (Struct_Encoder_Rudder_CAN_RX_Data *)FDCAN_Manage_Object->Rx_Buffer.Data;
     
     // crc校验待完善，暂不处理校验和字段
@@ -79,4 +134,43 @@ void Class_Encoder_Rudder::Data_Process()
     {
         Rx_Data.angle -= 360.0f;
     }
+}
+
+void Class_Swerve_Steer_Encoder::Init(float zero_offset_rad, bool reverse)
+{
+    Zero_Offset_Rad = Normalize_Angle(zero_offset_rad);
+    Reverse = reverse;
+
+    Raw = 0;
+    Angle_Rad = Normalize_Angle(-Zero_Offset_Rad);
+}
+
+void Class_Swerve_Steer_Encoder::Update(uint16_t encoder_raw)
+{
+    Raw = encoder_raw;
+
+    float angle = static_cast<float>(encoder_raw) / kEncoderRawMax * kTwoPi;
+
+    if (Reverse)
+    {
+        angle = -angle;
+    }
+
+    Angle_Rad = Normalize_Angle(angle - Zero_Offset_Rad);
+}
+
+float Class_Swerve_Steer_Encoder::Normalize_Angle(float angle)
+{
+    angle = fmodf(angle, kTwoPi);
+
+    if (angle > kPi)
+    {
+        angle -= kTwoPi;
+    }
+    else if (angle < -kPi)
+    {
+        angle += kTwoPi;
+    }
+
+    return angle;
 }
