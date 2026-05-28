@@ -52,7 +52,7 @@ void Task_Init();
 void Task_Loop();
 
 #ifdef __cplusplus
-};
+}
 #endif
 
 #endif

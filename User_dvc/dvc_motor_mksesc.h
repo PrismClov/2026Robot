@@ -14,7 +14,10 @@
  
  /* Includes ------------------------------------------------------------------*/
  
+ #include <math.h>
+
  #include "alg_pid.h"
+ #include "dvc_motor_base.h"
  #include "drv_can.h"
  #include "drv_math.h"
  
@@ -123,11 +126,21 @@
   * @brief MKSESC类初始化，具体电机各项参数需要在上位机软件上进行调试
   *
   */
- class Class_Motor_MKSESC
+ class Class_Motor_MKSESC : public Class_Motor_Base
  {
  public:
+     struct Base_Parameters
+     {
+         float Wheel_Radius_M = 0.05f;
+         float Reduction_Ratio = 1.0f;
+         bool Output_Use_TIM_Send_Callback = true;
+     };
  
      void Init(FDCAN_HandleTypeDef *hfdcan, uint32_t __FDCAN_Motor_ID,uint8_t __Motor_Pole_Pairs, float __Angle_Max = 12.5f, float __Omega_Max = 25.0f, float __Duty_Max = 10.0f, float __Current_Max = 10.261194f, Enum_Motor_MKSESC_Control_Method __Motor_MKSESC_Control_Method = Motor_MKSESC_Control_Method_Omega);
+
+     void Init() override;
+
+     void Set_Base_Parameters(const Base_Parameters& parameters);
  
      inline float Get_Angle_Max();
  
@@ -166,18 +179,44 @@
      inline void Set_Control_Current(float __Control_Current);
  
      inline void Set_Control_Method(Enum_Motor_MKSESC_Control_Method __Motor_MKSESC_Control_Method);
+
+     inline void Set_Control_Mode(Enum_Motor_Control_Mode mode) override;
+
+     inline void Set_Target_Current(float current) override;
+
+     inline void Set_Target_Speed(float speed) override;
+
+     inline void Set_Target_Position(float position) override;
+
+     inline void Set_Feedback_Current(float current) override;
+
+     inline void Set_Feedback_Speed(float speed) override;
+
+     inline void Set_Feedback_Position(float position) override;
+
+     inline float Get_Current() const override;
+
+     inline float Get_Speed() const override;
+
+     inline float Get_Position() const override;
  
      void FDCAN_RxCpltCallback(uint8_t *Rx_Data);
  
      void TIM_100ms_Alive_PeriodElapsedCallback();
  
      void TIM_Send_PeriodElapsedCallback();
+
+     void Update_Feedback() override;
+
+     void Calculate() override;
+
+     void Output() override;
  
  protected:
      // 初始化相关变量
  
      // 绑定的CAN
-     Struct_FDCAN_Manage_Object *FDCAN_Manage_Object;
+     Struct_FDCAN_Manage_Object *FDCAN_Manage_Object = nullptr;
      // 收发数据绑定的CAN ID
      uint32_t FDCAN_Motor_ID;
      // 最大位置
@@ -223,11 +262,31 @@
      float Control_Current = 0.0f;
          // 刹车电流用于电机锁零刹车
          float Brake_Current = 3.0f;
+
+     Base_Parameters Base_Param;
+     Enum_Motor_Control_Mode Base_Control_Mode = MOTOR_CONTROL_MODE_DISABLE;
+     float Base_Target_Current = 0.0f;
+     float Base_Target_Speed = 0.0f;
+     float Base_Target_Position = 0.0f;
+     float Base_Feedback_Current = 0.0f;
+     float Base_Feedback_Speed = 0.0f;
+     float Base_Feedback_Position = 0.0f;
+     bool Base_Initialized = false;
      // 内部函数
  
      void Data_Process();
  
-     void Output();
+     float Speed_Mps_To_Motor_Radps(float speed_mps) const;
+
+     float Motor_Radps_To_Speed_Mps(float motor_radps) const;
+
+     float Wheel_Rad_To_Motor_Rad(float wheel_rad) const;
+
+     float Motor_Rad_To_Wheel_Rad(float motor_rad) const;
+
+     static bool Is_Finite(float value);
+
+     void Output_CAN_Data();
  };
  
  /* Exported variables --------------------------------------------------------*/
@@ -419,10 +478,79 @@
   *
   * @param 
   */
- inline void Class_Motor_MKSESC::Set_Control_Method(Enum_Motor_MKSESC_Control_Method __Motor_MKSESC_Control_Method)
- {
-     Motor_MKSESC_Control_Method = __Motor_MKSESC_Control_Method;
- }
+inline void Class_Motor_MKSESC::Set_Control_Method(Enum_Motor_MKSESC_Control_Method __Motor_MKSESC_Control_Method)
+{
+    Motor_MKSESC_Control_Method = __Motor_MKSESC_Control_Method;
+}
+
+inline void Class_Motor_MKSESC::Set_Control_Mode(Enum_Motor_Control_Mode mode)
+{
+    Base_Control_Mode = mode;
+}
+
+inline void Class_Motor_MKSESC::Set_Target_Current(float current)
+{
+    if (Is_Finite(current))
+    {
+        Base_Target_Current = current;
+        Control_Current = current;
+    }
+}
+
+inline void Class_Motor_MKSESC::Set_Target_Speed(float speed)
+{
+    if (Is_Finite(speed))
+    {
+        Base_Target_Speed = speed;
+    }
+}
+
+inline void Class_Motor_MKSESC::Set_Target_Position(float position)
+{
+    if (Is_Finite(position))
+    {
+        Base_Target_Position = position;
+    }
+}
+
+inline void Class_Motor_MKSESC::Set_Feedback_Current(float current)
+{
+    if (Is_Finite(current))
+    {
+        Base_Feedback_Current = current;
+    }
+}
+
+inline void Class_Motor_MKSESC::Set_Feedback_Speed(float speed)
+{
+    if (Is_Finite(speed))
+    {
+        Base_Feedback_Speed = speed;
+    }
+}
+
+inline void Class_Motor_MKSESC::Set_Feedback_Position(float position)
+{
+    if (Is_Finite(position))
+    {
+        Base_Feedback_Position = position;
+    }
+}
+
+inline float Class_Motor_MKSESC::Get_Current() const
+{
+    return Base_Feedback_Current;
+}
+
+inline float Class_Motor_MKSESC::Get_Speed() const
+{
+    return Base_Feedback_Speed;
+}
+
+inline float Class_Motor_MKSESC::Get_Position() const
+{
+    return Base_Feedback_Position;
+}
  
  #endif
 /************************ COPYRIGHT(C) ROBOPIONEER **************************/

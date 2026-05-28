@@ -36,18 +36,20 @@
 #include "tsk_config_and_callback.h"
 #include "dvc_dwt.h"
 #include "drv_can.h"
+#include "drv_uart.h"
 #include "drv_tim.h"
 #include "drv_bsp.h"
 #include "ita_robot.h"
 #include "dvc_motor_rs.h"
-#include "crt_weapons.h"
+#include "dvc_motor_dji.h"
+#include "dvc_motor_mksesc.h"
+#include "dvc_swerve_module.h"
 /* Private macros ------------------------------------------------------------*/
 // static float vbat = 0;
 /* Private types -------------------------------------------------------------*/
 
 /* Private variables ---------------------------------------------------------*/
-Class_Chariot chariot;
-Class_Weapon_Grab Weapon_Grab;
+
 // 全局初始化完成标志位
 bool init_finished = false;
 uint32_t flag = 0;
@@ -68,6 +70,10 @@ void Device_FDCAN1_Callback(Struct_FDCAN_Rx_Buffer *FDCAN_RxMessage)
   switch (FDCAN_RxMessage->Header.Identifier)
   {
 
+  case 0x201:
+  {
+    break;
+  }
 
   default:
 
@@ -143,7 +149,6 @@ void Device_FDCAN3_Callback(Struct_FDCAN_Rx_Buffer *FDCAN_RxMessage)
   case (0x931):
   case (0x1031):
   {
-
     break;
   }
   case (0x933):
@@ -236,7 +241,6 @@ void Task_Init()
   //chariot.Init(0.03);
  
 
-  // 设备层初始化
 
   // 战车层初始化
 

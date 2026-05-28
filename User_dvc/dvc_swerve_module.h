@@ -35,6 +35,29 @@ public:
 
     struct Parameters
     {
+        Parameters() = default;
+
+        Parameters(
+            float force_to_current,
+            float speed_deadband,
+            float force_deadband,
+            float max_speed_mps,
+            float max_force_n,
+            float max_current_a,
+            float steer_zero_offset_rad,
+            bool steer_encoder_reverse
+        )
+            : Force_To_Current(force_to_current),
+              Speed_Deadband(speed_deadband),
+              Force_Deadband(force_deadband),
+              Max_Speed_Mps(max_speed_mps),
+              Max_Force_N(max_force_n),
+              Max_Current_A(max_current_a),
+              Steer_Zero_Offset_Rad(steer_zero_offset_rad),
+              Steer_Encoder_Reverse(steer_encoder_reverse)
+        {
+        }
+
         /*
          * 牵引力 N -> 电机电流 A 的简化比例。
          *
@@ -174,7 +197,6 @@ public:
 private:
     Class_Motor_Base* Steer_Motor = nullptr;
     Class_Motor_Base* Drive_Motor = nullptr;
-
     Class_Swerve_Steer_Encoder Steer_Encoder;
 
     Parameters Param;

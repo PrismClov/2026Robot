@@ -2,6 +2,14 @@
 #define DVC_MOTOR_BASE_H
 
 #include <stdint.h>
+/**
+ * @brief 通用电机状态
+ */
+enum Enum_Motor_Status
+{
+    Motor_Status_DISABLE = 0,
+    Motor_Status_ENABLE,
+};
 
 /**
  * @brief 通用电机控制模式

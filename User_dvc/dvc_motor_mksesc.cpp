@@ -57,10 +57,41 @@ void Class_Motor_MKSESC::Init(FDCAN_HandleTypeDef *hfdcan, uint32_t __FDCAN_Moto
     Omega_Max = __Omega_Max;
     Duty_Max = __Duty_Max;
     Current_Max = __Current_Max;
+
+    Base_Control_Mode = MOTOR_CONTROL_MODE_DISABLE;
+    Base_Target_Current = 0.0f;
+    Base_Target_Speed = 0.0f;
+    Base_Target_Position = 0.0f;
+    Base_Feedback_Current = 0.0f;
+    Base_Feedback_Speed = 0.0f;
+    Base_Feedback_Position = 0.0f;
+    Base_Initialized = true;
 }
 
-void Class_Motor_MKSESC::Output()
+void Class_Motor_MKSESC::Init()
 {
+}
+
+void Class_Motor_MKSESC::Set_Base_Parameters(const Base_Parameters& parameters)
+{
+    if (!Is_Finite(parameters.Wheel_Radius_M) ||
+        !Is_Finite(parameters.Reduction_Ratio) ||
+        parameters.Wheel_Radius_M <= 0.0f ||
+        parameters.Reduction_Ratio <= 0.0f)
+    {
+        return;
+    }
+
+    Base_Param = parameters;
+}
+
+void Class_Motor_MKSESC::Output_CAN_Data()
+{
+    if (FDCAN_Manage_Object == nullptr)
+    {
+        return;
+    }
+
     //设置临时变量
     uint32_t tmp_id;
     uint8_t FDCAN_Tx_Buffer[4];
@@ -118,7 +149,7 @@ void Class_Motor_MKSESC::Output()
             FDCAN_Tx_Buffer[3] = tmp_data ;
             break;
         default:
-		    break; 
+		    return;
     }
     //发送数据
     FDCAN_Send_Data(FDCAN_Manage_Object->FDCAN_Handler, tmp_id, FDCAN_Tx_Buffer, FDCAN_ID_Extended, 4);
@@ -173,12 +204,102 @@ void Class_Motor_MKSESC::TIM_Send_PeriodElapsedCallback()
         Math_Constrain(&Control_Duty, -Duty_Max, Duty_Max);
         Math_Constrain(&Control_Current, -Current_Max, Current_Max);
 
-        Output();
+        Output_CAN_Data();
     }
     else if (Motor_MKSESC_Status == Motor_MKSESC_Status_DISABLE)
     {
         return;
     }
+}
+
+void Class_Motor_MKSESC::Update_Feedback()
+{
+    if (!Base_Initialized)
+    {
+        return;
+    }
+
+    Base_Feedback_Current = Rx_Data.Now_Current;
+    Base_Feedback_Speed = Motor_Radps_To_Speed_Mps(Rx_Data.Now_Omega);
+    Base_Feedback_Position = Motor_Rad_To_Wheel_Rad(Rx_Data.Now_Angle);
+}
+
+void Class_Motor_MKSESC::Calculate()
+{
+    if (!Base_Initialized)
+    {
+        return;
+    }
+
+    Update_Feedback();
+
+    switch (Base_Control_Mode)
+    {
+    case MOTOR_CONTROL_MODE_CURRENT:
+    {
+        Motor_MKSESC_Control_Method = Motor_MKSESC_Control_Method_Current;
+        Control_Current = Base_Target_Current;
+        break;
+    }
+
+    case MOTOR_CONTROL_MODE_SPEED:
+    {
+        Motor_MKSESC_Control_Method = Motor_MKSESC_Control_Method_Omega;
+        Control_Omega = Speed_Mps_To_Motor_Radps(Base_Target_Speed);
+        break;
+    }
+
+    case MOTOR_CONTROL_MODE_POSITION:
+    {
+        Motor_MKSESC_Control_Method = Motor_MKSESC_Control_Method_Angle;
+        Control_Angle = Wheel_Rad_To_Motor_Rad(Base_Target_Position);
+        break;
+    }
+
+    case MOTOR_CONTROL_MODE_DISABLE:
+    default:
+    {
+        Motor_MKSESC_Control_Method = Motor_MKSESC_Control_Method_Current;
+        Control_Current = 0.0f;
+        Control_Omega = 0.0f;
+        break;
+    }
+    }
+}
+
+void Class_Motor_MKSESC::Output()
+{
+    if (!Base_Initialized || !Base_Param.Output_Use_TIM_Send_Callback)
+    {
+        return;
+    }
+
+    TIM_Send_PeriodElapsedCallback();
+}
+
+float Class_Motor_MKSESC::Speed_Mps_To_Motor_Radps(float speed_mps) const
+{
+    return speed_mps / Base_Param.Wheel_Radius_M * Base_Param.Reduction_Ratio;
+}
+
+float Class_Motor_MKSESC::Motor_Radps_To_Speed_Mps(float motor_radps) const
+{
+    return motor_radps / Base_Param.Reduction_Ratio * Base_Param.Wheel_Radius_M;
+}
+
+float Class_Motor_MKSESC::Wheel_Rad_To_Motor_Rad(float wheel_rad) const
+{
+    return wheel_rad * Base_Param.Reduction_Ratio;
+}
+
+float Class_Motor_MKSESC::Motor_Rad_To_Wheel_Rad(float motor_rad) const
+{
+    return motor_rad / Base_Param.Reduction_Ratio;
+}
+
+bool Class_Motor_MKSESC::Is_Finite(float value)
+{
+    return isfinite(value);
 }
 
 /**
