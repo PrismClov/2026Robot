@@ -192,7 +192,7 @@ void Class_Swerve_Module::Apply_Steer_Target()
     /*
      * 舵向电机始终工作在位置模式。
      */
-    Steer_Motor->Set_Control_Mode(MOTOR_CONTROL_MODE_POSITION);
+    Steer_Motor->Set_Control_Method(MOTOR_CONTROL_METHOD_POSITION);
 
     /*
      * 舵向位置反馈使用外置绝对编码器。
@@ -222,7 +222,7 @@ void Class_Swerve_Module::Apply_Drive_Target()
          * 这里的 Target_Speed 单位是 m/s。
          * 具体电机类需要在内部转换成 RPM / ERPM / 其他驱动器单位。
          */
-        Drive_Motor->Set_Control_Mode(MOTOR_CONTROL_MODE_SPEED);
+        Drive_Motor->Set_Control_Method(MOTOR_CONTROL_METHOD_SPEED);
 
         Drive_Motor->Set_Target_Speed(
             Module_Target.Speed_Mps
@@ -234,7 +234,7 @@ void Class_Swerve_Module::Apply_Drive_Target()
          * Force 和 Speed_Force 模式：
          * 轮向电机跑电流环 / 力控。
          */
-        Drive_Motor->Set_Control_Mode(MOTOR_CONTROL_MODE_CURRENT);
+        Drive_Motor->Set_Control_Method(MOTOR_CONTROL_METHOD_CURRENT);
 
         Drive_Motor->Set_Target_Current(
             Module_Target.Current_A
@@ -331,7 +331,7 @@ void Class_Swerve_Module::Stop()
 
     if (Drive_Motor != nullptr)
     {
-        Drive_Motor->Set_Control_Mode(MOTOR_CONTROL_MODE_DISABLE);
+        Drive_Motor->Set_Control_Method(MOTOR_CONTROL_METHOD_DISABLE);
         Drive_Motor->Set_Target_Speed(0.0f);
         Drive_Motor->Set_Target_Current(0.0f);
         Drive_Motor->Calculate();
@@ -342,7 +342,7 @@ void Class_Swerve_Module::Stop()
      */
     if (Steer_Motor != nullptr)
     {
-        Steer_Motor->Set_Control_Mode(MOTOR_CONTROL_MODE_POSITION);
+        Steer_Motor->Set_Control_Method(MOTOR_CONTROL_METHOD_POSITION);
 
         Steer_Motor->Set_Feedback_Position(
             Steer_Encoder.Get_Angle_Rad()

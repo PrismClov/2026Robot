@@ -5,6 +5,10 @@ namespace
     constexpr float kPi = 3.14159265358979323846f;
     constexpr float kTwoPi = 2.0f * kPi;
 }
+
+/**
+ * @brief 重载 Init() — 默认控制参数版本
+ */
 bool Class_Motor_DJI_C610::Init(
     FDCAN_HandleTypeDef* hfdcan,
     Enum_Motor_DJI_C610_ID fdcan_rx_id,
@@ -21,6 +25,15 @@ bool Class_Motor_DJI_C610::Init(
         default_parameters
     );
 }
+/**
+ * @brief 完整 Init() — 带控制参数版本
+ *
+ * 工作流程：
+ * 1. 校验参数合法性（gearbox_rate > 0、current_max > 0、PID 参数有限）
+ * 2. 绑定 FDCAN 句柄到对应的 Manage_Object
+ * 3. 从 FDCAN 共享发送缓冲区分配 2 字节 Tx_Data
+ * 4. 清零所有状态和目标值
+ */
 bool Class_Motor_DJI_C610::Init(
     FDCAN_HandleTypeDef* hfdcan,
     Enum_Motor_DJI_C610_ID fdcan_rx_id,
@@ -81,7 +94,7 @@ bool Class_Motor_DJI_C610::Init(
     Current_Max = current_max;
     Param = parameters;
 
-    Control_Mode = MOTOR_CONTROL_MODE_DISABLE;
+    Control_Method = MOTOR_CONTROL_METHOD_CURRENT;
 
     Target_Current = 0.0f;
     Target_Speed = 0.0f;
@@ -117,6 +130,11 @@ void Class_Motor_DJI_C610::Init()
      */
 }
 
+/**
+ * @brief 校验控制参数合法性
+ *
+ * 检查项：PID 参数必须为有限值，积分限幅非负，输出限幅为正。
+ */
 bool Class_Motor_DJI_C610::Check_Parameters(const Parameters& parameters) const
 {
     if (!Is_Finite(parameters.Position_Kp) ||
@@ -137,6 +155,12 @@ bool Class_Motor_DJI_C610::Check_Parameters(const Parameters& parameters) const
     return true;
 }
 
+/**
+ * @brief 为指定 CAN 接口和电机 ID 分配 Tx_Data 缓冲区
+ *
+ * DJI C610 每个电机占用 2 字节（电流目标高/低各 1 字节），
+ * 同一 ID 组（0x200 / 0x1FF）的 4 个电机共享一个 CAN 帧。
+ */
 uint8_t* Class_Motor_DJI_C610::Allocate_Tx_Data(
     FDCAN_HandleTypeDef* hfdcan,
     Enum_Motor_DJI_C610_ID fdcan_rx_id
@@ -204,6 +228,12 @@ uint8_t* Class_Motor_DJI_C610::Allocate_Tx_Data(
 
 
 
+/**
+ * @brief 更新反馈值到 Class_Motor_Base 统一接口
+ *
+ * - 电流和速度始终从 C610 内部编码器反馈读取
+ * - 位置根据 Use_External_Position_Feedback 决定来自 C610 还是外部绝对编码器
+ */
 void Class_Motor_DJI_C610::Update_Feedback()
 {
     if (!Initialized)
@@ -221,10 +251,13 @@ void Class_Motor_DJI_C610::Update_Feedback()
      */
     if (!Param.Use_External_Position_Feedback)
     {
-        Feedback_Position = Normalize_Angle(Rx_Data.Now_Angle);
+        Feedback_Position = Rx_Data.Now_Angle;
     }
 }
 
+/**
+ * @brief 控制周期主入口：反馈更新 → PID 计算 → 输出限幅
+ */
 void Class_Motor_DJI_C610::Calculate()
 {
     if (!Initialized)
@@ -237,13 +270,27 @@ void Class_Motor_DJI_C610::Calculate()
     PID_Calculate();
 
     Limit_Output();
+
+    Output();
 }
 
+/**
+ * @brief 根据控制模式执行对应 PID 计算
+ *
+ * 三种控制模式：
+ * - CURRENT：直接使用上层电流目标（+ 前馈电流），不经 PID
+ * - SPEED：速度 PID 输出电流目标（+ 速度前馈）
+ * - POSITION：位置外环 → 速度目标 → 速度内环 → 电流目标（双环串级 PID）
+ *
+ * 前馈叠加：
+ * - Feedforward_Speed 叠加到速度环目标
+ * - Feedforward_Current 叠加到最终电流输出
+ */
 void Class_Motor_DJI_C610::PID_Calculate()
 {
-    switch (Control_Mode)
+    switch (Control_Method)
     {
-    case MOTOR_CONTROL_MODE_CURRENT:
+    case MOTOR_CONTROL_METHOD_CURRENT:
     {
         /*
          * C610 电调内部有电流环，这里直接使用上层电流目标。
@@ -253,7 +300,7 @@ void Class_Motor_DJI_C610::PID_Calculate()
         break;
     }
 
-    case MOTOR_CONTROL_MODE_SPEED:
+    case MOTOR_CONTROL_METHOD_SPEED:
     {
         /*
          * 速度 PID 输出电流目标。
@@ -267,7 +314,7 @@ void Class_Motor_DJI_C610::PID_Calculate()
         break;
     }
 
-    case MOTOR_CONTROL_MODE_POSITION:
+    case MOTOR_CONTROL_METHOD_POSITION:
     {
         /*
          * 舵向位置模式：
@@ -297,7 +344,7 @@ void Class_Motor_DJI_C610::PID_Calculate()
         break;
     }
 
-    case MOTOR_CONTROL_MODE_DISABLE:
+    case MOTOR_CONTROL_METHOD_DISABLE:
     default:
     {
         Target_Current = 0.0f;
@@ -307,6 +354,13 @@ void Class_Motor_DJI_C610::PID_Calculate()
     }
 }
 
+/**
+ * @brief 输出限幅与单位转换
+ *
+ * CURRENT 模式下 PID_Calculate() 已叠加 Feedforward_Current，
+ * 此处再次叠加确保所有模式最终都能接受前馈。
+ * 限幅后清零前馈值，避免重复叠加。
+ */
 void Class_Motor_DJI_C610::Limit_Output()
 {
     float tmp_value = Target_Current + Feedforward_Current;
@@ -329,6 +383,12 @@ void Class_Motor_DJI_C610::Output()
     Output_CAN_Data();
 }
 
+/**
+ * @brief 写入 CAN 发送缓冲区（2 字节，大端字节序）
+ *
+ * DJI 协议：Tx_Data[0] = 高字节，Tx_Data[1] = 低字节
+ * 实际 CAN 帧由 FDCAN 定期发送任务统一打包发出。
+ */
 void Class_Motor_DJI_C610::Output_CAN_Data()
 {
     if (Tx_Data == nullptr)
@@ -340,6 +400,12 @@ void Class_Motor_DJI_C610::Output_CAN_Data()
     Tx_Data[1] = (int16_t)Out;
 }
 
+/**
+ * @brief FDCAN 接收回调 — 更新电机状态标志和反馈数据
+ *
+ * 每次收到反馈帧后 Flag 自增，用于后续心跳检测。
+ * rx_data 参数未使用，直接从 FDCAN_Manage_Object 读取最新帧。
+ */
 void Class_Motor_DJI_C610::FDCAN_RxCpltCallback(uint8_t* rx_data)
 {
     (void)rx_data;
@@ -354,6 +420,13 @@ void Class_Motor_DJI_C610::FDCAN_RxCpltCallback(uint8_t* rx_data)
     Data_Process();
 }
 
+/**
+ * @brief 100ms 心跳检测定时器回调
+ *
+ * 如果连续 100ms 内 Flag 未变化（未收到新反馈帧），
+ * 判定电机离线：禁用状态、清零 PID 积分、清零输出。
+ * 在线时重置 PID 积分可防止恢复连接后积分突跳。
+ */
 void Class_Motor_DJI_C610::TIM_100ms_Alive_PeriodElapsedCallback()
 {
     if (!Initialized)
@@ -380,6 +453,18 @@ void Class_Motor_DJI_C610::TIM_100ms_Alive_PeriodElapsedCallback()
     Pre_Flag = Flag;
 }
 
+/**
+ * @brief 解析 CAN 原始反馈数据
+ *
+ * 处理流程：
+ * 1. 字节序反转（DJI 为大端）
+ * 2. 多圈追踪：通过相邻帧编码器差值判断是否过零，更新 Total_Round
+ * 3. 计算减速箱输出端角度：Total_Encoder / 分辨率 * 2π / 减速比
+ * 4. 计算角速度：RPM → rad/s / 减速比
+ * 5. 计算电流和温度
+ *
+ * DJI C610 编码器分辨率：8192 线/圈（13 bit 绝对值编码器）
+ */
 void Class_Motor_DJI_C610::Data_Process()
 {
     if (FDCAN_Manage_Object == nullptr)
@@ -494,7 +579,13 @@ float Class_Motor_DJI_C610::Limit(float value, float limit)
 
     return value;
 }
-
+/**
+ * @brief 判断输入值是否为有限数
+ *
+ * @param value 输入值
+ * @return true 输入值为有限数
+ * @return false 输入值是无限数
+ */
 bool Class_Motor_DJI_C610::Is_Finite(float value)
 {
     return isfinite(value);

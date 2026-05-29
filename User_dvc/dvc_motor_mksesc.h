@@ -24,29 +24,9 @@
  /* Exported macros -----------------------------------------------------------*/
  
  /* Exported types ------------------------------------------------------------*/
+
  
- /**
-  * @brief MKSESC电调状态
-  *
-  */
- enum Enum_Motor_MKSESC_Status
- {
-     Motor_MKSESC_Status_DISABLE = 0,
-     Motor_MKSESC_Status_ENABLE,
- };
- 
- /**
-  * @brief MKSESC电调控制方法    占空比，电流，转速，角度
-  *
-  */
- enum Enum_Motor_MKSESC_Control_Method
- {
-     Motor_MKSESC_Control_Method_Duty = 0,
-     Motor_MKSESC_Control_Method_Current,
-     Motor_MKSESC_Control_Method_Omega,
-     Motor_MKSESC_Control_Method_Angle,
-     Motor_MKSESC_Control_Method_Brake,
- };
+
  
  /**
   * @brief MKSESC电调控制指令，放在CANID拓展部分执行
@@ -136,7 +116,7 @@
          bool Output_Use_TIM_Send_Callback = true;
      };
  
-     void Init(FDCAN_HandleTypeDef *hfdcan, uint32_t __FDCAN_Motor_ID,uint8_t __Motor_Pole_Pairs, float __Angle_Max = 12.5f, float __Omega_Max = 25.0f, float __Duty_Max = 10.0f, float __Current_Max = 10.261194f, Enum_Motor_MKSESC_Control_Method __Motor_MKSESC_Control_Method = Motor_MKSESC_Control_Method_Omega);
+     void Init(FDCAN_HandleTypeDef *hfdcan, uint32_t __FDCAN_Motor_ID,uint8_t __Motor_Pole_Pairs, float __Angle_Max = 12.5f, float __Omega_Max = 25.0f, float __Duty_Max = 10.0f, float __Current_Max = 10.261194f, Enum_Motor_Control_Method __Control_Method = MOTOR_CONTROL_METHOD_CURRENT);
 
      void Init() override;
 
@@ -150,7 +130,7 @@
  
      inline float Get_Current_Max();
  
-     inline Enum_Motor_MKSESC_Status Get_Status();
+     inline Enum_Motor_Status Get_Status();
  
      inline float Get_Now_Angle();
  
@@ -168,7 +148,7 @@
  
      inline float Get_Control_Current();
  
-     inline Enum_Motor_MKSESC_Control_Method Get_Control_Method();
+     inline Enum_Motor_Control_Method Get_Control_Method();
  
      inline void Set_Control_Angle(float __Control_Angle);
  
@@ -178,9 +158,8 @@
  
      inline void Set_Control_Current(float __Control_Current);
  
-     inline void Set_Control_Method(Enum_Motor_MKSESC_Control_Method __Motor_MKSESC_Control_Method);
+     inline void Set_Control_Method(Enum_Motor_Control_Method __Method);
 
-     inline void Set_Control_Mode(Enum_Motor_Control_Mode mode) override;
 
      inline void Set_Target_Current(float current) override;
 
@@ -241,7 +220,7 @@
      // 读变量
  
      // 电机状态
-     Enum_Motor_MKSESC_Status Motor_MKSESC_Status = Motor_MKSESC_Status_DISABLE;
+     Enum_Motor_Status Motor_Status = Motor_Status_DISABLE;
      // 电机对外接口信息
      Struct_Motor_MKSESC_Rx_Data Rx_Data;
  
@@ -250,7 +229,7 @@
      // 读写变量
  
      //电机控制方式
-     Enum_Motor_MKSESC_Control_Method Motor_MKSESC_Control_Method;
+     Enum_Motor_Control_Method Control_Method = MOTOR_CONTROL_METHOD_CURRENT;
  
      //占空比,-100~100%
      float Control_Duty = 0.0f;
@@ -260,11 +239,10 @@
      float Control_Omega = 0.0f;
      // 电流, A, EMIT模式是限幅, 其余模式无效
      float Control_Current = 0.0f;
-         // 刹车电流用于电机锁零刹车
-         float Brake_Current = 3.0f;
+        // 刹车电流用于电机锁零刹车
+    float Brake_Current = 3.0f;
 
      Base_Parameters Base_Param;
-     Enum_Motor_Control_Mode Base_Control_Mode = MOTOR_CONTROL_MODE_DISABLE;
      float Base_Target_Current = 0.0f;
      float Base_Target_Speed = 0.0f;
      float Base_Target_Position = 0.0f;
@@ -336,11 +314,11 @@
  /**
   * @brief 获取电机状态
   *
-  * @return Enum_Motor_DM_Status 电机状态
+  * @return Enum_Motor_Status 电机状态
   */
- inline Enum_Motor_MKSESC_Status Class_Motor_MKSESC::Get_Status()
+ inline Enum_Motor_Status Class_Motor_MKSESC::Get_Status()
  {
-     return (Motor_MKSESC_Status);
+     return (Motor_Status);
  }
  
  /**
@@ -386,11 +364,11 @@
  /**
   * @brief 获取电机控制方式
   *
-  * @return Enum_Motor_DM_Control_Method 电机控制方式
+  * @return Enum_Motor_Control_Method 电机控制方式
   */
- inline Enum_Motor_MKSESC_Control_Method Class_Motor_MKSESC::Get_Control_Method()
+ inline Enum_Motor_Control_Method Class_Motor_MKSESC::Get_Control_Method()
  {
-     return (Motor_MKSESC_Control_Method);
+     return (Control_Method);
  }
  
  /**
@@ -478,62 +456,58 @@
   *
   * @param 
   */
-inline void Class_Motor_MKSESC::Set_Control_Method(Enum_Motor_MKSESC_Control_Method __Motor_MKSESC_Control_Method)
+inline void Class_Motor_MKSESC::Set_Control_Method(Enum_Motor_Control_Method __Control_Method)
 {
-    Motor_MKSESC_Control_Method = __Motor_MKSESC_Control_Method;
+    Control_Method = __Control_Method;
 }
 
-inline void Class_Motor_MKSESC::Set_Control_Mode(Enum_Motor_Control_Mode mode)
-{
-    Base_Control_Mode = mode;
-}
 
-inline void Class_Motor_MKSESC::Set_Target_Current(float current)
+inline void Class_Motor_MKSESC::Set_Target_Current(float __Target_Current)
 {
-    if (Is_Finite(current))
+    if (Is_Finite(__Target_Current))
     {
-        Base_Target_Current = current;
-        Control_Current = current;
+        Base_Target_Current = __Target_Current;
+        Control_Current = __Target_Current;
     }
 }
 
-inline void Class_Motor_MKSESC::Set_Target_Speed(float speed)
+inline void Class_Motor_MKSESC::Set_Target_Speed(float __Target_Speed)
 {
-    if (Is_Finite(speed))
+    if (Is_Finite(__Target_Speed))
     {
-        Base_Target_Speed = speed;
+        Base_Target_Speed = __Target_Speed;
     }
 }
 
-inline void Class_Motor_MKSESC::Set_Target_Position(float position)
+inline void Class_Motor_MKSESC::Set_Target_Position(float __Target_Position)
 {
-    if (Is_Finite(position))
+    if (Is_Finite(__Target_Position))
     {
-        Base_Target_Position = position;
+        Base_Target_Position = __Target_Position;
     }
 }
 
-inline void Class_Motor_MKSESC::Set_Feedback_Current(float current)
+inline void Class_Motor_MKSESC::Set_Feedback_Current(float __Feedback_Current)
 {
-    if (Is_Finite(current))
+    if (Is_Finite(__Feedback_Current))
     {
-        Base_Feedback_Current = current;
+        Base_Feedback_Current = __Feedback_Current;
     }
 }
 
-inline void Class_Motor_MKSESC::Set_Feedback_Speed(float speed)
+inline void Class_Motor_MKSESC::Set_Feedback_Speed(float __Feedback_Speed)
 {
-    if (Is_Finite(speed))
+    if (Is_Finite(__Feedback_Speed))
     {
-        Base_Feedback_Speed = speed;
+        Base_Feedback_Speed = __Feedback_Speed;
     }
 }
 
-inline void Class_Motor_MKSESC::Set_Feedback_Position(float position)
+inline void Class_Motor_MKSESC::Set_Feedback_Position(float __Feedback_Position)
 {
-    if (Is_Finite(position))
+    if (Is_Finite(__Feedback_Position))
     {
-        Base_Feedback_Position = position;
+        Base_Feedback_Position = __Feedback_Position;
     }
 }
 

@@ -32,7 +32,7 @@
  * @param __Torque_Max 最大扭矩
  * @param __Motor_MKSESC_Control_Method 电机控制方法，默认为角速度控制方式。
  */
-void Class_Motor_MKSESC::Init(FDCAN_HandleTypeDef *hfdcan, uint32_t __FDCAN_Motor_ID,uint8_t __Motor_Pole_Pairs, float __Angle_Max, float __Omega_Max, float __Duty_Max, float __Current_Max, Enum_Motor_MKSESC_Control_Method __Motor_MKSESC_Control_Method)
+void Class_Motor_MKSESC::Init(FDCAN_HandleTypeDef *hfdcan, uint32_t __FDCAN_Motor_ID,uint8_t __Motor_Pole_Pairs, float __Angle_Max, float __Omega_Max, float __Duty_Max, float __Current_Max, Enum_Motor_Control_Method __Control_Method)
 {
     if (hfdcan->Instance == FDCAN1)
     {
@@ -51,21 +51,13 @@ void Class_Motor_MKSESC::Init(FDCAN_HandleTypeDef *hfdcan, uint32_t __FDCAN_Moto
 
     Pole_Pairs = __Motor_Pole_Pairs;
 
-    Motor_MKSESC_Control_Method = __Motor_MKSESC_Control_Method;
-    
+    Control_Method = __Control_Method;
+
     Angle_Max = __Angle_Max;
     Omega_Max = __Omega_Max;
     Duty_Max = __Duty_Max;
     Current_Max = __Current_Max;
 
-    Base_Control_Mode = MOTOR_CONTROL_MODE_DISABLE;
-    Base_Target_Current = 0.0f;
-    Base_Target_Speed = 0.0f;
-    Base_Target_Position = 0.0f;
-    Base_Feedback_Current = 0.0f;
-    Base_Feedback_Speed = 0.0f;
-    Base_Feedback_Position = 0.0f;
-    Base_Initialized = true;
 }
 
 void Class_Motor_MKSESC::Init()
@@ -98,11 +90,11 @@ void Class_Motor_MKSESC::Output_CAN_Data()
     int32_t tmp_data;
 
     //根据不同的控制方法选择发送不同的消息，仍然存在一些疑问！
-    switch(Motor_MKSESC_Control_Method)
+    switch(Control_Method)
     {   
 			//这里的比例关系很匪夷所思，不知道该具体怎么换算，但角速度发送和返回对应上了
         //占空比控制方式
-        case Motor_MKSESC_Control_Method_Duty:
+        case MOTOR_CONTROL_METHOD_DUTY:
             tmp_id = ((uint32_t) ( (FDCAN_PACKET_SET_DUTY) << 8) | FDCAN_Motor_ID);
 				//单位是%
             tmp_data = (int32_t)(Control_Duty * 1e3f);
@@ -112,7 +104,7 @@ void Class_Motor_MKSESC::Output_CAN_Data()
             FDCAN_Tx_Buffer[3] = tmp_data ;
             break;
         //电流控制方式
-        case Motor_MKSESC_Control_Method_Current:
+        case MOTOR_CONTROL_METHOD_CURRENT:
             tmp_id = ((uint32_t) ( (FDCAN_PACKET_SET_CURRENT) << 8) | FDCAN_Motor_ID);
 				//发送给电调的电流是mA，乘上1000单位由A转化为mA
             tmp_data = (int32_t)(Control_Current * 1000.0f);	
@@ -122,7 +114,7 @@ void Class_Motor_MKSESC::Output_CAN_Data()
             FDCAN_Tx_Buffer[3] = tmp_data ;
             break;
         //转速控制方式
-        case Motor_MKSESC_Control_Method_Omega:
+        case MOTOR_CONTROL_METHOD_SPEED:
             tmp_id = ((uint32_t) ( (FDCAN_PACKET_SET_RPM) << 8) | FDCAN_Motor_ID);
             //VESC电调的RPM模式单位为ERPM(ERPM = 物理RPM * 极对数)
             tmp_data = (int32_t)(Control_Omega / RPM_TO_RADPS * Pole_Pairs);
@@ -132,7 +124,7 @@ void Class_Motor_MKSESC::Output_CAN_Data()
             FDCAN_Tx_Buffer[3] = tmp_data ;
             break;
         //角度控制方式，输入单位是弧度，这个函数中转化为度发送给电调
-        case Motor_MKSESC_Control_Method_Angle:
+        case MOTOR_CONTROL_METHOD_POSITION:
             tmp_id = ((uint32_t) ( (FDCAN_PACKET_SET_POS) << 8) | FDCAN_Motor_ID);
             tmp_data = (int32_t)(Control_Angle / DEG_TO_RAD * 1e6f);
             FDCAN_Tx_Buffer[0] = tmp_data >> 24 ;
@@ -140,7 +132,7 @@ void Class_Motor_MKSESC::Output_CAN_Data()
             FDCAN_Tx_Buffer[2] = tmp_data >> 8 ;
             FDCAN_Tx_Buffer[3] = tmp_data ;
             break;
-				case Motor_MKSESC_Control_Method_Brake:
+        case MOTOR_CONTROL_METHOD_BRAKE:
             tmp_id = ((uint32_t) ( (FDCAN_PACKET_SET_CURRENT_BRAKE) << 8) | FDCAN_Motor_ID);
             tmp_data = (int32_t)(Brake_Current * 1e3f);
             FDCAN_Tx_Buffer[0] = tmp_data >> 24 ;
@@ -178,12 +170,12 @@ void Class_Motor_MKSESC::TIM_100ms_Alive_PeriodElapsedCallback()
     if (Flag == Pre_Flag)
     {
         // 电机断开连接
-        Motor_MKSESC_Status = Motor_MKSESC_Status_DISABLE;
+        Motor_Status = Motor_Status_DISABLE;
     }
     else
     {
         // 电机保持连接
-        Motor_MKSESC_Status = Motor_MKSESC_Status_ENABLE;
+        Motor_Status = Motor_Status_ENABLE;
     }
 
     Pre_Flag = Flag;
@@ -196,7 +188,7 @@ void Class_Motor_MKSESC::TIM_100ms_Alive_PeriodElapsedCallback()
 void Class_Motor_MKSESC::TIM_Send_PeriodElapsedCallback()
 {
 
-    if (Motor_MKSESC_Status == Motor_MKSESC_Status_ENABLE)
+    if (Motor_Status == Motor_Status_ENABLE)
     {
         // 电机在线, 正常控制
         Math_Constrain(&Control_Angle, -Angle_Max, Angle_Max);
@@ -206,7 +198,7 @@ void Class_Motor_MKSESC::TIM_Send_PeriodElapsedCallback()
 
         Output_CAN_Data();
     }
-    else if (Motor_MKSESC_Status == Motor_MKSESC_Status_DISABLE)
+    else if (Motor_Status == Motor_Status_DISABLE)
     {
         return;
     }
@@ -232,39 +224,7 @@ void Class_Motor_MKSESC::Calculate()
     }
 
     Update_Feedback();
-
-    switch (Base_Control_Mode)
-    {
-    case MOTOR_CONTROL_MODE_CURRENT:
-    {
-        Motor_MKSESC_Control_Method = Motor_MKSESC_Control_Method_Current;
-        Control_Current = Base_Target_Current;
-        break;
-    }
-
-    case MOTOR_CONTROL_MODE_SPEED:
-    {
-        Motor_MKSESC_Control_Method = Motor_MKSESC_Control_Method_Omega;
-        Control_Omega = Speed_Mps_To_Motor_Radps(Base_Target_Speed);
-        break;
-    }
-
-    case MOTOR_CONTROL_MODE_POSITION:
-    {
-        Motor_MKSESC_Control_Method = Motor_MKSESC_Control_Method_Angle;
-        Control_Angle = Wheel_Rad_To_Motor_Rad(Base_Target_Position);
-        break;
-    }
-
-    case MOTOR_CONTROL_MODE_DISABLE:
-    default:
-    {
-        Motor_MKSESC_Control_Method = Motor_MKSESC_Control_Method_Current;
-        Control_Current = 0.0f;
-        Control_Omega = 0.0f;
-        break;
-    }
-    }
+    Output();
 }
 
 void Class_Motor_MKSESC::Output()

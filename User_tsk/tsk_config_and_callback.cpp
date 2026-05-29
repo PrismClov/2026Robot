@@ -56,7 +56,8 @@ uint32_t flag = 0;
 
 
 /* Private function declarations ---------------------------------------------*/
-
+Class_Motor_DJI_C610 M2006;
+Class_Encoder_Rudder Steer_Encoder;
 /* Function prototypes -------------------------------------------------------*/
 
 /**
@@ -72,6 +73,7 @@ void Device_FDCAN1_Callback(Struct_FDCAN_Rx_Buffer *FDCAN_RxMessage)
 
   case 0x201:
   {
+    M2006.FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
     break;
   }
 
@@ -96,6 +98,7 @@ void Device_FDCAN2_Callback(Struct_FDCAN_Rx_Buffer *FDCAN_RxMessage)
 
     static uint8_t FDCAN_ID = FDCAN_RxMessage->Header.Identifier >> 8;
     static uint8_t Master_ID = FDCAN_RxMessage->Header.Identifier;
+    (void)Master_ID;
     switch (FDCAN_ID)
     {
 
@@ -129,10 +132,15 @@ void Device_FDCAN3_Callback(Struct_FDCAN_Rx_Buffer *FDCAN_RxMessage)
 
     break;
   }
-  // 舵向电机返回数据处理
-  case (0x201):
+  case (0x200):
   {
 
+    break;
+  }
+  // 舵向编码器返回数据处理
+  case (0x101):
+  {
+      Steer_Encoder.FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
     break;
   }
   case (0x203):
@@ -174,6 +182,8 @@ void Device_FDCAN3_Callback(Struct_FDCAN_Rx_Buffer *FDCAN_RxMessage)
  */
 void DR16_UART5_Callback(uint8_t *Buffer, uint16_t Length)
 {
+  (void)Buffer;
+  (void)Length;
 //  chariot.DR16.DR16_UART_RxCpltCallback(Buffer);
 //  // 底盘 云台 发射机构 的控制策略
 //  chariot.TIM_Control_Callback();
@@ -199,7 +209,7 @@ void Task100us_TIM4_Callback()
  */
 uint8_t mod100 = 0;
 
-
+float new_2006_target_speed = 0.0f;
 void Task1ms_TIM5_Callback()
 {
   DWT_Update();
@@ -213,6 +223,9 @@ void Task1ms_TIM5_Callback()
     
     mod100 = 0;
   }
+  // M2006.Set_Control_Mode(MOTOR_CONTROL_MODE_SPEED);
+  // M2006.Set_Target_Speed(new_2006_target_speed);
+  // M2006.Calculate();
 //  Weapon_Grab.Motor_Rotate.CAN_Send_Set_Rx_ID(0xF1);
 //  Weapon_Grab.Motor_Rotate.CAN_Send_Set_Tx_ID(0x71);
 
@@ -239,8 +252,8 @@ void Task_Init()
   TIM_Init(&htim4, Task100us_TIM4_Callback);
   TIM_Init(&htim5, Task1ms_TIM5_Callback);
   //chariot.Init(0.03);
- 
-
+  M2006.Init(&hfdcan1, Motor_DJI_C610_ID_0x201);
+  Steer_Encoder.Init(&hfdcan3, 0x201);
 
   // 战车层初始化
 

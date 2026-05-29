@@ -135,7 +135,7 @@ public:
      */
     void Init() override;
 
-    inline void Set_Control_Mode(Enum_Motor_Control_Mode mode) override;
+    inline void Set_Control_Method(Enum_Motor_Control_Method __Method) override;
 
     inline void Set_Target_Current(float __Target_Current) override;
     inline void Set_Target_Speed(float __Target_Speed) override;
@@ -149,8 +149,19 @@ public:
     inline float Get_Speed() const override;
     inline float Get_Position() const override;
 
+    /**
+     * @brief 从 CAN 帧更新 Class_Motor_Base 统一反馈值
+     */
     void Update_Feedback() override;
+
+    /**
+     * @brief 控制周期主入口：反馈更新 → PID 计算 → 输出限幅
+     */
     void Calculate() override;
+
+    /**
+     * @brief 将计算结果写入 CAN 发送缓冲区
+     */
     void Output() override;
 
     /**
@@ -161,22 +172,29 @@ public:
     void FDCAN_RxCpltCallback(uint8_t* rx_data);
 
     /**
-     * @brief 100ms 在线检测
+     * @brief 100ms 心跳检测定时器回调
+     *
+     * 丢帧时判定电机离线，清零状态和积分。
      */
     void TIM_100ms_Alive_PeriodElapsedCallback();
 
     bool Is_Initialized() const;
     Enum_Motor_Status Get_Status() const;
 
+    /* ===== DJI C610 原生反馈值 ===== */
     inline float Get_Now_Angle() const;
     inline float Get_Now_Omega() const;
     inline float Get_Now_Current() const;
     inline float Get_Now_Temperature() const;
 
+    /* ===== 内部状态读取 ===== */
     inline float Get_Target_Current_Internal() const;
     inline float Get_Target_Omega_Internal() const;
     inline float Get_Output() const;
 
+    /**
+     * @brief 速度前馈 — 叠加到速度环目标，Limit_Output() 中自动清零
+     */
     inline void Set_Feedforward_Omega(float feedforward_omega);
     inline void Set_Feedforward_Current(float feedforward_current);
 
@@ -195,9 +213,14 @@ private:
     float Current_To_Out = 10000.0f / 10.0f;
     float Theoretical_Output_Current_Max = 10.0f;
 
+    /*
+     * 心跳检测：Flag 在每次收到反馈时自增，
+     * Pre_Flag 在 100ms 定时器中对比判断是否丢帧。
+     */
     uint32_t Flag = 0;
     uint32_t Pre_Flag = 0;
 
+    /* DJI CAN 协议待发送的电流值（已转换为协议格式） */
     float Out = 0.0f;
 
     Struct_Motor_DJI_C610_Rx_Data Rx_Data;
@@ -207,20 +230,20 @@ private:
      */
     Parameters Param;
     Enum_Motor_Status Motor_Status = Motor_Status_DISABLE;
-    Enum_Motor_Control_Mode Control_Mode = MOTOR_CONTROL_MODE_DISABLE;
+    Enum_Motor_Control_Method Control_Method = MOTOR_CONTROL_METHOD_CURRENT;
 
     float Target_Current = 0.0f;   // A, 上层目标电流
     float Target_Speed = 0.0f;     // rad/s, 上层目标速度
     float Target_Position = 0.0f;  // rad, 上层目标位置
 
-    // 电机接受到的反馈值，单位同 Target_* 单位
+    /* 电机接受到的反馈值，单位同 Target_* 单位 */
     float Feedback_Current = 0.0f;   // A
     float Feedback_Speed = 0.0f;     // rad/s
     float Feedback_Position = 0.0f;  // rad
 
     bool Initialized = false;
 
-
+    /* 前馈叠加量：由上层在 Calculate() 前写入，Limit_Output() 中清零 */
     float Feedforward_Speed = 0.0f;   // rad/s
     float Feedforward_Current = 0.0f; // A
 
@@ -243,10 +266,15 @@ private:
     void Limit_Output();
     void Output_CAN_Data();
 
+    /**
+     * @brief 将角度归一化到 [-2π, 2π] 区间
+     */
     static float Normalize_Angle(float angle);
     static float Limit(float value, float limit);
     static bool Is_Finite(float value);
 };
+
+/* ===== inline 实现：状态读取 ===== */
 
 inline Enum_Motor_Status Class_Motor_DJI_C610::Get_Status() const
 {
@@ -288,6 +316,8 @@ inline float Class_Motor_DJI_C610::Get_Output() const
     return Out;
 }
 
+/* ===== inline 实现：前馈写入（含 NaN/Inf 防护） ===== */
+
 inline void Class_Motor_DJI_C610::Set_Feedforward_Omega(float feedforward_omega)
 {
     if (Is_Finite(feedforward_omega))
@@ -303,62 +333,62 @@ inline void Class_Motor_DJI_C610::Set_Feedforward_Current(float feedforward_curr
         Feedforward_Current = feedforward_current;
     }
 }
-inline void Class_Motor_DJI_C610::Set_Control_Mode(Enum_Motor_Control_Mode mode)
+
+/* ===== inline 实现：Class_Motor_Base 接口 ===== */
+
+inline void Class_Motor_DJI_C610::Set_Control_Method(Enum_Motor_Control_Method __Method)
 {
-    Control_Mode = mode;
+    Control_Method = __Method;
 }
 
-inline void Class_Motor_DJI_C610::Set_Target_Current(float current)
+inline void Class_Motor_DJI_C610::Set_Target_Current(float __Target_Current)
 {
-    if (Is_Finite(current))
+    if (Is_Finite(__Target_Current))
     {
-        Target_Current = current;
+        Target_Current = __Target_Current;
     }
 }
 
-inline void Class_Motor_DJI_C610::Set_Target_Speed(float speed)
+inline void Class_Motor_DJI_C610::Set_Target_Speed(float __Target_Speed)
 {
-    if (Is_Finite(speed))
+    if (Is_Finite(__Target_Speed))
     {
-        /*
-         * C610 对外速度单位：rad/s
-         */
-        Target_Speed = speed;
+        /* C610 对外速度单位：rad/s */
+        Target_Speed = __Target_Speed;
     }
 }
 
-inline void Class_Motor_DJI_C610::Set_Target_Position(float position)
+inline void Class_Motor_DJI_C610::Set_Target_Position(float __Target_Position)
 {
-    if (Is_Finite(position))
+    if (Is_Finite(__Target_Position))
     {
-        /*
-         * C610 对外位置单位：rad
-         */
-        Target_Position = Normalize_Angle(position);
+        /* C610 对外位置单位：rad */
+        Target_Position = __Target_Position;
     }
 }
 
-inline void Class_Motor_DJI_C610::Set_Feedback_Current(float current)
+inline void Class_Motor_DJI_C610::Set_Feedback_Current(float __Feedback_Current)
 {
-    if (Is_Finite(current))
+    if (Is_Finite(__Feedback_Current))
     {
-        Feedback_Current = current;
+        Feedback_Current = __Feedback_Current;
     }
 }
 
-inline void Class_Motor_DJI_C610::Set_Feedback_Speed(float speed)
+inline void Class_Motor_DJI_C610::Set_Feedback_Speed(float __Feedback_Speed)
 {
-    if (Is_Finite(speed))
+    if (Is_Finite(__Feedback_Speed))
     {
-        Feedback_Speed = speed;
+        Feedback_Speed = __Feedback_Speed;
     }
 }
 
-inline void Class_Motor_DJI_C610::Set_Feedback_Position(float position)
+inline void Class_Motor_DJI_C610::Set_Feedback_Position(float __Feedback_Position)
 {
-    if (Is_Finite(position))
+    if (Is_Finite(__Feedback_Position))
     {
-        Feedback_Position = Normalize_Angle(position);
+        /* 外部位置反馈写入前归一化到 [-π, π] */
+        Feedback_Position = __Feedback_Position;
     }
 }
 
