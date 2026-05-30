@@ -219,7 +219,6 @@ private:
     void Apply_Drive_Target();
 
     static float Normalize_Angle(float angle);
-    static float Limit(float value, float limit);
     static bool Is_Finite(float value);
 };
 

@@ -2,6 +2,7 @@
 #define DVC_MOTOR_BASE_H
 
 #include <stdint.h>
+#include "drv_math.h"
 /**
  * @brief 通用电机状态
  */

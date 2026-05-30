@@ -560,25 +560,7 @@ float Class_Motor_DJI_C610::Normalize_Angle(float angle)
     return angle;
 }
 
-float Class_Motor_DJI_C610::Limit(float value, float limit)
-{
-    if (limit <= 0.0f)
-    {
-        return value;
-    }
 
-    if (value > limit)
-    {
-        return limit;
-    }
-
-    if (value < -limit)
-    {
-        return -limit;
-    }
-
-    return value;
-}
 /**
  * @brief 判断输入值是否为有限数
  *

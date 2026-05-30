@@ -100,7 +100,7 @@ bool Class_Swerve_Module::Set_Target_Speed_Angle(
 
     Current_Mode = Mode::Speed;
 
-    Module_Target.Speed_Mps = Limit(speed_mps, Param.Max_Speed_Mps);
+    Module_Target.Speed_Mps = Math_Constrain(&speed_mps, Param.Max_Speed_Mps, -Param.Max_Speed_Mps);
     Module_Target.Force_N = 0.0f;
     Module_Target.Current_A = 0.0f;
     Module_Target.Angle_Rad = Normalize_Angle(angle_rad);
@@ -122,7 +122,7 @@ bool Class_Swerve_Module::Set_Target_Force_Angle(
     Current_Mode = Mode::Force;
 
     Module_Target.Speed_Mps = 0.0f;
-    Module_Target.Force_N = Limit(force_n, Param.Max_Force_N);
+    Module_Target.Force_N = Math_Constrain(&force_n, Param.Max_Force_N, -Param.Max_Force_N);
     Module_Target.Current_A = 0.0f;
     Module_Target.Angle_Rad = Normalize_Angle(angle_rad);
 
@@ -143,8 +143,8 @@ bool Class_Swerve_Module::Set_Target_Speed_Force_Angle(
 
     Current_Mode = Mode::Speed_Force;
 
-    Module_Target.Speed_Mps = Limit(speed_mps, Param.Max_Speed_Mps);
-    Module_Target.Force_N = Limit(force_n, Param.Max_Force_N);
+    Module_Target.Speed_Mps = Math_Constrain(&speed_mps, Param.Max_Speed_Mps, -Param.Max_Speed_Mps);
+    Module_Target.Force_N = Math_Constrain(&force_n, Param.Max_Force_N, -Param.Max_Force_N);
     Module_Target.Current_A = 0.0f;
     Module_Target.Angle_Rad = Normalize_Angle(angle_rad);
 
@@ -173,10 +173,7 @@ void Class_Swerve_Module::Calculate()
     Module_Target.Current_A =
         Module_Target.Force_N * Param.Force_To_Current;
 
-    Module_Target.Current_A = Limit(
-        Module_Target.Current_A,
-        Param.Max_Current_A
-    );
+    Module_Target.Current_A = Math_Constrain(&Module_Target.Current_A, Param.Max_Current_A, -Param.Max_Current_A);
 
     Apply_Steer_Target();
     Apply_Drive_Target();
@@ -416,26 +413,6 @@ float Class_Swerve_Module::Normalize_Angle(float angle)
     }
 
     return angle;
-}
-
-float Class_Swerve_Module::Limit(float value, float limit)
-{
-    if (limit <= 0.0f)
-    {
-        return value;
-    }
-
-    if (value > limit)
-    {
-        return limit;
-    }
-
-    if (value < -limit)
-    {
-        return -limit;
-    }
-
-    return value;
 }
 
 bool Class_Swerve_Module::Is_Finite(float value)

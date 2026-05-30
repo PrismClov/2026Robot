@@ -1,6 +1,15 @@
 # Changelog
 ---
+# 2026年5月30日
+### 加入CRC校验
+- 添加 CRC 校验，防止数据传输错误导致数据错误。
+- 接口为
+```cpp
+void CRC8_UpdateByte(uint8_t &crc, uint8_t data);
 
+void void CRC8_Update_Buffer(uint8_t &crc, const uint8_t *data, uint32_t length);
+```
+---
 
 ## 2026-05-29
 

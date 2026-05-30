@@ -208,8 +208,6 @@ void Task100us_TIM4_Callback()
  *
  */
 uint8_t mod100 = 0;
-
-float new_2006_target_speed = 0.0f;
 void Task1ms_TIM5_Callback()
 {
   DWT_Update();
@@ -223,14 +221,7 @@ void Task1ms_TIM5_Callback()
     
     mod100 = 0;
   }
-  // M2006.Set_Control_Mode(MOTOR_CONTROL_MODE_SPEED);
-  // M2006.Set_Target_Speed(new_2006_target_speed);
-  // M2006.Calculate();
-//  Weapon_Grab.Motor_Rotate.CAN_Send_Set_Rx_ID(0xF1);
-//  Weapon_Grab.Motor_Rotate.CAN_Send_Set_Tx_ID(0x71);
-
-  // FDCAN_Send_Data(&hfdcan1, 0x01, data, FDCAN_ID_Standard, 8);
-  //chariot.TIM_2ms_Calculate_PeriodElapsedCallback();
+ 
 }
 /**
  * @brief 初始化任务
