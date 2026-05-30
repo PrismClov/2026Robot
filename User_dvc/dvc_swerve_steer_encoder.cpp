@@ -112,10 +112,10 @@ void Class_Encoder_Rudder::Data_Process()
     
     // crc校验待完善，暂不处理校验和字段
     
-    
-        // 计算角度
-        uint16_t raw_angle = (tmp_buffer->raw_angle_high << 8) | tmp_buffer->raw_angle_low;
-        Rx_Data.angle = Math_Int_To_Float(raw_angle, 0, 65535, 0.0f, 360.0f) / Gear_Ratio;
+
+    // 计算角度
+    uint16_t raw_angle = (tmp_buffer->raw_angle_high << 8) | tmp_buffer->raw_angle_low;
+    Rx_Data.angle = Math_Int_To_Float(raw_angle, 0, 65535, 0.0f, 360.0f) / Gear_Ratio;
         
     // 复制剩余字段 (从status开始到reserved)
     memcpy(&Rx_Data.status, &tmp_buffer->status, 

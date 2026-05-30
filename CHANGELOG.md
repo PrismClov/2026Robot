@@ -9,6 +9,9 @@ void CRC8_UpdateByte(uint8_t &crc, uint8_t data);
 
 void void CRC8_Update_Buffer(uint8_t &crc, const uint8_t *data, uint32_t length);
 ```
+
+### 引入命名空间
+- 添加命名空间 `namespace Motor`，避免命名冲突。
 ---
 
 ## 2026-05-29

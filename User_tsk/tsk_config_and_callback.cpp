@@ -56,7 +56,7 @@ uint32_t flag = 0;
 
 
 /* Private function declarations ---------------------------------------------*/
-Class_Motor_DJI_C610 M2006;
+Motor::Class_Motor_DJI_C610 M2006;
 Class_Encoder_Rudder Steer_Encoder;
 /* Function prototypes -------------------------------------------------------*/
 

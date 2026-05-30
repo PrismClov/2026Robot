@@ -6,6 +6,8 @@ namespace
     constexpr float kTwoPi = 2.0f * kPi;
 }
 
+namespace Motor
+{
 /**
  * @brief 重载 Init() — 默认控制参数版本
  */
@@ -571,4 +573,6 @@ float Class_Motor_DJI_C610::Normalize_Angle(float angle)
 bool Class_Motor_DJI_C610::Is_Finite(float value)
 {
     return isfinite(value);
+}
+
 }

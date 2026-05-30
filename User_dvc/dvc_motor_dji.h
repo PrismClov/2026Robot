@@ -55,7 +55,9 @@ struct Struct_Motor_DJI_C610_Rx_Data
     int32_t Total_Encoder = 0;
     int32_t Total_Round = 0;
 };
-
+namespace Motor
+{
+    
 /**
  * @brief DJI C610 电机类，直接继承 Class_Motor_Base
  *
@@ -407,3 +409,5 @@ inline float Class_Motor_DJI_C610::Get_Position() const
     return Feedback_Position;
 }
 #endif
+
+}
