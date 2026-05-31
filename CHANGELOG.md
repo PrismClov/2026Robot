@@ -1,5 +1,23 @@
 # Changelog
 ---
+# 2026年5月31日
+###添加`DJI_Send_Group`函数
+- 添加 `DJI_Send_Group` 函数，用于发送多个 CAN 帧。
+- 0x201~0x204共用一个发送ID::0x200 和发送缓冲区
+- 0x205~0x204共用一个发送ID::0x1FF 和发送缓冲区
+```cpp
+
+enum Enum_CAN_Tx_ID
+{
+    CAN_Tx_ID_0x200_Only = 0,
+    CAN_Tx_ID_0x1FF_Only,
+    CAN_Tx_ID_Both
+};
+
+void DJI_TIM_Send_Group(FDCAN_HandleTypeDef *hfdcan, Enum_CAN_Tx_ID __Enum_CAN_Tx_ID);
+
+```
+---
 # 2026年5月30日
 ### 加入CRC校验
 - 添加 CRC 校验，防止数据传输错误导致数据错误。

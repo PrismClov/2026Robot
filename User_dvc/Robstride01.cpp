@@ -54,7 +54,7 @@ void Class_RobStride_Motor::Init(FDCAN_HandleTypeDef *hfdcan, uint8_t __CAN_ID, 
 
     CAN_ID = __CAN_ID;
     Master_ID = __Master_ID;
-		CAN_Mode = __CAN_Mode;
+    CAN_Mode = __CAN_Mode;
 }
 
 /**

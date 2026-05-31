@@ -8,6 +8,7 @@ namespace
 
 namespace Motor
 {
+    
 /**
  * @brief 重载 Init() — 默认控制参数版本
  */
@@ -163,7 +164,7 @@ bool Class_Motor_DJI_C610::Check_Parameters(const Parameters& parameters) const
  * DJI C610 每个电机占用 2 字节（电流目标高/低各 1 字节），
  * 同一 ID 组（0x200 / 0x1FF）的 4 个电机共享一个 CAN 帧。
  */
-uint8_t* Class_Motor_DJI_C610::Allocate_Tx_Data(
+uint8_t* Allocate_Tx_Data(
     FDCAN_HandleTypeDef* hfdcan,
     Enum_Motor_DJI_C610_ID fdcan_rx_id
 )
@@ -400,6 +401,7 @@ void Class_Motor_DJI_C610::Output_CAN_Data()
 
     Tx_Data[0] = (int16_t)Out >> 8;
     Tx_Data[1] = (int16_t)Out;
+
 }
 
 /**
@@ -575,4 +577,61 @@ bool Class_Motor_DJI_C610::Is_Finite(float value)
     return isfinite(value);
 }
 
+}
+
+
+/**
+ * @brief 大疆电机统一发送接口
+ * C610 C620
+ * @return
+ */
+void DJI_TIM_Send_Group(FDCAN_HandleTypeDef *hfdcan, Enum_CAN_Tx_ID __Enum_CAN_Tx_ID)
+{
+    if (hfdcan == nullptr)
+    {
+        return;
+    }
+
+    // C610 C620共用 0x200 和 0x1FF 两组 ID，分别对应 FDCAN1_0x200_Tx_Data 和 FDCAN1_0x1ff_Tx_Data 共享缓冲区
+    // 0x201 ~ 0x204 使用 0x200 组，0x205 ~ 0x208 使用 0x1FF 组
+    // DJI电调使用标准帧 ID，数据长度固定为 8 字节，每个电机占用 2 字节（高字节 + 低字节）
+    uint8_t *tx_data = nullptr;
+    switch (__Enum_CAN_Tx_ID)
+    {
+    case CAN_Tx_ID_0x200_Only:
+    {
+        //绑定0x201~0x204的电机ID到0x200组发送缓冲区
+        tx_data = Motor::Allocate_Tx_Data(hfdcan, Motor_DJI_C610_ID_0x201);
+        if (tx_data != nullptr)
+        FDCAN_Send_Data(hfdcan, 0x200, tx_data, FDCAN_ID_Standard);
+        break;
+    }
+
+    case CAN_Tx_ID_0x1FF_Only:
+    {
+        //绑定0x205~0x208的电机ID到0x1FF组发送缓冲区
+        tx_data = Motor::Allocate_Tx_Data(hfdcan, Motor_DJI_C610_ID_0x205);
+        if (tx_data != nullptr)
+        FDCAN_Send_Data(hfdcan, 0x1FF, tx_data, FDCAN_ID_Standard);
+        break;
+    }
+
+    case CAN_Tx_ID_Both:
+    {
+        //绑定0x201~0x204和0x205~0x208的电机ID到0x200组和0x1FF组发送缓冲区
+        tx_data = Motor::Allocate_Tx_Data(hfdcan, Motor_DJI_C610_ID_0x201);
+
+        if (tx_data != nullptr)
+        FDCAN_Send_Data(hfdcan, 0x200, tx_data, FDCAN_ID_Standard);
+
+        tx_data = Motor::Allocate_Tx_Data(hfdcan, Motor_DJI_C610_ID_0x205);
+
+        if (tx_data != nullptr)
+        FDCAN_Send_Data(hfdcan, 0x1FF, tx_data, FDCAN_ID_Standard);
+        break;
+    }
+
+    default:
+        break;
+    }
 }

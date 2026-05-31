@@ -207,6 +207,7 @@ void Task100us_TIM4_Callback()
  * @brief TIM5任务回调函数
  *
  */
+float Target_Position = 0.0;
 uint8_t mod100 = 0;
 void Task1ms_TIM5_Callback()
 {
@@ -218,7 +219,11 @@ void Task1ms_TIM5_Callback()
   if (mod100 >= 100)
   {
     //chariot.TIM_100ms_Alive_PeriodElapsedCallback();
-    
+   // M2006.TIM_100ms_Alive_PeriodElapsedCallback();
+    M2006.Set_Control_Method(MOTOR_CONTROL_METHOD_POSITION);
+    M2006.Set_Target_Position(Target_Position);
+    M2006.Calculate();
+    FDCAN_Send_Data(&hfdcan1, 0x200, FDCAN1_0x200_Tx_Data, FDCAN_ID_Standard);
     mod100 = 0;
   }
  
@@ -244,6 +249,8 @@ void Task_Init()
   TIM_Init(&htim5, Task1ms_TIM5_Callback);
   //chariot.Init(0.03);
   M2006.Init(&hfdcan1, Motor_DJI_C610_ID_0x201);
+  M2006.PID_Omega.Init(0, 0.0, 0.0, 0.0, 0.0, 0.0);
+  M2006.PID_Position.Init(0, 0.0, 0.0, 0.0, 0.0, 0.0);
   Steer_Encoder.Init(&hfdcan3, 0x201);
 
   // 战车层初始化

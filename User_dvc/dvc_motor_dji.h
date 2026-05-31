@@ -28,7 +28,15 @@ enum Enum_Motor_DJI_C610_ID
     Motor_DJI_C610_ID_0x207,
     Motor_DJI_C610_ID_0x208,
 };
-
+/**
+ * @brief DJI 电机CAN发送ID
+ */
+enum Enum_CAN_Tx_ID
+{
+    CAN_Tx_ID_0x200_Only = 0,
+    CAN_Tx_ID_0x1FF_Only,
+    CAN_Tx_ID_Both
+};
 /**
  * @brief DJI 电机 CAN 原始反馈数据
  */
@@ -72,6 +80,11 @@ namespace Motor
  * - POSITION 模式使用外部绝对编码器反馈
  * - 通过 Set_Feedback_Position(absolute_angle_rad) 输入舵向真实角度
  */
+uint8_t* Allocate_Tx_Data(
+    FDCAN_HandleTypeDef* hfdcan,
+    Enum_Motor_DJI_C610_ID fdcan_rx_id
+);
+void DJI_TIM_Send_Group(FDCAN_HandleTypeDef *hfdcan, Enum_CAN_Tx_ID __Enum_CAN_Tx_ID);
 class Class_Motor_DJI_C610 : public Class_Motor_Base
 {
 public:
@@ -95,7 +108,7 @@ public:
          * false:
          *   POSITION 模式使用 C610 自身编码器反馈 Rx_Data.Now_Angle
          */
-        bool Use_External_Position_Feedback = true;
+        bool Use_External_Position_Feedback = false;
     };
 
 public:
@@ -253,10 +266,6 @@ private:
 private:
     bool Check_Parameters(const Parameters& parameters) const;
 
-    uint8_t* Allocate_Tx_Data(
-        FDCAN_HandleTypeDef* hfdcan,
-        Enum_Motor_DJI_C610_ID fdcan_rx_id
-    );
 
     void Data_Process();
 
