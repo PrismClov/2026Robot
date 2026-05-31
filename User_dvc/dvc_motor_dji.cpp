@@ -23,9 +23,9 @@ bool Class_Motor_DJI_C610::Init(
     return Init(
         hfdcan,
         fdcan_rx_id,
+        default_parameters,
         gearbox_rate,
-        current_max,
-        default_parameters
+        current_max
     );
 }
 /**
@@ -40,9 +40,9 @@ bool Class_Motor_DJI_C610::Init(
 bool Class_Motor_DJI_C610::Init(
     FDCAN_HandleTypeDef* hfdcan,
     Enum_Motor_DJI_C610_ID fdcan_rx_id,
+    const Parameters& parameters,
     float gearbox_rate,
-    float current_max,
-    const Parameters& parameters
+    float current_max
 )
 {
     Initialized = false;
@@ -107,8 +107,6 @@ bool Class_Motor_DJI_C610::Init(
     Feedback_Speed = 0.0f;
     Feedback_Position = 0.0f;
 
-    Target_Speed = 0.0f;
-
     Feedforward_Speed = 0.0f;
     Feedforward_Current = 0.0f;
 
@@ -119,12 +117,37 @@ bool Class_Motor_DJI_C610::Init(
     Motor_Status = Motor_Status_DISABLE;
     Rx_Data = {};
 
+    // PID 初始化
+    PID_Position.Init(parameters.PID_Position.K_P,
+                      parameters.PID_Position.K_I,
+                      parameters.PID_Position.K_D,
+                      parameters.PID_Position.K_F,
+                      parameters.PID_Position.I_Out_Max,
+                      parameters.PID_Position.Out_Max,
+                      parameters.PID_Position.D_T,
+                      parameters.PID_Position.Dead_Zone,
+                      parameters.PID_Position.I_Variable_Speed_A,
+                      parameters.PID_Position.I_Variable_Speed_B,
+                      parameters.PID_Position.I_Separate_Threshold,
+                      parameters.PID_Position.D_First);
+
+    PID_Omega.Init(parameters.PID_Omega.K_P,
+                   parameters.PID_Omega.K_I,
+                   parameters.PID_Omega.K_D,
+                   parameters.PID_Omega.K_F,
+                   parameters.PID_Omega.I_Out_Max,
+                   parameters.PID_Omega.Out_Max,
+                   parameters.PID_Omega.D_T,
+                   parameters.PID_Omega.Dead_Zone,
+                   parameters.PID_Omega.I_Variable_Speed_A,
+                   parameters.PID_Omega.I_Variable_Speed_B,
+                   parameters.PID_Omega.I_Separate_Threshold,
+                   parameters.PID_Omega.D_First);
 
     Initialized = true;
 
     return true;
 }
-
 void Class_Motor_DJI_C610::Init()
 {
     /*
@@ -140,17 +163,17 @@ void Class_Motor_DJI_C610::Init()
  */
 bool Class_Motor_DJI_C610::Check_Parameters(const Parameters& parameters) const
 {
-    if (!Is_Finite(parameters.Position_Kp) ||
-        !Is_Finite(parameters.Position_Ki) ||
-        !Is_Finite(parameters.Position_Kd) ||
-        !Is_Finite(parameters.Position_Integral_Limit) ||
-        !Is_Finite(parameters.Position_Output_Limit))
+    if (!Is_Finite(parameters.PID_Position.K_P) ||
+        !Is_Finite(parameters.PID_Position.K_I) ||
+        !Is_Finite(parameters.PID_Position.K_D) ||
+        !Is_Finite(parameters.PID_Position.I_Out_Max) ||
+        !Is_Finite(parameters.PID_Position.Out_Max))
     {
         return false;
     }
 
-    if (parameters.Position_Integral_Limit < 0.0f ||
-        parameters.Position_Output_Limit <= 0.0f)
+    if (parameters.PID_Position.I_Out_Max < 0.0f ||
+        parameters.PID_Position.Out_Max <= 0.0f)
     {
         return false;
     }
@@ -576,10 +599,6 @@ bool Class_Motor_DJI_C610::Is_Finite(float value)
 {
     return isfinite(value);
 }
-
-}
-
-
 /**
  * @brief 大疆电机统一发送接口
  * C610 C620
@@ -601,7 +620,7 @@ void DJI_TIM_Send_Group(FDCAN_HandleTypeDef *hfdcan, Enum_CAN_Tx_ID __Enum_CAN_T
     case CAN_Tx_ID_0x200_Only:
     {
         //绑定0x201~0x204的电机ID到0x200组发送缓冲区
-        tx_data = Motor::Allocate_Tx_Data(hfdcan, Motor_DJI_C610_ID_0x201);
+        tx_data = Allocate_Tx_Data(hfdcan, Motor_DJI_C610_ID_0x201);
         if (tx_data != nullptr)
         FDCAN_Send_Data(hfdcan, 0x200, tx_data, FDCAN_ID_Standard);
         break;
@@ -610,7 +629,7 @@ void DJI_TIM_Send_Group(FDCAN_HandleTypeDef *hfdcan, Enum_CAN_Tx_ID __Enum_CAN_T
     case CAN_Tx_ID_0x1FF_Only:
     {
         //绑定0x205~0x208的电机ID到0x1FF组发送缓冲区
-        tx_data = Motor::Allocate_Tx_Data(hfdcan, Motor_DJI_C610_ID_0x205);
+        tx_data = Allocate_Tx_Data(hfdcan, Motor_DJI_C610_ID_0x205);
         if (tx_data != nullptr)
         FDCAN_Send_Data(hfdcan, 0x1FF, tx_data, FDCAN_ID_Standard);
         break;
@@ -619,12 +638,12 @@ void DJI_TIM_Send_Group(FDCAN_HandleTypeDef *hfdcan, Enum_CAN_Tx_ID __Enum_CAN_T
     case CAN_Tx_ID_Both:
     {
         //绑定0x201~0x204和0x205~0x208的电机ID到0x200组和0x1FF组发送缓冲区
-        tx_data = Motor::Allocate_Tx_Data(hfdcan, Motor_DJI_C610_ID_0x201);
+        tx_data = Allocate_Tx_Data(hfdcan, Motor_DJI_C610_ID_0x201);
 
         if (tx_data != nullptr)
         FDCAN_Send_Data(hfdcan, 0x200, tx_data, FDCAN_ID_Standard);
 
-        tx_data = Motor::Allocate_Tx_Data(hfdcan, Motor_DJI_C610_ID_0x205);
+        tx_data = Allocate_Tx_Data(hfdcan, Motor_DJI_C610_ID_0x205);
 
         if (tx_data != nullptr)
         FDCAN_Send_Data(hfdcan, 0x1FF, tx_data, FDCAN_ID_Standard);
@@ -635,3 +654,7 @@ void DJI_TIM_Send_Group(FDCAN_HandleTypeDef *hfdcan, Enum_CAN_Tx_ID __Enum_CAN_T
         break;
     }
 }
+
+}
+
+
