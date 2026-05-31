@@ -1,0 +1,11 @@
+>>> cc
+
+In file included from ./../User_chariot/crt_lift.cpp:1:
+In file included from ../User_chariot/crt_lift.h:7:
+../User_dvc\dvc_dwt.h:4:10: fatal error: 'stm32h5xx_hal.h' file not found
+#include "stm32h5xx_hal.h"
+         ^~~~~~~~~~~~~~~~~
+1 error generated.
+
+>>> ld
+

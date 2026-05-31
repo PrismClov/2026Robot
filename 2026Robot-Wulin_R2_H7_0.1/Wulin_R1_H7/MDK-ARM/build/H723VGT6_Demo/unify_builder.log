@@ -1,0 +1,285 @@
+[2026-05-26 22:15:10]	[info] incremental build: 3 source files changed
+These source files will be recompiled
+---
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_chariot\crt_lift.cpp': dependence 'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\MDK-ARM\..\User_chariot\crt_lift.h' has been changed.
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_ita\ita_robot.cpp': dependence 'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\MDK-ARM\..\User_chariot\crt_lift.h' has been changed.
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_tsk\tsk_config_and_callback.cpp': dependence 'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\MDK-ARM\..\User_chariot\crt_lift.h' has been changed.
+
+[2026-05-26 22:15:11]	[done]
+	build successfully !
+
+[2026-05-27 19:59:11]	[info] incremental build: 3 source files changed
+These source files will be recompiled
+---
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_chariot\crt_lift.cpp': source file has been changed.
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_ita\ita_robot.cpp': source file has been changed.
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_tsk\tsk_config_and_callback.cpp': dependence 'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\MDK-ARM\..\User_chariot\crt_lift.h' has been changed.
+
+[2026-05-27 19:59:11]	compilation failed at : "e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_chariot\crt_lift.cpp", exit code: 1
+command: 
+  "C:\Keil_v5\ARM\ARMCLANG\bin\armclang.exe" --target=arm-arm-none-eabi -c -xc++ -std=c++11 -I../Core/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I../Drivers/CMSIS/Include -I../Middlewares/ST/ARM/DSP/Inc -I../User_chariot/Chassis -I../User_drv -I../User_ita -I../User_tsk -I.cmsis/include -IRTE/_H723VGT6_Demo -I../User_chariot -I../User_chariot/KFS -I../User_dvc -I../User_alg -D"USE_HAL_DRIVER" -D"STM32H723xx" -D"ARM_MATH_CM7" -mfloat-abi=hard -mfpu=fpv5-d16 -mcpu=cortex-m7 -mlittle-endian -O0 -ffunction-sections -funsigned-char -fshort-enums -fshort-wchar -fno-rtti -w -g -o ./build/H723VGT6_Demo/.obj/__/User_chariot/crt_lift.o -MMD ./../User_chariot/crt_lift.cpp
+   at unify_builder.Program.Main(String[] args_)
+---
+./../User_chariot/crt_lift.cpp:442:1: error: unknown type name 'Class'; did you mean 'class'?
+Class Lift::TIM_100ms_Alive_PeriodElapsedCallback()
+^~~~~
+class
+./../User_chariot/crt_lift.cpp:442:7: error: use of undeclared identifier 'Lift'
+Class Lift::TIM_100ms_Alive_PeriodElapsedCallback()
+      ^
+./../User_chariot/crt_lift.cpp:442:51: error: expected unqualified-id
+Class Lift::TIM_100ms_Alive_PeriodElapsedCallback()
+                                                  ^
+3 errors generated.
+
+[2026-05-27 20:04:22]	[info] incremental build: 3 source files changed
+These source files will be recompiled
+---
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_chariot\crt_lift.cpp': object (.o) file not exist
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_ita\ita_robot.cpp': source file has been changed.
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_tsk\tsk_config_and_callback.cpp': dependence 'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\MDK-ARM\..\User_chariot\crt_lift.h' has been changed.
+
+[2026-05-27 20:04:23]	[done]
+	build successfully !
+
+[2026-05-27 20:04:54]	[info] incremental build: 1 source files changed
+These source files will be recompiled
+---
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_chariot\crt_lift.cpp': source file has been changed.
+
+[2026-05-27 20:04:54]	compilation failed at : "e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_chariot\crt_lift.cpp", exit code: 1
+command: 
+  "C:\Keil_v5\ARM\ARMCLANG\bin\armclang.exe" --target=arm-arm-none-eabi -c -xc++ -std=c++11 -I../Core/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I../Drivers/CMSIS/Include -I../Middlewares/ST/ARM/DSP/Inc -I../User_chariot/Chassis -I../User_drv -I../User_ita -I../User_tsk -I.cmsis/include -IRTE/_H723VGT6_Demo -I../User_chariot -I../User_chariot/KFS -I../User_dvc -I../User_alg -D"USE_HAL_DRIVER" -D"STM32H723xx" -D"ARM_MATH_CM7" -mfloat-abi=hard -mfpu=fpv5-d16 -mcpu=cortex-m7 -mlittle-endian -O0 -ffunction-sections -funsigned-char -fshort-enums -fshort-wchar -fno-rtti -w -g -o ./build/H723VGT6_Demo/.obj/__/User_chariot/crt_lift.o -MMD ./../User_chariot/crt_lift.cpp
+   at unify_builder.Program.Main(String[] args_)
+---
+./../User_chariot/crt_lift.cpp:443:5: error: use of undeclared identifier 'Lift'
+    Lift->Check_Motor_Block();
+    ^
+1 error generated.
+
+[2026-05-27 20:05:00]	[info] incremental build: 1 source files changed
+These source files will be recompiled
+---
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_chariot\crt_lift.cpp': object (.o) file not exist
+
+[2026-05-27 20:05:02]	[done]
+	build successfully !
+
+[2026-05-27 20:11:22]	[info] incremental build: 1 source files changed
+These source files will be recompiled
+---
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_chariot\crt_lift.cpp': source file has been changed.
+
+[2026-05-27 20:11:23]	[done]
+	build successfully !
+
+[2026-05-28 20:29:25]	[info] incremental build: 3 source files changed
+These source files will be recompiled
+---
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_chariot\crt_lift.cpp': source file has been changed.
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_ita\ita_robot.cpp': dependence 'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\MDK-ARM\..\User_chariot\crt_lift.h' has been changed.
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_tsk\tsk_config_and_callback.cpp': dependence 'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\MDK-ARM\..\User_chariot\crt_lift.h' has been changed.
+
+[2026-05-28 20:29:26]	compilation failed at : "e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_chariot\crt_lift.cpp", exit code: 1
+command: 
+  "C:\Keil_v5\ARM\ARMCLANG\bin\armclang.exe" --target=arm-arm-none-eabi -c -xc++ -std=c++11 -I../Core/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I../Drivers/CMSIS/Include -I../Middlewares/ST/ARM/DSP/Inc -I../User_chariot/Chassis -I../User_drv -I../User_ita -I../User_tsk -I.cmsis/include -IRTE/_H723VGT6_Demo -I../User_chariot -I../User_chariot/KFS -I../User_dvc -I../User_alg -D"USE_HAL_DRIVER" -D"STM32H723xx" -D"ARM_MATH_CM7" -mfloat-abi=hard -mfpu=fpv5-d16 -mcpu=cortex-m7 -mlittle-endian -O0 -ffunction-sections -funsigned-char -fshort-enums -fshort-wchar -fno-rtti -w -g -o ./build/H723VGT6_Demo/.obj/__/User_chariot/crt_lift.o -MMD ./../User_chariot/crt_lift.cpp
+   at unify_builder.Program.Main(String[] args_)
+---
+./../User_chariot/crt_lift.cpp:453:1: error: function definition is not allowed here
+{
+^
+./../User_chariot/crt_lift.cpp:468:1: error: function definition is not allowed here
+{
+^
+./../User_chariot/crt_lift.cpp:491:2: error: function definition is not allowed here
+ {
+ ^
+./../User_chariot/crt_lift.cpp:509:3: error: expected '}'
+ }
+  ^
+./../User_chariot/crt_lift.cpp:316:2: note: to match this '{'
+ {
+ ^
+4 errors generated.
+
+[2026-05-28 20:40:35]	[info] incremental build: 3 source files changed
+These source files will be recompiled
+---
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_chariot\crt_lift.cpp': object (.o) file not exist
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_ita\ita_robot.cpp': dependence 'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\MDK-ARM\..\User_chariot\crt_lift.h' has been changed.
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_tsk\tsk_config_and_callback.cpp': dependence 'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\MDK-ARM\..\User_chariot\crt_lift.h' has been changed.
+
+[2026-05-28 20:40:37]	[done]
+	build successfully !
+
+[2026-05-28 20:40:52]	[info] incremental build: 1 source files changed
+These source files will be recompiled
+---
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_chariot\crt_lift.cpp': source file has been changed.
+
+[2026-05-28 20:40:53]	[done]
+	build successfully !
+
+[2026-05-28 20:46:30]	[info] incremental build: 1 source files changed
+These source files will be recompiled
+---
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_chariot\crt_lift.cpp': source file has been changed.
+
+[2026-05-28 20:46:31]	[done]
+	build successfully !
+
+[2026-05-28 21:02:02]	[info] incremental build: 6 source files changed
+These source files will be recompiled
+---
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_chariot\crt_chassis.cpp': dependence 'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\MDK-ARM\..\User_dvc\dvc_motor_dji.h' has been changed.
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_chariot\crt_lift.cpp': source file has been changed.
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_chariot\crt_weapon_head.cpp': dependence 'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\MDK-ARM\..\User_dvc\dvc_motor_dji.h' has been changed.
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_dvc\dvc_motor_dji.cpp': dependence 'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\MDK-ARM\..\User_dvc\dvc_motor_dji.h' has been changed.
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_ita\ita_robot.cpp': dependence 'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\MDK-ARM\..\User_dvc\dvc_motor_dji.h' has been changed.
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_tsk\tsk_config_and_callback.cpp': dependence 'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\MDK-ARM\..\User_dvc\dvc_motor_dji.h' has been changed.
+
+[2026-05-28 21:02:03]	compilation failed at : "e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_chariot\crt_lift.cpp", exit code: 1
+command: 
+  "C:\Keil_v5\ARM\ARMCLANG\bin\armclang.exe" --target=arm-arm-none-eabi -c -xc++ -std=c++11 -I../Core/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I../Drivers/CMSIS/Include -I../Middlewares/ST/ARM/DSP/Inc -I../User_chariot/Chassis -I../User_drv -I../User_ita -I../User_tsk -I.cmsis/include -IRTE/_H723VGT6_Demo -I../User_chariot -I../User_chariot/KFS -I../User_dvc -I../User_alg -D"USE_HAL_DRIVER" -D"STM32H723xx" -D"ARM_MATH_CM7" -mfloat-abi=hard -mfpu=fpv5-d16 -mcpu=cortex-m7 -mlittle-endian -O0 -ffunction-sections -funsigned-char -fshort-enums -fshort-wchar -fno-rtti -w -g -o ./build/H723VGT6_Demo/.obj/__/User_chariot/crt_lift.o -MMD ./../User_chariot/crt_lift.cpp
+   at unify_builder.Program.Main(String[] args_)
+---
+./../User_chariot/crt_lift.cpp:294:8: error: use of undeclared identifier 'Lift'
+    if(Lift->Is_Calibrate_Finished())
+       ^
+1 error generated.
+
+[2026-05-28 21:02:18]	[info] incremental build: 5 source files changed
+These source files will be recompiled
+---
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_chariot\crt_lift.cpp': object (.o) file not exist
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_chariot\crt_weapon_head.cpp': dependence 'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\MDK-ARM\..\User_dvc\dvc_motor_dji.h' has been changed.
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_dvc\dvc_motor_dji.cpp': dependence 'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\MDK-ARM\..\User_dvc\dvc_motor_dji.h' has been changed.
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_ita\ita_robot.cpp': dependence 'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\MDK-ARM\..\User_dvc\dvc_motor_dji.h' has been changed.
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_tsk\tsk_config_and_callback.cpp': dependence 'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\MDK-ARM\..\User_dvc\dvc_motor_dji.h' has been changed.
+
+[2026-05-28 21:02:20]	[done]
+	build successfully !
+
+[2026-05-28 21:18:07]	[info] incremental build: 6 source files changed
+These source files will be recompiled
+---
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_chariot\crt_chassis.cpp': dependence 'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\MDK-ARM\..\User_dvc\dvc_motor_dji.h' has been changed.
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_chariot\crt_lift.cpp': source file has been changed.
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_chariot\crt_weapon_head.cpp': dependence 'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\MDK-ARM\..\User_dvc\dvc_motor_dji.h' has been changed.
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_dvc\dvc_motor_dji.cpp': source file has been changed.
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_ita\ita_robot.cpp': dependence 'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\MDK-ARM\..\User_dvc\dvc_motor_dji.h' has been changed.
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_tsk\tsk_config_and_callback.cpp': dependence 'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\MDK-ARM\..\User_dvc\dvc_motor_dji.h' has been changed.
+
+[2026-05-28 21:18:10]	[done]
+	build successfully !
+
+[2026-05-28 21:24:56]	[info] incremental build: 3 source files changed
+These source files will be recompiled
+---
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_chariot\crt_lift.cpp': source file has been changed.
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_ita\ita_robot.cpp': dependence 'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\MDK-ARM\..\User_chariot\crt_lift.h' has been changed.
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_tsk\tsk_config_and_callback.cpp': dependence 'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\MDK-ARM\..\User_chariot\crt_lift.h' has been changed.
+
+[2026-05-28 21:24:56]	compilation failed at : "e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_chariot\crt_lift.cpp", exit code: 1
+command: 
+  "C:\Keil_v5\ARM\ARMCLANG\bin\armclang.exe" --target=arm-arm-none-eabi -c -xc++ -std=c++11 -I../Core/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I../Drivers/CMSIS/Include -I../Middlewares/ST/ARM/DSP/Inc -I../User_chariot/Chassis -I../User_drv -I../User_ita -I../User_tsk -I.cmsis/include -IRTE/_H723VGT6_Demo -I../User_chariot -I../User_chariot/KFS -I../User_dvc -I../User_alg -D"USE_HAL_DRIVER" -D"STM32H723xx" -D"ARM_MATH_CM7" -mfloat-abi=hard -mfpu=fpv5-d16 -mcpu=cortex-m7 -mlittle-endian -O0 -ffunction-sections -funsigned-char -fshort-enums -fshort-wchar -fno-rtti -w -g -o ./build/H723VGT6_Demo/.obj/__/User_chariot/crt_lift.o -MMD ./../User_chariot/crt_lift.cpp
+   at unify_builder.Program.Main(String[] args_)
+---
+./../User_chariot/crt_lift.cpp:85:98: error: use of undeclared identifier 'Caliberate_Out'; did you mean 'Calibrate_Out'?
+    if(Math_Abs(Now_Distance[0]) >= Distance_Caliberate && Math_Abs(Motor_Lift_L.Get_Omega()) <= Caliberate_Out[0])
+                                                                                                 ^~~~~~~~~~~~~~
+                                                                                                 Calibrate_Out
+../User_chariot/crt_lift.h:204:11: note: 'Calibrate_Out' declared here
+    float Calibrate_Out[2] = { 1.0f, 1.0f };
+          ^
+./../User_chariot/crt_lift.cpp:85:82: error: no member named 'Get_Omega' in 'Class_Motor_DJI_C620'
+    if(Math_Abs(Now_Distance[0]) >= Distance_Caliberate && Math_Abs(Motor_Lift_L.Get_Omega()) <= Caliberate_Out[0])
+                                                                    ~~~~~~~~~~~~ ^
+./../User_chariot/crt_lift.cpp:99:98: error: use of undeclared identifier 'Caliberate_Out'; did you mean 'Calibrate_Out'?
+    if(Math_Abs(Now_Distance[1]) >= Distance_Caliberate && Math_Abs(Motor_Lift_R.Get_Omega()) <= Caliberate_Out[1])
+                                                                                                 ^~~~~~~~~~~~~~
+                                                                                                 Calibrate_Out
+../User_chariot/crt_lift.h:204:11: note: 'Calibrate_Out' declared here
+    float Calibrate_Out[2] = { 1.0f, 1.0f };
+          ^
+./../User_chariot/crt_lift.cpp:99:82: error: no member named 'Get_Omega' in 'Class_Motor_DJI_C620'
+    if(Math_Abs(Now_Distance[1]) >= Distance_Caliberate && Math_Abs(Motor_Lift_R.Get_Omega()) <= Caliberate_Out[1])
+                                                                    ~~~~~~~~~~~~ ^
+4 errors generated.
+
+[2026-05-28 21:25:29]	[info] incremental build: 3 source files changed
+These source files will be recompiled
+---
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_chariot\crt_lift.cpp': object (.o) file not exist
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_ita\ita_robot.cpp': dependence 'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\MDK-ARM\..\User_chariot\crt_lift.h' has been changed.
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_tsk\tsk_config_and_callback.cpp': dependence 'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\MDK-ARM\..\User_chariot\crt_lift.h' has been changed.
+
+[2026-05-28 21:25:29]	compilation failed at : "e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_chariot\crt_lift.cpp", exit code: 1
+command: 
+  "C:\Keil_v5\ARM\ARMCLANG\bin\armclang.exe" --target=arm-arm-none-eabi -c -xc++ -std=c++11 -I../Core/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I../Drivers/CMSIS/Include -I../Middlewares/ST/ARM/DSP/Inc -I../User_chariot/Chassis -I../User_drv -I../User_ita -I../User_tsk -I.cmsis/include -IRTE/_H723VGT6_Demo -I../User_chariot -I../User_chariot/KFS -I../User_dvc -I../User_alg -D"USE_HAL_DRIVER" -D"STM32H723xx" -D"ARM_MATH_CM7" -mfloat-abi=hard -mfpu=fpv5-d16 -mcpu=cortex-m7 -mlittle-endian -O0 -ffunction-sections -funsigned-char -fshort-enums -fshort-wchar -fno-rtti -w -g -o ./build/H723VGT6_Demo/.obj/__/User_chariot/crt_lift.o -MMD ./../User_chariot/crt_lift.cpp
+   at unify_builder.Program.Main(String[] args_)
+---
+./../User_chariot/crt_lift.cpp:85:102: error: use of undeclared identifier 'Caliberate_Out'; did you mean 'Calibrate_Out'?
+    if(Math_Abs(Now_Distance[0]) >= Distance_Caliberate && Math_Abs(Motor_Lift_L.Get_Now_Omega()) <= Caliberate_Out[0])
+                                                                                                     ^~~~~~~~~~~~~~
+                                                                                                     Calibrate_Out
+../User_chariot/crt_lift.h:204:11: note: 'Calibrate_Out' declared here
+    float Calibrate_Out[2] = { 1.0f, 1.0f };
+          ^
+./../User_chariot/crt_lift.cpp:99:102: error: use of undeclared identifier 'Caliberate_Out'; did you mean 'Calibrate_Out'?
+    if(Math_Abs(Now_Distance[1]) >= Distance_Caliberate && Math_Abs(Motor_Lift_R.Get_Now_Omega()) <= Caliberate_Out[1])
+                                                                                                     ^~~~~~~~~~~~~~
+                                                                                                     Calibrate_Out
+../User_chariot/crt_lift.h:204:11: note: 'Calibrate_Out' declared here
+    float Calibrate_Out[2] = { 1.0f, 1.0f };
+          ^
+2 errors generated.
+
+[2026-05-28 21:25:59]	[info] incremental build: 3 source files changed
+These source files will be recompiled
+---
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_chariot\crt_lift.cpp': object (.o) file not exist
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_ita\ita_robot.cpp': dependence 'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\MDK-ARM\..\User_chariot\crt_lift.h' has been changed.
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_tsk\tsk_config_and_callback.cpp': dependence 'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\MDK-ARM\..\User_chariot\crt_lift.h' has been changed.
+
+[2026-05-28 21:26:01]	[done]
+	build successfully !
+
+[2026-05-28 21:28:08]	[info] incremental build: 1 source files changed
+These source files will be recompiled
+---
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_chariot\crt_lift.cpp': source file has been changed.
+
+[2026-05-28 21:28:09]	[done]
+	build successfully !
+
+[2026-05-28 21:38:07]	[info] incremental build: 3 source files changed
+These source files will be recompiled
+---
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_chariot\crt_lift.cpp': dependence 'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\MDK-ARM\..\User_chariot\crt_lift.h' has been changed.
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_ita\ita_robot.cpp': dependence 'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\MDK-ARM\..\User_chariot\crt_lift.h' has been changed.
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_tsk\tsk_config_and_callback.cpp': dependence 'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\MDK-ARM\..\User_chariot\crt_lift.h' has been changed.
+
+[2026-05-28 21:38:08]	[done]
+	build successfully !
+
+[2026-05-28 22:14:16]	[info] incremental build: 4 source files changed
+These source files will be recompiled
+---
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_chariot\crt_lift.cpp': source file has been changed.
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_dvc\dvc_dwt.cpp': source file has been changed.
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_ita\ita_robot.cpp': dependence 'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\MDK-ARM\..\User_chariot\crt_lift.h' has been changed.
+'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_tsk\tsk_config_and_callback.cpp': dependence 'e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\MDK-ARM\..\User_dvc\dvc_dwt.h' has been changed.
+
+[2026-05-28 22:14:17]	compilation failed at : "e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R2_H7\Wulin_R1_H7\User_chariot\crt_lift.cpp", exit code: 1
+command: 
+  "C:\Keil_v5\ARM\ARMCLANG\bin\armclang.exe" --target=arm-arm-none-eabi -c -xc++ -std=c++11 -I../Core/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I../Drivers/CMSIS/Include -I../Middlewares/ST/ARM/DSP/Inc -I../User_chariot/Chassis -I../User_drv -I../User_ita -I../User_tsk -I.cmsis/include -IRTE/_H723VGT6_Demo -I../User_chariot -I../User_chariot/KFS -I../User_dvc -I../User_alg -D"USE_HAL_DRIVER" -D"STM32H723xx" -D"ARM_MATH_CM7" -mfloat-abi=hard -mfpu=fpv5-d16 -mcpu=cortex-m7 -mlittle-endian -O0 -ffunction-sections -funsigned-char -fshort-enums -fshort-wchar -fno-rtti -w -g -o ./build/H723VGT6_Demo/.obj/__/User_chariot/crt_lift.o -MMD ./../User_chariot/crt_lift.cpp
+   at unify_builder.Program.Main(String[] args_)
+---
+In file included from ./../User_chariot/crt_lift.cpp:1:
+In file included from ../User_chariot/crt_lift.h:7:
+../User_dvc\dvc_dwt.h:4:10: fatal error: 'stm32h5xx_hal.h' file not found
+#include "stm32h5xx_hal.h"
+         ^~~~~~~~~~~~~~~~~
+1 error generated.
+

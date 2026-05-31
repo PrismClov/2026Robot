@@ -1,0 +1,6 @@
+tool: AC6
+fileName: 'H723VGT6_Demo.map'
+elfName: 'H723VGT6_Demo.axf'
+compilerName: 'ARMCLANG 6'
+compilerFullName: 'ARMCLANG 6'
+compilerPath: 'C:\Keil_v5\ARM\ARMCLANG\bin\armclang.exe'
