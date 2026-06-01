@@ -1,17 +1,9 @@
 #include "dvc_swerve_module.h"
 
-namespace
-{
-    constexpr float kPi = 3.14159265358979323846f;
-    constexpr float kHalfPi = kPi / 2.0f;
-    constexpr float kTwoPi = 2.0f * kPi;
-}
-
-bool Class_Swerve_Module::Init(
-    Class_Motor_Base& steer_motor,
-    Class_Motor_Base& drive_motor,
-    const Parameters& parameters
-)
+/**
+ * @brief 单个舵轮模块实现
+ */
+bool Class_Swerve_Module::Init(Class_Motor_Base &steer_motor, Class_Motor_Base &drive_motor, const Parameters &parameters, Mode mode)
 {
     if (!Check_Parameters(parameters))
     {
@@ -24,28 +16,28 @@ bool Class_Swerve_Module::Init(
 
     Param = parameters;
 
-    Steer_Encoder.Init(
-        Param.Steer_Zero_Offset_Rad,
-        Param.Steer_Encoder_Reverse
-    );
+    Steer_Encoder.Init(Param.Steer_Zero_Offset_Rad, Param.Steer_Encoder_Reverse);
 
-    Module_Target = {};
-    Current_Mode = Mode::Speed;
+    Current_Mode = mode;
 
     Initialized = true;
 
     return true;
 }
 
-bool Class_Swerve_Module::Check_Parameters(const Parameters& parameters) const
+/**
+ * @brief 校验控制参数合法性
+ */
+bool Class_Swerve_Module::Check_Parameters(const Parameters &parameters) const
 {
-    if (!Is_Finite(parameters.Force_To_Current) ||
-        !Is_Finite(parameters.Speed_Deadband) ||
-        !Is_Finite(parameters.Force_Deadband) ||
-        !Is_Finite(parameters.Max_Speed_Mps) ||
-        !Is_Finite(parameters.Max_Force_N) ||
-        !Is_Finite(parameters.Max_Current_A) ||
-        !Is_Finite(parameters.Steer_Zero_Offset_Rad))
+    if (!isfinite(parameters.Force_To_Current) ||
+        !isfinite(parameters.Speed_Deadband) ||
+        !isfinite(parameters.Force_Deadband) ||
+        !isfinite(parameters.Current_Deadband) ||
+        !isfinite(parameters.Max_Speed_Mps) ||
+        !isfinite(parameters.Max_Force_N) ||
+        !isfinite(parameters.Max_Current_A) ||
+        !isfinite(parameters.Steer_Zero_Offset_Rad))
     {
         return false;
     }
@@ -72,11 +64,9 @@ bool Class_Swerve_Module::Check_Parameters(const Parameters& parameters) const
     return true;
 }
 
-bool Class_Swerve_Module::Is_Initialized() const
-{
-    return Initialized;
-}
-
+/**
+ * @brief 更新舵向绝对编码器原始值
+ */
 void Class_Swerve_Module::Update_Encoder(uint16_t encoder_raw)
 {
     if (!Initialized)
@@ -87,70 +77,9 @@ void Class_Swerve_Module::Update_Encoder(uint16_t encoder_raw)
     Steer_Encoder.Update(encoder_raw);
 }
 
-bool Class_Swerve_Module::Set_Target_Speed_Angle(
-    float speed_mps,
-    float angle_rad
-)
-{
-    if (!Is_Finite(speed_mps) || !Is_Finite(angle_rad))
-    {
-        Clear_Drive_Target();
-        return false;
-    }
-
-    Current_Mode = Mode::Speed;
-
-    Module_Target.Speed_Mps = Math_Constrain(&speed_mps, Param.Max_Speed_Mps, -Param.Max_Speed_Mps);
-    Module_Target.Force_N = 0.0f;
-    Module_Target.Current_A = 0.0f;
-    Module_Target.Angle_Rad = Normalize_Angle(angle_rad);
-
-    return true;
-}
-
-bool Class_Swerve_Module::Set_Target_Force_Angle(
-    float force_n,
-    float angle_rad
-)
-{
-    if (!Is_Finite(force_n) || !Is_Finite(angle_rad))
-    {
-        Clear_Drive_Target();
-        return false;
-    }
-
-    Current_Mode = Mode::Force;
-
-    Module_Target.Speed_Mps = 0.0f;
-    Module_Target.Force_N = Math_Constrain(&force_n, Param.Max_Force_N, -Param.Max_Force_N);
-    Module_Target.Current_A = 0.0f;
-    Module_Target.Angle_Rad = Normalize_Angle(angle_rad);
-
-    return true;
-}
-
-bool Class_Swerve_Module::Set_Target_Speed_Force_Angle(
-    float speed_mps,
-    float force_n,
-    float angle_rad
-)
-{
-    if (!Is_Finite(speed_mps) || !Is_Finite(force_n) || !Is_Finite(angle_rad))
-    {
-        Clear_Drive_Target();
-        return false;
-    }
-
-    Current_Mode = Mode::Speed_Force;
-
-    Module_Target.Speed_Mps = Math_Constrain(&speed_mps, Param.Max_Speed_Mps, -Param.Max_Speed_Mps);
-    Module_Target.Force_N = Math_Constrain(&force_n, Param.Max_Force_N, -Param.Max_Force_N);
-    Module_Target.Current_A = 0.0f;
-    Module_Target.Angle_Rad = Normalize_Angle(angle_rad);
-
-    return true;
-}
-
+/**
+ * @brief 计算控制量
+ */
 void Class_Swerve_Module::Calculate()
 {
     if (!Initialized)
@@ -170,15 +99,22 @@ void Class_Swerve_Module::Calculate()
     /*
      * 力控目标转换成电流目标。
      */
-    Module_Target.Current_A =
-        Module_Target.Force_N * Param.Force_To_Current;
+    Module_Target.Current_A = Module_Target.Force_N * Param.Force_To_Current;
 
-    Module_Target.Current_A = Math_Constrain(&Module_Target.Current_A, Param.Max_Current_A, -Param.Max_Current_A);
+    Module_Target.Current_A = Math_Constrain(&Module_Target.Current_A, -Param.Max_Current_A, Param.Max_Current_A);
+
+    if (Math_Abs(Module_Target.Current_A) < Param.Current_Deadband)
+    {
+        Module_Target.Current_A = 0.0f;
+    }
 
     Apply_Steer_Target();
     Apply_Drive_Target();
 }
 
+/**
+ * @brief 输出舵向控制量
+ */
 void Class_Swerve_Module::Apply_Steer_Target()
 {
     if (Steer_Motor == nullptr)
@@ -194,17 +130,16 @@ void Class_Swerve_Module::Apply_Steer_Target()
     /*
      * 舵向位置反馈使用外置绝对编码器。
      */
-    Steer_Motor->Set_Feedback_Position(
-        Steer_Encoder.Get_Angle_Rad()
-    );
+    Steer_Motor->Set_Feedback_Position(Steer_Encoder.Get_Angle_Rad());
 
-    Steer_Motor->Set_Target_Position(
-        Module_Target.Angle_Rad
-    );
+    Steer_Motor->Set_Target_Position(Module_Target.Angle_Rad);
 
     Steer_Motor->Calculate();
 }
 
+/**
+ * @brief 输出轮向控制量
+ */
 void Class_Swerve_Module::Apply_Drive_Target()
 {
     if (Drive_Motor == nullptr)
@@ -221,38 +156,33 @@ void Class_Swerve_Module::Apply_Drive_Target()
          */
         Drive_Motor->Set_Control_Method(MOTOR_CONTROL_METHOD_SPEED);
 
-        Drive_Motor->Set_Target_Speed(
-            Module_Target.Speed_Mps
-        );
+        Drive_Motor->Set_Target_Speed(Module_Target.Speed_Mps);
     }
     else
     {
         /*
-         * Force 和 Speed_Force 模式：
+         * Force 和 Current 模式：
          * 轮向电机跑电流环 / 力控。
          */
         Drive_Motor->Set_Control_Method(MOTOR_CONTROL_METHOD_CURRENT);
 
-        Drive_Motor->Set_Target_Current(
-            Module_Target.Current_A
-        );
+        Drive_Motor->Set_Target_Current(Module_Target.Current_A);
     }
 
     Drive_Motor->Calculate();
 }
 
+/**
+ * @brief 优化舵向目标，减少不必要的大幅转动
+ */
 void Class_Swerve_Module::Optimize_Target()
 {
-    if (Is_In_Deadband())
-    {
-        Clear_Drive_Target();
-        return;
-    }
+    Deadband_Process();
 
     const float current_angle = Steer_Encoder.Get_Angle_Rad();
 
     float error = Module_Target.Angle_Rad - current_angle;
-    error = Normalize_Angle(error);
+    error = Math_Modulus_Normalization(error, PI);
 
     /*
      * 舵向优化：
@@ -265,18 +195,32 @@ void Class_Swerve_Module::Optimize_Target()
      * 2. 轮向速度取反
      * 3. 轮向力取反
      */
-    if (error > kHalfPi || error < -kHalfPi)
+    if (Math_Abs(error) > PI * 0.5f)
     {
         Flip_Direction();
     }
 }
 
-bool Class_Swerve_Module::Is_In_Deadband() const
+/**
+ * @brief 死区处理
+ */
+void Class_Swerve_Module::Deadband_Process()
 {
-    return fabsf(Module_Target.Speed_Mps) < Param.Speed_Deadband &&
-           fabsf(Module_Target.Force_N) < Param.Force_Deadband;
+    // 死区处理：小于死区时认为目标为 0，避免停止或低速时舵轮乱优化。
+    if (Math_Abs(Module_Target.Speed_Mps) < Param.Speed_Deadband)
+    {
+        Module_Target.Speed_Mps = 0.0f;
+    }
+
+    if (Math_Abs(Module_Target.Force_N) < Param.Force_Deadband)
+    {
+        Module_Target.Force_N = 0.0f;
+    }
 }
 
+/**
+ * @brief 清除轮向目标（速度、力、当前），但不清除舵向目标
+ */
 void Class_Swerve_Module::Clear_Drive_Target()
 {
     Module_Target.Speed_Mps = 0.0f;
@@ -284,15 +228,21 @@ void Class_Swerve_Module::Clear_Drive_Target()
     Module_Target.Current_A = 0.0f;
 }
 
+/**
+ * @brief 舵向电机反转优化
+ */
 void Class_Swerve_Module::Flip_Direction()
 {
-    Module_Target.Angle_Rad =
-        Normalize_Angle(Module_Target.Angle_Rad + kPi);
+    Module_Target.Angle_Rad = Math_Modulus_Normalization(Module_Target.Angle_Rad + PI, PI);
 
     Module_Target.Speed_Mps = -Module_Target.Speed_Mps;
     Module_Target.Force_N = -Module_Target.Force_N;
+    Module_Target.Current_A = -Module_Target.Current_A;
 }
 
+/**
+ * @brief 输出控制量
+ */
 void Class_Swerve_Module::Output()
 {
     if (!Initialized)
@@ -311,12 +261,18 @@ void Class_Swerve_Module::Output()
     }
 }
 
-void Class_Swerve_Module::Update()
+/**
+ * @brief 1ms 定时器回调
+ */
+void Class_Swerve_Module::TIM_1ms_PeriodElapsedCallback()
 {
     Calculate();
     Output();
 }
 
+/**
+ * @brief Stop 只修改目标并计算，不强制发送
+ */
 void Class_Swerve_Module::Stop()
 {
     Clear_Drive_Target();
@@ -341,81 +297,10 @@ void Class_Swerve_Module::Stop()
     {
         Steer_Motor->Set_Control_Method(MOTOR_CONTROL_METHOD_POSITION);
 
-        Steer_Motor->Set_Feedback_Position(
-            Steer_Encoder.Get_Angle_Rad()
-        );
+        Steer_Motor->Set_Feedback_Position(Steer_Encoder.Get_Angle_Rad());
 
-        Steer_Motor->Set_Target_Position(
-            Module_Target.Angle_Rad
-        );
+        Steer_Motor->Set_Target_Position(Module_Target.Angle_Rad);
 
         Steer_Motor->Calculate();
     }
-}
-
-void Class_Swerve_Module::Stop_And_Output()
-{
-    Stop();
-    Output();
-}
-
-Class_Swerve_Module::Mode Class_Swerve_Module::Get_Mode() const
-{
-    return Current_Mode;
-}
-
-float Class_Swerve_Module::Get_Current_Angle() const
-{
-    return Steer_Encoder.Get_Angle_Rad();
-}
-
-float Class_Swerve_Module::Get_Target_Angle() const
-{
-    return Module_Target.Angle_Rad;
-}
-
-float Class_Swerve_Module::Get_Target_Speed() const
-{
-    return Module_Target.Speed_Mps;
-}
-
-float Class_Swerve_Module::Get_Target_Force() const
-{
-    return Module_Target.Force_N;
-}
-
-float Class_Swerve_Module::Get_Target_Current() const
-{
-    return Module_Target.Current_A;
-}
-
-const Class_Swerve_Module::Target& Class_Swerve_Module::Get_Target() const
-{
-    return Module_Target;
-}
-
-float Class_Swerve_Module::Normalize_Angle(float angle)
-{
-    if (!Is_Finite(angle))
-    {
-        return 0.0f;
-    }
-
-    angle = fmodf(angle, kTwoPi);
-
-    if (angle > kPi)
-    {
-        angle -= kTwoPi;
-    }
-    else if (angle < -kPi)
-    {
-        angle += kTwoPi;
-    }
-
-    return angle;
-}
-
-bool Class_Swerve_Module::Is_Finite(float value)
-{
-    return isfinite(value);
 }

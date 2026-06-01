@@ -121,11 +121,11 @@ namespace Motor
             bool Use_External_Position_Feedback = false;
         };
 
-    public:
+    
         Class_PID PID_Omega;
         Class_PID PID_Position;
 
-    public:
+
         Class_Motor_DJI_C610() = default;
 
         /**
@@ -289,7 +289,6 @@ namespace Motor
          * @brief 将角度归一化到 [-2π, 2π] 区间
          */
         static float Normalize_Angle(float angle);
-        static float Limit(float value, float limit);
         static bool Is_Finite(float value);
     };
 
@@ -425,5 +424,5 @@ namespace Motor
     {
         return Feedback_Position;
     }
-#endif
 }
+#endif
