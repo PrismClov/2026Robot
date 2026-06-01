@@ -1,0 +1,6 @@
+r
+halt
+loadfile "e:\2026-robot-Wulin_r1 and r2\2026Robot-Wulin_R1_H7\Wulin_R1_H7\MDK-ARM\build\H723VGT6_Demo\H723VGT6_Demo.hex"
+r
+go
+exit

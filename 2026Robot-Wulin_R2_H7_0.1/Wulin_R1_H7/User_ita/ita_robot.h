@@ -1,0 +1,88 @@
+/**
+ * @file ita_robot.cpp
+ * @author yssickjgd (1345578933@qq.com)
+ * @brief 人机交互控制逻辑
+ * @version 1.1
+ * @date 2023-08-29 0.1 23赛季定稿
+ * @date 2024-01-17 1.1 更名为ita_robot.h, 引入新功能
+ *
+ * @copyright USTC-RoboWalker (c) 2023-2024
+ *
+ */
+
+#ifndef  ITA_ROBOT_H
+#define  ITA_ROBOT_H
+ 
+/* Includes -----------------------------------------------------------------*/
+#include "crt_chassis.h"
+#include "crt_lift.h"
+#include "dvc_dr16.h"
+#include "crt_weapon_head.h"
+#include "dvc_motor_dji.h"
+#include "dvc_sbus.h"
+
+
+/* Exported macros -----------------------------------------------------------*/
+
+/* Exported types ------------------------------------------------------------*/
+/**
+ * @brief SBUS控制数据来源
+ *
+ */
+enum Enum_SBUS_Control_Type
+{
+    SBUS_Control_Type_REMOTE = 0,
+    SBUS_Control_Type_KEYBOARD,
+
+    SBUS_Control_Type_NONE,
+};
+
+enum Enum_Control_Source{
+    SBUS_Control,
+    Control_DISABLE,
+};
+
+// 添加活动控制器枚举类型
+enum Enum_Active_Controller
+{
+    Controller_NONE = 0,
+    Controller_SBUS,
+};
+
+class Class_Chariot
+{
+public:
+    //遥控器
+    Class_SBUS SBUS;
+    //遥控器角度环
+    Class_PID PID_Angle_DR16;
+    //全向轮底盘
+    Class_Omni_Chassis Chassis;
+    Class_Lift Lift;
+    Class_Weapon_Head Weapon_Head;
+    void Init(float __Dead_Zone = 0);
+    void TIM_Control_Callback();
+    void TIM_Calculate_PeriodElapsedCallback();
+    void TIM_Unline_Protect_PeriodElapsedCallback();
+    void TIM1msMod50_Alive_PeriodElapsedCallback();
+    
+    void Judge_SBUS_Control_Type();
+    void Judge_Active_Controller();
+    void Control_Chassis();
+
+    
+protected:
+    //SBUS控制数据来源
+    Enum_SBUS_Control_Type SBUS_Control_Type = SBUS_Control_Type_NONE;
+
+    
+    // 当前活动的控制器
+    Enum_Active_Controller Active_Controller = Controller_NONE;
+
+    Enum_Control_Source Control_Source = Control_DISABLE; 
+
+    //遥控器拨动的死区, 0~1
+    float Dead_Zone;
+    
+};
+#endif
