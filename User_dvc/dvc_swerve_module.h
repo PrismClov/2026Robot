@@ -30,7 +30,6 @@ public:
     {
         Speed = 0, // 轮向速控
         Force,     // 轮向力控
-        Current    // 轮向电流控制
     };
 
     struct Parameters
@@ -197,7 +196,7 @@ inline bool Class_Swerve_Module::Is_Initialized() const
  */
 inline bool Class_Swerve_Module::Set_Mode(Mode mode)
 {
-    if (mode != Mode::Speed && mode != Mode::Force && mode != Mode::Current)
+    if (mode != Mode::Speed && mode != Mode::Force)
     {
         Clear_Drive_Target();
         return false;
