@@ -21,25 +21,6 @@ public:
         Chassis_Control_Type_NORMAL,
     };
 
-    struct PID_Parameters
-    {
-        float K_P = 0.0f;
-        float K_I = 0.0f;
-        float K_D = 0.0f;
-        float K_F = 0.0f;
-
-        float I_Out_Max = 0.0f;
-        float Out_Max = 0.0f;
-        float D_T = 0.001f;
-        float Dead_Zone = 0.0f;
-
-        float I_Variable_Speed_A = 0.0f;
-        float I_Variable_Speed_B = 0.0f;
-        float I_Separate_Threshold = 0.0f;
-
-        Enum_PID_D_First D_First = PID_D_First_DISABLE;
-    };
-
     // 底盘速度值PID
     Class_PID PID_Velocity_X;
 
@@ -86,6 +67,10 @@ public:
 
     inline float Get_Target_Steer_Angle(uint8_t x);
 
+    void TIM_100ms_Alive_PeriodElapsedCallback();
+
+    void TIM_1ms_Control_PeriodElapsedCallback();
+
 protected:
     // 底盘控制方法
     Enum_Chassis_Control_Type Chassis_Control_Type = Enum_Chassis_Control_Type::Chassis_Control_Type_DISABLE;
@@ -96,7 +81,7 @@ protected:
     float Now_Steer_Angle[4] = {0.0f, 0.0f, 0.0f, 0.0f};
 
     // 轮组方位角
-    float Steer_Azimuth[4] = {-0.785, -2.356, 2.356, 0.75}; // 轮组方位角，单位为弧度，顺时针为正，前x右y上z
+    float Steer_Azimuth[4] = {-0.785, -2.356, 2.356, 0.785}; // 轮组方位角，单位为弧度，顺时针为正，前x右y上z
 
     // 初始化相关常量
     // 当前速度X
@@ -109,6 +94,25 @@ protected:
     float Angle_Yaw = 0.0f;
 
     // 内部变量
+
+    // 舵向电机PID 参数
+    Motor::PID_Parameters PID_Position_Parameters = {
+        .K_P = 0.0f,
+        .K_I = 0.0f,
+        .K_D = 0.0f,
+
+    };
+    Motor::PID_Parameters PID_Omega_Parameters = {
+        .K_P = 0.0f,
+        .K_I = 0.0f,
+        .K_D = 0.0f,
+    };
+
+    // 轮向参数
+    static constexpr float Wheel_Radius = 0.0265f;         // m
+    static constexpr float Wheel_Motor_Reduction = 7.5f;    // 减速比
+    static constexpr float Wheel_To_Core_Distance[4] = {0.18f, 0.18f, 0.18f, 0.18f}; // m, 四轮到几何中心距离
+    static constexpr float Swerve_Module_Force_To_Current = 0.2f; // N -> A
 
     // 轮向电机静摩擦阻力电流值
     float Static_Resistance_Wheel_Current[4] = {3.0f,
@@ -169,12 +173,6 @@ protected:
     void Steer_Angle_Self_Resolution();
 
     void Kinematics_Inverse_Resolution();
-
-    void Output_To_Dynamics();
-
-    void Dynamics_Inverse_Resolution();
-
-    void Output_To_Motor();
 };
 
 inline float Class_Chassis::Get_Now_Velocity_X()
