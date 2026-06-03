@@ -16,6 +16,7 @@
 #include <math.h>
 #include "drv_can.h"
 #include "drv_math.h"
+#include "alg_crc.h"
 /* Exported macros -----------------------------------------------------------*/
 
 /**

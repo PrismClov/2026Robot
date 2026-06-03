@@ -16,10 +16,10 @@
 
 namespace
 {
-    constexpr float kPi = 3.14159265358979323846f;
-    constexpr float kTwoPi = 2.0f * kPi;
-    constexpr float kEncoderRawMax = 65535.0f;
-}
+constexpr float kPi = 3.14159265358979323846f;
+constexpr float kTwoPi = 2.0f * kPi;
+constexpr float kEncoderRawMax = 65535.0f;
+} // namespace
 
 /* Private types -------------------------------------------------------------*/
 /**
@@ -107,18 +107,23 @@ void Class_Encoder_Rudder::Data_Process()
     {
         return;
     }
-    
+
     Struct_Encoder_Rudder_CAN_RX_Data *tmp_buffer = (Struct_Encoder_Rudder_CAN_RX_Data *)FDCAN_Manage_Object->Rx_Buffer.Data;
-    
-    // crc校验待完善，暂不处理校验和字段
-    
+
+    // crc校验
+    uint8_t calculated_crc = Algorithm::CRC_Lib::CRC8::compute(tmp_buffer, sizeof(Struct_Encoder_Rudder_CAN_RX_Data) - sizeof(tmp_buffer->checksum) - sizeof(tmp_buffer->reserved)); // 不包括checksum和reserved
+
+    if (calculated_crc != tmp_buffer->checksum)
+    {
+        return;
+    }
 
     // 计算角度
     uint16_t raw_angle = (tmp_buffer->raw_angle_high << 8) | tmp_buffer->raw_angle_low;
     Rx_Data.angle = Math_Int_To_Float(raw_angle, 0, 65535, 0.0f, 360.0f) / Gear_Ratio;
-        
+
     // 复制剩余字段 (从status开始到reserved)
-    memcpy(&Rx_Data.status, &tmp_buffer->status, 
+    memcpy(&Rx_Data.status, &tmp_buffer->status,
            sizeof(Struct_Encoder_Rudder_Rx_Data) - offsetof(Struct_Encoder_Rudder_Rx_Data, status));
 
     // // 复制状态信息
@@ -128,7 +133,7 @@ void Class_Encoder_Rudder::Data_Process()
     // Rx_Data.parity_error = tmp_buffer->parity_error;
     // Rx_Data.checksum = tmp_buffer->checksum;  // 保存校验和结果
     // Rx_Data.reserved = 0;
-    
+
     // 防止角度值溢出
     if (Rx_Data.angle >= 360.0f)
     {

@@ -1,8 +1,8 @@
 #ifndef DVC_SWERVE_MODULE_H
 #define DVC_SWERVE_MODULE_H
 
-#include <stdint.h>
 #include <math.h>
+#include <stdint.h>
 
 #include "dvc_motor_base.h"
 #include "dvc_swerve_steer_encoder.h"
@@ -28,9 +28,8 @@ class Class_Swerve_Module
 public:
     enum class Mode : uint8_t
     {
-        Speed = 0,       // 轮向速度环
-        Force,           // 轮向电流/力控
-        Speed_Force,     // 舵角由速度决定，轮向由力控决定
+        Speed = 0, // 轮向速控
+        Force,     // 轮向力控
     };
 
     struct Parameters
@@ -41,15 +40,16 @@ public:
             float force_to_current,
             float speed_deadband,
             float force_deadband,
+            float current_deadband,
             float max_speed_mps,
             float max_force_n,
             float max_current_a,
             float steer_zero_offset_rad,
-            bool steer_encoder_reverse
-        )
+            bool steer_encoder_reverse)
             : Force_To_Current(force_to_current),
               Speed_Deadband(speed_deadband),
               Force_Deadband(force_deadband),
+              Current_Deadband(current_deadband),
               Max_Speed_Mps(max_speed_mps),
               Max_Force_N(max_force_n),
               Max_Current_A(max_current_a),
@@ -75,16 +75,17 @@ public:
         /*
          * 小于死区时认为目标为 0，避免停止或低速时舵轮乱优化。
          */
-        float Speed_Deadband = 0.03f; // m/s
-        float Force_Deadband = 0.5f;  // N
+        float Speed_Deadband = 0.03f;  // m/s
+        float Force_Deadband = 0.5f;   // N
+        float Current_Deadband = 0.0f; // A
 
         /*
          * 目标限幅。
          * <= 0 表示不启用对应限幅。
          */
-        float Max_Speed_Mps = 0.0f;   // m/s
-        float Max_Force_N = 0.0f;     // N
-        float Max_Current_A = 0.0f;   // A
+        float Max_Speed_Mps = 0.0f; // m/s
+        float Max_Force_N = 0.0f;   // N
+        float Max_Current_A = 0.0f; // A
 
         /*
          * 舵向绝对编码器参数。
@@ -95,13 +96,12 @@ public:
 
     struct Target
     {
-        float Angle_Rad = 0.0f;  // 舵向目标角，rad
-        float Speed_Mps = 0.0f;  // 轮向目标速度，m/s
-        float Force_N = 0.0f;    // 轮向目标牵引力，N
-        float Current_A = 0.0f;  // 轮向目标电流，A
+        float Angle_Rad = 0.0f; // 舵向目标角，rad
+        float Speed_Mps = 0.0f; // 轮向目标速度，m/s
+        float Force_N = 0.0f;   // 轮向目标牵引力，N
+        float Current_A = 0.0f; // 轮向目标电流，A
     };
 
-public:
     /*
      * 默认构造：
      * 适合全局对象、静态对象、数组对象。
@@ -113,13 +113,9 @@ public:
      * 直接构造：
      * 适合局部对象、测试对象或依赖初始化顺序明确的场景。
      */
-    explicit Class_Swerve_Module(
-        Class_Motor_Base& steer_motor,
-        Class_Motor_Base& drive_motor,
-        const Parameters& parameters
-    )
+    explicit Class_Swerve_Module(Class_Motor_Base &steer_motor, Class_Motor_Base &drive_motor, const Parameters &parameters, Mode mode = Mode::Speed)
     {
-        Init(steer_motor, drive_motor, parameters);
+        Init(steer_motor, drive_motor, parameters, mode);
     }
 
     /*
@@ -130,96 +126,190 @@ public:
      * true  初始化成功
      * false 参数非法，初始化失败
      */
-    bool Init(
-        Class_Motor_Base& steer_motor,
-        Class_Motor_Base& drive_motor,
-        const Parameters& parameters
-    );
+    bool Init(Class_Motor_Base &steer_motor, Class_Motor_Base &drive_motor, const Parameters &parameters, Mode mode = Mode::Speed);
 
-    bool Is_Initialized() const;
+    inline bool Is_Initialized() const;
 
-    /*
-     * 更新舵向绝对编码器原始值。
-     * 建议在每个控制周期最先调用。
-     */
     void Update_Encoder(uint16_t encoder_raw);
 
-    /*
-     * 三种目标设置接口。
-     *
-     * speed_mps: 轮向线速度，单位 m/s
-     * force_n:  轮向牵引力，单位 N
-     * angle_rad: 舵向目标角，单位 rad
-     *
-     * 返回值：
-     * true  表示目标有效并已设置
-     * false 表示目标存在 NaN/Inf 等非法值，模块会清除驱动目标
-     */
-    bool Set_Target_Speed_Angle(float speed_mps, float angle_rad);
-    bool Set_Target_Force_Angle(float force_n, float angle_rad);
-    bool Set_Target_Speed_Force_Angle(
-        float speed_mps,
-        float force_n,
-        float angle_rad
-    );
+    // Set
+    inline bool Set_Mode(Mode mode);
+    inline bool Set_Target_Speed(float speed_mps);
+    inline bool Set_Target_Force(float force_n);
+    inline bool Set_Target_Angle(float angle_rad);
 
-    /*
-     * 控制周期调用。
-     */
+    // Get
+    inline Mode Get_Mode() const;
+    inline float Get_Current_Angle() const;
+    inline float Get_Target_Angle() const;
+    inline float Get_Target_Speed() const;
+    inline float Get_Target_Force() const;
+    inline float Get_Target_Current() const;
+
+    const inline Target &Get_Target() const;
+
     void Calculate();
+
     void Output();
 
-    /*
-     * 便捷接口：等价于 Calculate() + Output()。
-     */
-    void Update();
+    void TIM_1ms_PeriodElapsedCallback();
 
-    /*
-     * Stop 只修改目标并计算，不强制发送。
-     * 如果需要立即下发，请调用 Stop_And_Output()。
-     */
     void Stop();
-    void Stop_And_Output();
-
-    /*
-     * 状态读取接口。
-     */
-    Mode Get_Mode() const;
-
-    float Get_Current_Angle() const;
-    float Get_Target_Angle() const;
-    float Get_Target_Speed() const;
-    float Get_Target_Force() const;
-    float Get_Target_Current() const;
-
-    const Target& Get_Target() const;
 
 private:
-    Class_Motor_Base* Steer_Motor = nullptr;
-    Class_Motor_Base* Drive_Motor = nullptr;
-    Class_Swerve_Steer_Encoder Steer_Encoder;
+    Class_Motor_Base *Steer_Motor = nullptr;
+    Class_Motor_Base *Drive_Motor = nullptr;
+    Class_Swerve_Steer_Encoder Steer_Encoder = {};
 
-    Parameters Param;
-    Target Module_Target;
+    Parameters Param = {};
+    Target Module_Target = {};
 
     Mode Current_Mode = Mode::Speed;
 
     bool Initialized = false;
 
-private:
-    bool Check_Parameters(const Parameters& parameters) const;
+    bool Check_Parameters(const Parameters &parameters) const;
 
     void Optimize_Target();
 
-    bool Is_In_Deadband() const;
+    void Deadband_Process();
+
     void Clear_Drive_Target();
+
     void Flip_Direction();
 
     void Apply_Steer_Target();
-    void Apply_Drive_Target();
 
-    static float Normalize_Angle(float angle);
-    static bool Is_Finite(float value);
+    void Apply_Drive_Target();
 };
+
+/**
+ * @brief 检查是否已初始化
+ */
+inline bool Class_Swerve_Module::Is_Initialized() const
+{
+    return Initialized;
+}
+
+/**
+ * @brief 设置模式
+ */
+inline bool Class_Swerve_Module::Set_Mode(Mode mode)
+{
+    if (mode != Mode::Speed && mode != Mode::Force)
+    {
+        Clear_Drive_Target();
+        return false;
+    }
+
+    Current_Mode = mode;
+
+    /*
+     * 模式切换时清零目标，避免突变。
+     * 例如从速度模式切到力控模式，之前的速度目标不再适用，应该清零。
+     * 反之亦然。
+     */
+    Clear_Drive_Target();
+
+    return true;
+}
+
+/**
+ * @brief 设置目标速度
+ */
+inline bool Class_Swerve_Module::Set_Target_Speed(float speed_mps)
+{
+    if (!isfinite(speed_mps))
+    {
+        Clear_Drive_Target();
+        return false;
+    }
+    Module_Target.Speed_Mps = Math_Constrain(&speed_mps, Param.Max_Speed_Mps, -Param.Max_Speed_Mps);
+    return true;
+}
+
+/**
+ * @brief 设置目标牵引力
+ */
+inline bool Class_Swerve_Module::Set_Target_Force(float force_n)
+{
+    if (!isfinite(force_n))
+    {
+        Clear_Drive_Target();
+        return false;
+    }
+    Module_Target.Force_N = Math_Constrain(&force_n, Param.Max_Force_N, -Param.Max_Force_N);
+    return true;
+}
+
+/**
+ * @brief 设置目标舵角
+ */
+inline bool Class_Swerve_Module::Set_Target_Angle(float angle_rad)
+{
+    if (!isfinite(angle_rad))
+    {
+        Clear_Drive_Target();
+        return false;
+    }
+    Module_Target.Angle_Rad = Math_Modulus_Normalization(angle_rad, PI);
+    return true;
+}
+
+/**
+ * @brief 获取当前模式
+ */
+inline Class_Swerve_Module::Mode Class_Swerve_Module::Get_Mode() const
+{
+    return Current_Mode;
+}
+
+/**
+ * @brief 获取当前舵角
+ */
+inline float Class_Swerve_Module::Get_Current_Angle() const
+{
+    return Steer_Encoder.Get_Angle_Rad();
+}
+
+/**
+ * @brief 获取目标舵角
+ */
+inline float Class_Swerve_Module::Get_Target_Angle() const
+{
+    return Module_Target.Angle_Rad;
+}
+
+/**
+ * @brief 获取目标速度
+ */
+inline float Class_Swerve_Module::Get_Target_Speed() const
+{
+    return Module_Target.Speed_Mps;
+}
+
+/**
+ * @brief 获取目标牵引力
+ */
+inline float Class_Swerve_Module::Get_Target_Force() const
+{
+    return Module_Target.Force_N;
+}
+
+/**
+ * @brief 获取目标电流
+ */
+inline float Class_Swerve_Module::Get_Target_Current() const
+{
+    return Module_Target.Current_A;
+}
+
+/**
+ * @brief 获取当前目标结构体
+ */
+const inline Class_Swerve_Module::Target &Class_Swerve_Module::Get_Target() const
+{
+    return Module_Target;
+}
 
 #endif
