@@ -65,34 +65,58 @@ void Class_Chassis::Steer_Angle_Self_Resolution()
     }
 }
 
+void Class_Chassis::Calculate()
+{
+    if (Chassis_Control_Type != Enum_Chassis_Control_Type::Chassis_Control_Type_NORMAL)
+    {
+        for (int i = 0; i < 4; i++)
+        {
+            PID_Velocity_X.Set_Integral_Error(0.0f);
+            PID_Velocity_Y.Set_Integral_Error(0.0f);
+            PID_Omega.Set_Integral_Error(0.0f);
+            Wheel_Force[i] = 0.0f;
+        }
+        Chassis_Force_X = 0.0f;
+        Chassis_Force_Y = 0.0f;
+        Chassis_Torque = 0.0f;
+        return;
+    }
+
+    // 底盘速度PID
+    PID_Velocity_X.Set_Target(Target_Velocity_X);
+    PID_Velocity_X.Set_Now(Now_Velocity_X);
+    PID_Velocity_X.TIM_Calculate_PeriodElapsedCallback();
+
+    PID_Velocity_Y.Set_Target(Target_Velocity_Y);
+    PID_Velocity_Y.Set_Now(Now_Velocity_Y);
+    PID_Velocity_Y.TIM_Calculate_PeriodElapsedCallback();
+
+    PID_Omega.Set_Target(Target_Omega);
+    PID_Omega.Set_Now(Now_Omega);
+    PID_Omega.TIM_Calculate_PeriodElapsedCallback();
+
+    Chassis_Force_X = PID_Velocity_X.Get_Out();
+    Chassis_Force_Y = PID_Velocity_Y.Get_Out();
+    Chassis_Torque = PID_Omega.Get_Out();
+
+    // 合力分解至每个轮向
+    for (int i = 0; i < 4; i++)
+    {
+        float steer_angle = Now_Steer_Angle[i];
+
+        Wheel_Force[i] = Chassis_Force_X * arm_cos_f32(steer_angle)
+                       + Chassis_Force_Y * arm_sin_f32(steer_angle)
+                       - Chassis_Torque / Wheel_To_Core_Distance[i]
+                         * arm_sin_f32(Steer_Azimuth[i] - steer_angle);
+    }
+}
+
 void Class_Chassis::Kinematics_Inverse_Resolution()
 {
     for (uint8_t i = 0; i < 4; i++)
     {
-        /*
-         * 全向运动学逆解：
-         *   v_i = v_chassis + omega x r_i
-         *
-         * r_i 从中心指向轮子位置:
-         *   r_x = distance * cos(azimuth)
-         *   r_y = distance * sin(azimuth)
-         *
-         * omega x r 在底盘坐标系下:
-         *   (omega x r)_x = -omega * r_y
-         *   (omega x r)_y =  omega * r_x
-         */
-        float r_x = Wheel_To_Core_Distance[i] * arm_cos_f32(Steer_Azimuth[i]);
-        float r_y = Wheel_To_Core_Distance[i] * arm_sin_f32(Steer_Azimuth[i]);
-
-        float v_module_x = Target_Velocity_X - Target_Omega * r_y;
-        float v_module_y = Target_Velocity_Y + Target_Omega * r_x;
-
-        float angle = atan2f(v_module_y, v_module_x);
-        float speed = sqrtf(v_module_x * v_module_x + v_module_y * v_module_y);
-
-        Swerve_Modules[i].Set_Target_Angle(angle);
-        Swerve_Modules[i].Set_Target_Speed(speed);
-        Swerve_Modules[i].Set_Target_Force((v_module_x * arm_cos_f32(Now_Steer_Angle[i]) + v_module_y * arm_sin_f32(Now_Steer_Angle[i])) * 1.0f);
+        Swerve_Modules[i].Set_Target_Angle(Target_Steer_Angle[i]);
+        Swerve_Modules[i].Set_Target_Force(Wheel_Force[i]);
     }
 }
 
@@ -106,6 +130,8 @@ void Class_Chassis::TIM_100ms_Alive_PeriodElapsedCallback()
 
 void Class_Chassis::TIM_1ms_Control_PeriodElapsedCallback()
 {
+    Calculate();
+
     Kinematics_Inverse_Resolution();
 
     for (int i = 0; i < 4; i++)

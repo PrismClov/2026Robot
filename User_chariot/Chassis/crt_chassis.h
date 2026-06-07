@@ -137,6 +137,14 @@ protected:
     // 轮向电机角速度目标值
     float Target_Wheel_Omega[4];
 
+    // 底盘合力 (Calculate 输出)
+    float Chassis_Force_X = 0.0f;
+    float Chassis_Force_Y = 0.0f;
+    float Chassis_Torque = 0.0f;
+
+    // 每个轮向的牵引力 (Calculate 输出)
+    float Wheel_Force[4];
+
     // 低电流前馈控制相关参数
 
     // 低电流死区设置
@@ -168,6 +176,8 @@ protected:
 
     // 内部函数
 
+    void Calculate();
+    
     void Self_Resolution();
 
     void Steer_Angle_Self_Resolution();
