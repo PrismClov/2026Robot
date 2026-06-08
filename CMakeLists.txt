@@ -41,7 +41,7 @@ add_executable(${CMAKE_PROJECT_NAME})
 target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE
     -fno-exceptions      # 禁用异常，减少Flash占用
     -fno-rtti           # 禁用运行时类型识别
-    # -Os                # 体积优化（调试时可以先注释）
+    -Os                # 体积优化（调试时可以先注释）
 )
 
 # Add STM32CubeMX generated sources
