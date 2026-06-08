@@ -228,21 +228,6 @@ void Task1ms_TIM5_Callback()
   }
  
 }
-/**
- * @brief 初始化任务
- *
- */
-Motor::PID_Parameters PID_Position_Parameters = {
-    .K_P = 0.0f,
-    .K_I = 0.0f,
-    .K_D = 0.0f,
-
-};
-Motor::PID_Parameters PID_Omega_Parameters = {
-    .K_P = 0.0f,
-    .K_I = 0.0f,
-    .K_D = 0.0f,
-};
 
 void Task_Init()
 {
@@ -260,11 +245,7 @@ void Task_Init()
   TIM_Init(&htim4, Task100us_TIM4_Callback);
   TIM_Init(&htim5, Task1ms_TIM5_Callback);
   //chariot.Init(0.03);
-  M2006.Init(
-      &hfdcan1,
-      Motor_DJI_C610_ID_0x201,
-      {PID_Position_Parameters, PID_Omega_Parameters, false}
-  );  
+ 
   Steer_Encoder.Init(&hfdcan3, 0x201);
 
   // 战车层初始化
