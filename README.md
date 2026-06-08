@@ -7,7 +7,7 @@ STM32H723 舵轮机器人底盘控制固件，支持 DJI C610 / MKSESC 等电机
 - **MCU**: STM32H723VGT6
 - **开发平台**: STM32CubeMX + CMake + ARM GCC
 - **Keil MDK**: 同步支持 Keil MDK-ARM 工程
-- **语言**: C11 + C++17
+- **语言**: C11 + C++20
 
 ## 目录结构
 
