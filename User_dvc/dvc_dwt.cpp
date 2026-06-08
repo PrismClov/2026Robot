@@ -14,10 +14,10 @@ void DWT_Init(void)
     last_cycle_count = DWT->CYCCNT;
     accumulated_cycles = 0;
 }
-
+uint32_t cpu_freq = 0;
 void DWT_Update(void)
 {
-    uint32_t cpu_freq = HAL_RCC_GetSysClockFreq();
+    cpu_freq = HAL_RCC_GetSysClockFreq();
     if (cpu_freq == 0) return;
     uint32_t current_cnt = DWT->CYCCNT;
 
@@ -48,6 +48,27 @@ uint32_t DWT_GetCurrentTimeUs(void)
     return SystemTime.us;
 }
 
+float DWT_GetDeltaT(uint32_t *cnt_last)
+{
+    volatile uint32_t cnt_now = DWT->CYCCNT;
+    float dt = ((uint32_t)(cnt_now - *cnt_last)) / ((float)(HAL_RCC_GetSysClockFreq()));
+    *cnt_last = cnt_now;
+
+    DWT_Update();
+
+    return dt;
+}
+
+double DWT_GetDeltaT64(uint32_t *cnt_last)
+{
+    volatile uint32_t cnt_now = DWT->CYCCNT;
+    double dt = ((uint32_t)(cnt_now - *cnt_last)) / ((double)(HAL_RCC_GetSysClockFreq()));
+    *cnt_last = cnt_now;
+
+    DWT_Update();
+
+    return dt;
+}
 
 
 /**
