@@ -34,16 +34,19 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "tsk_config_and_callback.h"
-#include "dvc_dwt.h"
-#include "drv_can.h"
-#include "drv_uart.h"
-#include "drv_tim.h"
+#include "crt_chassis.h"
 #include "drv_bsp.h"
-#include "ita_robot.h"
-#include "dvc_motor_rs.h"
+#include "drv_can.h"
+#include "drv_tim.h"
+#include "drv_uart.h"
+#include "dvc_dwt.h"
 #include "dvc_motor_dji.h"
 #include "dvc_motor_mksesc.h"
+#include "dvc_motor_rs.h"
 #include "dvc_swerve_module.h"
+#include "ita_robot.h"
+
+Class_Chassis Chassis;
 /* Private macros ------------------------------------------------------------*/
 // static float vbat = 0;
 /* Private types -------------------------------------------------------------*/
@@ -54,10 +57,8 @@
 bool init_finished = false;
 uint32_t flag = 0;
 
-
 /* Private function declarations ---------------------------------------------*/
-Motor::Class_Motor_DJI_C610 M2006;
-Class_Encoder_Rudder Steer_Encoder;
+
 /* Function prototypes -------------------------------------------------------*/
 
 /**
@@ -68,19 +69,19 @@ Class_Encoder_Rudder Steer_Encoder;
 void Device_FDCAN1_Callback(Struct_FDCAN_Rx_Buffer *FDCAN_RxMessage)
 {
 
-  switch (FDCAN_RxMessage->Header.Identifier)
-  {
+    switch (FDCAN_RxMessage->Header.Identifier)
+    {
 
-  case 0x201:
-  {
-    M2006.FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
-    break;
-  }
+        case 0x201:
+        {
 
-  default:
+            break;
+        }
 
-    break;
-  }
+        default:
+
+            break;
+    }
 }
 
 /**
@@ -90,20 +91,16 @@ void Device_FDCAN1_Callback(Struct_FDCAN_Rx_Buffer *FDCAN_RxMessage)
  */
 void Device_FDCAN2_Callback(Struct_FDCAN_Rx_Buffer *FDCAN_RxMessage)
 {
-  switch (FDCAN_RxMessage->Header.Identifier)
-  {
-    
-
-
-
-    static uint8_t FDCAN_ID = FDCAN_RxMessage->Header.Identifier >> 8;
-    static uint8_t Master_ID = FDCAN_RxMessage->Header.Identifier;
-    (void)Master_ID;
-    switch (FDCAN_ID)
+    switch (FDCAN_RxMessage->Header.Identifier)
     {
 
+        static uint8_t FDCAN_ID = FDCAN_RxMessage->Header.Identifier >> 8;
+        static uint8_t Master_ID = FDCAN_RxMessage->Header.Identifier;
+        (void)Master_ID;
+        switch (FDCAN_ID)
+        {
+        }
     }
-  }
 }
 
 /**
@@ -113,65 +110,70 @@ void Device_FDCAN2_Callback(Struct_FDCAN_Rx_Buffer *FDCAN_RxMessage)
  */
 void Device_FDCAN3_Callback(Struct_FDCAN_Rx_Buffer *FDCAN_RxMessage)
 {
-  switch (FDCAN_RxMessage->Header.Identifier)
-  {
- 
-  // 舵向编码器返回数据处理
-  case (0x001):
-  {
+    switch (FDCAN_RxMessage->Header.Identifier)
+    {
 
-    break;
-  }
-  case (0x003):
-  {
+        // 舵向编码器返回数据处理
+        case (0x001):
+        {
 
-    break;
-  }
-  case (0x004):
-  {
+            break;
+        }
+        case (0x003):
+        {
 
-    break;
-  }
-  case (0x200):
-  {
+            break;
+        }
+        case (0x004):
+        {
 
-    break;
-  }
-  // 舵向编码器返回数据处理
-  case (0x101):
-  {
-      Steer_Encoder.FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
-    break;
-  }
-  case (0x203):
-  {
+            break;
+        }
+        case (0x200):
+        {
 
-    break;
-  }
-  case (0x204):
-  {
+            break;
+        }
+        // 舵向编码器返回数据处理 (0x201-0x204)
+        case 0x201:
+        {
+            Chassis.Steer_Encoder[0].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+            break;
+        }
+        case 0x202:
+        {
+            Chassis.Steer_Encoder[1].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+            break;
+        }
+        case 0x203:
+        {
+            Chassis.Steer_Encoder[2].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+            break;
+        }
+        case 0x204:
+        {
+            Chassis.Steer_Encoder[3].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+            break;
+        }
 
-    break;
-  }
+        case (0x931):
+        case (0x1031):
+        {
+            break;
+        }
+        case (0x933):
+        case (0x1033):
+        {
 
-  case (0x931):
-  case (0x1031):
-  {
-    break;
-  }
-  case (0x933):
-  case (0x1033):
-  {
+            break;
+        }
+        case (0x934):
+        case (0x1034):
+        {
 
-    break;
-  }
-  case (0x934):
-  case (0x1034):
-  {
-
-    break;
-  }
-  }
+            break;
+        }
+    }
 }
 
 /**
@@ -182,16 +184,12 @@ void Device_FDCAN3_Callback(Struct_FDCAN_Rx_Buffer *FDCAN_RxMessage)
  */
 void DR16_UART5_Callback(uint8_t *Buffer, uint16_t Length)
 {
-  (void)Buffer;
-  (void)Length;
-//  chariot.DR16.DR16_UART_RxCpltCallback(Buffer);
-//  // 底盘 云台 发射机构 的控制策略
-//  chariot.TIM_Control_Callback();
+    (void)Buffer;
+    (void)Length;
+    //  chariot.DR16.DR16_UART_RxCpltCallback(Buffer);
+    //  // 底盘 云台 发射机构 的控制策略
+    //  chariot.TIM_Control_Callback();
 }
-
-
-
-
 
 /**
  * @brief TIM4任务回调函数
@@ -200,7 +198,6 @@ void DR16_UART5_Callback(uint8_t *Buffer, uint16_t Length)
 
 void Task100us_TIM4_Callback()
 {
-
 }
 
 /**
@@ -211,54 +208,52 @@ float Target_Position = 0.0;
 uint8_t mod100 = 0;
 void Task1ms_TIM5_Callback()
 {
-  DWT_Update();
-  flag++;
-
-  // 10ms检测存活状态
-  mod100++;
-  if (mod100 >= 100)
-  {
-    //chariot.TIM_100ms_Alive_PeriodElapsedCallback();
-   // M2006.TIM_100ms_Alive_PeriodElapsedCallback();
-    M2006.Set_Control_Method(MOTOR_CONTROL_METHOD_POSITION);
-    M2006.Set_Target_Position(Target_Position);
-    M2006.Calculate();
-    Motor::DJI_TIM_Send_Group(&hfdcan1, CAN_Tx_ID_0x200_Only);
-    mod100 = 0;
-  }
- 
+    DWT_Update();
+    flag++;
+    //Chassis.TIM_1ms_Control_PeriodElapsedCallback();
+    // 10ms检测存活状态
+    mod100++;
+    if (mod100 >= 100)
+    {
+        //   //chariot.TIM_100ms_Alive_PeriodElapsedCallback();
+        //  // M2006.TIM_100ms_Alive_PeriodElapsedCallback();
+        //   M2006.Set_Control_Method(MOTOR_CONTROL_METHOD_POSITION);
+        //   M2006.Set_Target_Position(Target_Position);
+        //   M2006.Calculate();
+        //   Motor::DJI_TIM_Send_Group(&hfdcan1, CAN_Tx_ID_0x200_Only);
+        //   mod100 = 0;
+        //Chassis.TIM_100ms_Alive_PeriodElapsedCallback();
+    }
 }
 
 void Task_Init()
 {
-  // 驱动层初始化
-  DWT_Init();
-  // 点俩灯, 开24V
-  BSP_Init(BSP_DC24_L_OFF | BSP_DC24_R_OFF | BSP_DC5_ON, 0.0, 0.0);
-  // CAN总线初始化
-  FDCAN_Init(&hfdcan1, Device_FDCAN1_Callback);
-  FDCAN_Init(&hfdcan2, Device_FDCAN2_Callback);
-	FDCAN_Init(&hfdcan3, Device_FDCAN3_Callback);
-  // UART初始化
-  UART_Init(&huart5, DR16_UART5_Callback, 36);
-  // 定时器初始化
-  TIM_Init(&htim4, Task100us_TIM4_Callback);
-  TIM_Init(&htim5, Task1ms_TIM5_Callback);
-  //chariot.Init(0.03);
- 
-  Steer_Encoder.Init(&hfdcan3, 0x201);
+    // 驱动层初始化
+    DWT_Init();
+    // 点俩灯, 开24V
+    BSP_Init(BSP_DC24_L_OFF | BSP_DC24_R_OFF | BSP_DC5_ON, 0.0, 0.0);
+    // CAN总线初始化
+    FDCAN_Init(&hfdcan1, Device_FDCAN1_Callback);
+    FDCAN_Init(&hfdcan2, Device_FDCAN2_Callback);
+    FDCAN_Init(&hfdcan3, Device_FDCAN3_Callback);
+    // UART初始化
+    UART_Init(&huart5, DR16_UART5_Callback, 36);
+    // 定时器初始化
+    TIM_Init(&htim4, Task100us_TIM4_Callback);
+    TIM_Init(&htim5, Task1ms_TIM5_Callback);
+    Chassis.Init();
 
-  // 战车层初始化
+    // 战车层初始化
 
-  // 交互层初始化
+    // 交互层初始化
 
-  // 机器人战车初始化
+    // 机器人战车初始化
 
-  // 使能调度时钟
-  HAL_TIM_Base_Start_IT(&htim4);
-  HAL_TIM_Base_Start_IT(&htim5);
-  // 标记初始化完成
-  init_finished = true;
+    // 使能调度时钟
+    HAL_TIM_Base_Start_IT(&htim4);
+    HAL_TIM_Base_Start_IT(&htim5);
+    // 标记初始化完成
+    init_finished = true;
 }
 
 /**

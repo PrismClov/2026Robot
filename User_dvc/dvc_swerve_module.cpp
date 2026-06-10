@@ -3,7 +3,7 @@
 /**
  * @brief 单个舵轮模块实现
  */
-bool Class_Swerve_Module::Init(Class_Motor_Base &steer_motor, Class_Motor_Base &drive_motor, const Parameters &parameters, Mode mode)
+bool Class_Swerve_Module::Init(Class_Motor_Base &steer_motor, Class_Motor_Base &drive_motor, Class_Swerve_Steer_Encoder &steer_encoder, const Parameters &parameters, Mode mode)
 {
     if (!Check_Parameters(parameters))
     {
@@ -13,10 +13,9 @@ bool Class_Swerve_Module::Init(Class_Motor_Base &steer_motor, Class_Motor_Base &
 
     Steer_Motor = &steer_motor;
     Drive_Motor = &drive_motor;
+    Steer_Encoder = &steer_encoder;
 
     Param = parameters;
-
-    Steer_Encoder.Init(Param.Steer_Zero_Offset_Rad, Param.Steer_Encoder_Reverse);
 
     Current_Mode = mode;
 
@@ -62,19 +61,6 @@ bool Class_Swerve_Module::Check_Parameters(const Parameters &parameters) const
      */
 
     return true;
-}
-
-/**
- * @brief 更新舵向绝对编码器原始值
- */
-void Class_Swerve_Module::Update_Encoder(uint16_t encoder_raw)
-{
-    if (!Initialized)
-    {
-        return;
-    }
-
-    Steer_Encoder.Update(encoder_raw);
 }
 
 /**
@@ -130,7 +116,7 @@ void Class_Swerve_Module::Apply_Steer_Target()
     /*
      * 舵向位置反馈使用外置绝对编码器。
      */
-    Steer_Motor->Set_Feedback_Position(Steer_Encoder.Get_Angle_Rad());
+    Steer_Motor->Set_Feedback_Position((Steer_Encoder->Get_Normalized_Angle() * DEG_TO_RAD) - Param.Steer_Zero_Offset_Rad);
 
     Steer_Motor->Set_Target_Position(Module_Target.Angle_Rad);
 
@@ -179,7 +165,7 @@ void Class_Swerve_Module::Optimize_Target()
 {
     Deadband_Process();
 
-    const float current_angle = Steer_Encoder.Get_Angle_Rad();
+    const float current_angle = (Steer_Encoder->Get_Normalized_Angle() * DEG_TO_RAD) - Param.Steer_Zero_Offset_Rad;
 
     float error = Module_Target.Angle_Rad - current_angle;
     error = Math_Modulus_Normalization(error, PI);
@@ -297,7 +283,7 @@ void Class_Swerve_Module::Stop()
     {
         Steer_Motor->Set_Control_Method(MOTOR_CONTROL_METHOD_POSITION);
 
-        Steer_Motor->Set_Feedback_Position(Steer_Encoder.Get_Angle_Rad());
+        Steer_Motor->Set_Feedback_Position((Steer_Encoder->Get_Normalized_Angle() * DEG_TO_RAD) - Param.Steer_Zero_Offset_Rad);
 
         Steer_Motor->Set_Target_Position(Module_Target.Angle_Rad);
 

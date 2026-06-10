@@ -46,8 +46,13 @@ target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE
 add_subdirectory(cmake/stm32cubemx)
 
 # Link directories setup
+# CMSIS DSP library for STM32H7 (Cortex-M7, little-endian, single-precision FPU)
+set(CMSIS_DSP_LIB_DIR ${CMAKE_SOURCE_DIR}/Drivers/CMSIS/DSP/Lib/ARM)
+set(CMSIS_DSP_LIB     ${CMSIS_DSP_LIB_DIR}/arm_cortexM7lfsp_math.lib)
+
 target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined library search paths
+    ${CMSIS_DSP_LIB_DIR}
 )
 
 # Add sources to executable
@@ -97,6 +102,9 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
 # Add project symbols (macros)
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined symbols
+    ARM_MATH_CM7
+    ARM_MATH_MATRIX_CHECK
+    ARM_MATH_ROUNDING
 )
 
 set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES
@@ -106,6 +114,9 @@ set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES
 # Add linked libraries
 target_link_libraries(${CMAKE_PROJECT_NAME}
     stm32cubemx
+
+    # CMSIS DSP library for STM32H7
+    ${CMSIS_DSP_LIB}
 
     # Add user defined libraries
 )

@@ -60,10 +60,6 @@ void Class_Motor_MKSESC::Init(FDCAN_HandleTypeDef *hfdcan, uint32_t __FDCAN_Moto
 
 }
 
-void Class_Motor_MKSESC::Init()
-{
-}
-
 void Class_Motor_MKSESC::Set_Base_Parameters(const Base_Parameters& parameters)
 {
     if (!Is_Finite(parameters.Wheel_Radius_M) ||

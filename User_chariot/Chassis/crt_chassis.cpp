@@ -1,5 +1,9 @@
 #include "crt_chassis.h"
+#include <math.h>
 
+/**
+ * @brief 初始化底盘 PID、电机、编码器和舵轮模块
+ */
 void Class_Chassis::Init()
 {
     // 底盘速度xPID, 输出摩擦力
@@ -18,10 +22,16 @@ void Class_Chassis::Init()
                             Motor::Class_Motor_DJI_C610::Parameters{PID_Position_Parameters, PID_Omega_Parameters, false}, 36.0f, 10.0f);
     }
 
-    // 模组绑定电机
+    // 舵轮编码器
     for (uint8_t i = 0; i < 4; i++)
     {
-        Swerve_Modules[i].Init(Motor_Steer[i], Motor_Wheel[i], Class_Swerve_Module::Parameters{}, Class_Swerve_Module::Mode::Force);
+        Steer_Encoder[i].Init(&hfdcan3, 0x201 + i); // CAN ID: 0x201, 0x202, 0x203, 0x204
+    }
+
+    // 模组绑定电机和编码器
+    for (uint8_t i = 0; i < 4; i++)
+    {
+        Swerve_Modules[i].Init(Motor_Steer[i], Motor_Wheel[i], Steer_Encoder[i], Class_Swerve_Module::Parameters{}, Class_Swerve_Module::Mode::Force);
     }
 }
 
@@ -104,17 +114,30 @@ void Class_Chassis::Calculate()
     {
         float steer_angle = Now_Steer_Angle[i];
 
-        Wheel_Force[i] = Chassis_Force_X * arm_cos_f32(steer_angle)
-                       + Chassis_Force_Y * arm_sin_f32(steer_angle)
-                       - Chassis_Torque / Wheel_To_Core_Distance[i]
-                         * arm_sin_f32(Steer_Azimuth[i] - steer_angle);
+        Wheel_Force[i] = Chassis_Force_X * arm_cos_f32(steer_angle) + Chassis_Force_Y * arm_sin_f32(steer_angle) - Chassis_Torque / Wheel_To_Core_Distance[i] * arm_sin_f32(Steer_Azimuth[i] - steer_angle);
     }
 }
 
 void Class_Chassis::Kinematics_Inverse_Resolution()
 {
+    // 逆运动学解算：根据目标底盘速度计算每个舵轮的目标角度和轮速
     for (uint8_t i = 0; i < 4; i++)
     {
+        // 轮子 i 的位置坐标 (相对于底盘中心)
+        float x_i = Wheel_To_Core_Distance[i] * arm_cos_f32(Steer_Azimuth[i]);
+        float y_i = Wheel_To_Core_Distance[i] * arm_sin_f32(Steer_Azimuth[i]);
+
+        // 轮子线速度 = 底盘平移速度 + 旋转速度
+        // v_wheel = v_chassis + omega × r
+        // v_wheel_x = vx - omega * y_i
+        // v_wheel_y = vy + omega * x_i
+        float v_wheel_x = Target_Velocity_X - Target_Omega * y_i;
+        float v_wheel_y = Target_Velocity_Y + Target_Omega * x_i;
+
+        // 目标舵角 = atan2(vy, vx)
+        Target_Steer_Angle[i] = atan2f(v_wheel_y, v_wheel_x);
+
+        // 设置模块目标
         Swerve_Modules[i].Set_Target_Angle(Target_Steer_Angle[i]);
         Swerve_Modules[i].Set_Target_Force(Wheel_Force[i]);
     }

@@ -4,6 +4,7 @@
 #include "alg_pid.h"
 #include "dvc_motor_dji.h"
 #include "dvc_motor_mksesc.h"
+#include "dvc_steer_encoder.h"
 #include "dvc_swerve_module.h"
 
 /**
@@ -35,6 +36,9 @@ public:
 
     // 轮向电机
     Class_Motor_MKSESC Motor_Wheel[4];
+
+    // 四个舵轮编码器
+    Class_Swerve_Steer_Encoder Steer_Encoder[4];
 
     // 四个舵轮模块
     Class_Swerve_Module Swerve_Modules[4];

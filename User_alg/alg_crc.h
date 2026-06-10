@@ -1,3 +1,13 @@
+/**
+ * @file    alg_crc.h
+ * @author  Carbon
+ * @brief   CRC (Cyclic Redundancy Check) calculation library
+ * @version 1.0
+ * @date    2026-06-05
+ *
+ * @note    C++17 header-only library, supports CRC-8/CRC-16/CRC-32/CRC-64
+ */
+
 #ifndef ALG_CRC_H
 #define ALG_CRC_H
 
@@ -31,7 +41,7 @@ struct CRC_Core
      * @brief 安全计算编译期掩码，完美规避移位溢出的未定义行为 (UB)
      */
     template <uint8_t Width>
-    static constexpr CRCType<Width> get_mask() noexcept
+    static constexpr CRCType<Width> GetMask() noexcept
     {
         using Type = CRCType<Width>;
         // 既然是编译期常量，if constexpr 会在编译时直接丢弃不符合条件的分支
@@ -50,7 +60,7 @@ struct CRC_Core
      * @tparam Width CRC位宽
      */
     template <uint8_t Width>
-    static constexpr CRCType<Width> reflect(CRCType<Width> value) 
+    static constexpr CRCType<Width> Reflect(CRCType<Width> value) 
     {
         using Type = CRCType<Width>;
         Type result = 0;
@@ -69,17 +79,17 @@ struct CRC_Core
      * @tparam Width CRC位宽
      */
     template <uint8_t Width>
-    static constexpr auto generate_table(CRCType<Width> poly, bool refin) 
+    static constexpr auto GenerateTable(CRCType<Width> poly, bool refin) 
     {
         using Type = CRCType<Width>;
         std::array<Type, 256> table{};
         
         // 动态计算掩码，防止位移溢出
-        constexpr Type mask = CRC_Core::get_mask<Width>();
+        constexpr Type mask = CRC_Core::GetMask<Width>();
 
         if (refin) 
         {
-            Type reflected_poly = reflect<Width>(poly);
+            Type Reflected_poly = Reflect<Width>(poly);
             for (uint32_t d = 0; d < 256; d++) 
             {
                 Type entry = static_cast<Type>(d);
@@ -87,7 +97,7 @@ struct CRC_Core
                 {
                     bool lsb = (entry & 1u) != 0u;
                     entry >>= 1;
-                    if (lsb) entry ^= reflected_poly;
+                    if (lsb) entry ^= Reflected_poly;
                     entry &= mask;
                 }
                 table[d] = entry;
@@ -118,18 +128,18 @@ struct CRC_Core
       * @tparam Init CRC初始值
       * @tparam Xorout CRC输出异或值
       * @tparam Refin 输入数据是否反转
-      * @tparam Refout 输出CRC是否反转
+      * @tparam Refout CRC计算完成后是否反转
       * @param table 预生成的CRC查找表
       * @param data 输入数据指针
       * @param length 输入数据长度
      */
     template <uint8_t Width, CRCType<Width> Poly, CRCType<Width> Init, CRCType<Width> Xorout, bool Refin, bool Refout, typename TableType>
-    static constexpr auto process(const std::array<TableType, 256>& table, const uint8_t* data, size_t length)
+    static constexpr auto Process(const std::array<TableType, 256>& table, const uint8_t* data, size_t length)
     {
         using Type = CRCType<Width>;
-        
+
         Type crc_value = Init;
-        constexpr Type mask = CRC_Core::get_mask<Width>();
+        constexpr Type mask = CRC_Core::GetMask<Width>();
 
         if constexpr (Refin)
         {
@@ -150,12 +160,21 @@ struct CRC_Core
             crc_value &= mask;
         }
 
+        // 根据 Refin/Refout 组合执行不同的后处理
+        // 标准CRC惯例：
+        //   Refin=true, Refout=true  → 中间值已是反射形式，直接 xorout
+        //   Refin=false, Refout=true → 中间值是正序形式，需 reflect 后 xorout
+        //   Refin=true/false, Refout=false → 直接 xorout
         if constexpr (Refout)
         {
-            crc_value = reflect<Width>(crc_value);
+            if constexpr (!Refin)
+            {
+                crc_value = Reflect<Width>(crc_value);
+            }
+            // Refin=true 时中间值已在 LSB-first 模式下自然反转，无需再 reflect
         }
         crc_value ^= Xorout;
-        
+
         return static_cast<Type>(crc_value & mask);
     }
 };
@@ -171,19 +190,19 @@ private:
     static_assert(Width >= 8 && Width <= 64, "CRC width must be 8..64");
     static_assert(Width % 8 == 0, "CRC width must be a multiple of 8");
 
-    static constexpr auto LUT = CRC_Core::generate_table<Width>(Poly, Refin);
+    static constexpr auto LUT = CRC_Core::GenerateTable<Width>(Poly, Refin);
 
 public:
     using Type = CRCType<Width>;
     
-    static Type compute(const void *data, size_t length) noexcept
+    static Type Calculate(const void *data, size_t length) noexcept
     {
-        return CRC_Core::process<Width, Poly, Init, Xorout, Refin, Refout>(LUT, static_cast<const uint8_t*>(data), length);
+        return CRC_Core::Process<Width, Poly, Init, Xorout, Refin, Refout>(LUT, static_cast<const uint8_t*>(data), length);
     }
 
-    static Type compute(std::string_view str) noexcept
+    static Type Calculate(std::string_view str) noexcept
     {
-        return compute(str.data(), str.size());
+        return Calculate(str.data(), str.size());
     }
 };
 
@@ -200,21 +219,20 @@ using CRC8_MAXIM        = Class_CRC_Static<8, 0x31, 0x00, 0x00, true, true>;
 // CRC-16 (uint16_t)
 using CRC16_IBM         = Class_CRC_Static<16, 0x8005, 0x0000, 0x0000, true, true>;
 using CRC16_MODBUS      = Class_CRC_Static<16, 0x8005, 0xFFFF, 0x0000, true, true>;
-using CRC16_CCITT       = Class_CRC_Static<16, 0x1021, 0x0000, 0x0000, true, true>;
+using CRC16_CCITT       = Class_CRC_Static<16, 0x1021, 0xFFFF, 0x0000, false, false>;
 
 // CRC-32 (uint32_t)
 using CRC32             = Class_CRC_Static<32, 0x04C11DB7, 0xFFFFFFFF, 0xFFFFFFFF, true, true>;
 
 // CRC-64 (uint64_t)
 using CRC64_ECMA        = Class_CRC_Static<64, 0x42F0E1EBA9EA3693ULL, 0x0000000000000000ULL, 0x0000000000000000ULL, false, false>;
-using CRC64_ISO         = Class_CRC_Static<64, 0x000000000000001BULL, 0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFFFFFFFFFULL, true, true>;
 
 } // namespace CRC_Lib
 } // namespace Algorithm
 
 /**
  * 使用示例：
- * uint32_t crc32_value = Algorithm::CRC_Lib::CRC32::compute(data, length);
- * uint8_t crc8_value = Algorithm::CRC_Lib::CRC8_ITU::compute("Hello, World!");
+ * uint32_t crc32_value = Algorithm::CRC_Lib::CRC32::Calculate(data, length);
+ * uint8_t crc8_value = Algorithm::CRC_Lib::CRC8_ITU::Calculate("Hello, World!");
  */
 #endif // ALG_CRC_H

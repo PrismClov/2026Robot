@@ -118,8 +118,6 @@
  
      void Init(FDCAN_HandleTypeDef *hfdcan, uint32_t __FDCAN_Motor_ID,uint8_t __Motor_Pole_Pairs, float __Angle_Max = 12.5f, float __Omega_Max = 25.0f, float __Duty_Max = 10.0f, float __Current_Max = 10.261194f, Enum_Motor_Control_Method __Control_Method = MOTOR_CONTROL_METHOD_CURRENT);
 
-     void Init() override;
-
      void Set_Base_Parameters(const Base_Parameters& parameters);
  
      inline float Get_Angle_Max();

@@ -148,13 +148,6 @@ bool Class_Motor_DJI_C610::Init(
 
     return true;
 }
-void Class_Motor_DJI_C610::Init()
-{
-    /*
-     * 兼容 Class_Motor_Base 的无参 Init。
-     * 真正硬件初始化请调用带参数 Init()。
-     */
-}
 
 /**
  * @brief 校验控制参数合法性

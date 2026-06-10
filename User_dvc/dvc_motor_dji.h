@@ -158,7 +158,6 @@ namespace Motor
          *
          * 真正硬件初始化请调用带参数 Init()。
          */
-        void Init() override;
 
         inline void Set_Control_Method(Enum_Motor_Control_Method __Method) override;
 

@@ -5,7 +5,7 @@
 #include <stdint.h>
 
 #include "dvc_motor_base.h"
-#include "dvc_swerve_steer_encoder.h"
+#include "dvc_steer_encoder.h"
 
 /**
  * @brief 单个舵轮模块
@@ -113,9 +113,9 @@ public:
      * 直接构造：
      * 适合局部对象、测试对象或依赖初始化顺序明确的场景。
      */
-    explicit Class_Swerve_Module(Class_Motor_Base &steer_motor, Class_Motor_Base &drive_motor, const Parameters &parameters, Mode mode = Mode::Speed)
+    explicit Class_Swerve_Module(Class_Motor_Base &steer_motor, Class_Motor_Base &drive_motor, Class_Swerve_Steer_Encoder &steer_encoder, const Parameters &parameters, Mode mode = Mode::Speed)
     {
-        Init(steer_motor, drive_motor, parameters, mode);
+        Init(steer_motor, drive_motor, steer_encoder, parameters, mode);
     }
 
     /*
@@ -126,11 +126,9 @@ public:
      * true  初始化成功
      * false 参数非法，初始化失败
      */
-    bool Init(Class_Motor_Base &steer_motor, Class_Motor_Base &drive_motor, const Parameters &parameters, Mode mode = Mode::Speed);
+    bool Init(Class_Motor_Base &steer_motor, Class_Motor_Base &drive_motor, Class_Swerve_Steer_Encoder &steer_encoder, const Parameters &parameters, Mode mode = Mode::Speed);
 
     inline bool Is_Initialized() const;
-
-    void Update_Encoder(uint16_t encoder_raw);
 
     // Set
     inline bool Set_Mode(Mode mode);
@@ -159,7 +157,7 @@ public:
 private:
     Class_Motor_Base *Steer_Motor = nullptr;
     Class_Motor_Base *Drive_Motor = nullptr;
-    Class_Swerve_Steer_Encoder Steer_Encoder = {};
+    Class_Swerve_Steer_Encoder *Steer_Encoder = nullptr;
 
     Parameters Param = {};
     Target Module_Target = {};
@@ -265,11 +263,11 @@ inline Class_Swerve_Module::Mode Class_Swerve_Module::Get_Mode() const
 }
 
 /**
- * @brief 获取当前舵角
+ * @brief 获取当前舵角 (rad)
  */
 inline float Class_Swerve_Module::Get_Current_Angle() const
 {
-    return Steer_Encoder.Get_Angle_Rad();
+    return (Steer_Encoder->Get_Normalized_Angle() * DEG_TO_RAD) - Param.Steer_Zero_Offset_Rad;
 }
 
 /**

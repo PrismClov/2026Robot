@@ -50,14 +50,6 @@ public:
     virtual ~Class_Motor_Base() {}
 
     /**
-     * @brief 无参初始化接口
-     *
-     * 对于适配器类，真正的绑定初始化通常会额外提供带参数 Init()。
-     * 这个无参 Init() 主要用于统一接口。
-     */
-    virtual void Init() = 0;
-
-    /**
      * @brief 设置电机控制模式
      */
     virtual void Set_Control_Method(Enum_Motor_Control_Method __Method) = 0;
