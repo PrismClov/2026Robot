@@ -39,6 +39,7 @@
 #include "drv_can.h"
 #include "drv_tim.h"
 #include "drv_uart.h"
+#include "dvc_ds_servo.h"
 #include "dvc_dwt.h"
 #include "dvc_motor_dji.h"
 #include "dvc_motor_mksesc.h"
@@ -46,7 +47,8 @@
 #include "dvc_swerve_module.h"
 #include "ita_robot.h"
 
-Class_Chassis Chassis;
+Class_Chariot chariot;
+Class_DS_Servo DS_Servo;
 /* Private macros ------------------------------------------------------------*/
 // static float vbat = 0;
 /* Private types -------------------------------------------------------------*/
@@ -137,22 +139,22 @@ void Device_FDCAN3_Callback(Struct_FDCAN_Rx_Buffer *FDCAN_RxMessage)
         // 舵向编码器返回数据处理 (0x201-0x204)
         case 0x201:
         {
-            Chassis.Steer_Encoder[0].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+            chariot.Chassis.Steer_Encoder[0].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
             break;
         }
         case 0x202:
         {
-            Chassis.Steer_Encoder[1].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+            chariot.Chassis.Steer_Encoder[1].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
             break;
         }
         case 0x203:
         {
-            Chassis.Steer_Encoder[2].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+            chariot.Chassis.Steer_Encoder[2].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
             break;
         }
         case 0x204:
         {
-            Chassis.Steer_Encoder[3].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+            chariot.Chassis.Steer_Encoder[3].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
             break;
         }
 
@@ -184,11 +186,9 @@ void Device_FDCAN3_Callback(Struct_FDCAN_Rx_Buffer *FDCAN_RxMessage)
  */
 void DR16_UART5_Callback(uint8_t *Buffer, uint16_t Length)
 {
-    (void)Buffer;
-    (void)Length;
-    //  chariot.DR16.DR16_UART_RxCpltCallback(Buffer);
-    //  // 底盘 云台 发射机构 的控制策略
-    //  chariot.TIM_Control_Callback();
+    chariot.DR16.DR16_UART_RxCpltCallback(Buffer);
+    // 底盘 云台 发射机构 的控制策略
+    chariot.TIM_Control_Callback();
 }
 
 /**
@@ -210,8 +210,8 @@ void Task1ms_TIM5_Callback()
 {
     DWT_Update();
     flag++;
-    //Chassis.TIM_1ms_Control_PeriodElapsedCallback();
-    // 10ms检测存活状态
+    // chariot.Chassis.TIM_1ms_Control_PeriodElapsedCallback();
+    //  10ms检测存活状态
     mod100++;
     if (mod100 >= 100)
     {
@@ -222,7 +222,7 @@ void Task1ms_TIM5_Callback()
         //   M2006.Calculate();
         //   Motor::DJI_TIM_Send_Group(&hfdcan1, CAN_Tx_ID_0x200_Only);
         //   mod100 = 0;
-        //Chassis.TIM_100ms_Alive_PeriodElapsedCallback();
+        // chariot.Chassis.TIM_100ms_Alive_PeriodElapsedCallback();
     }
 }
 
@@ -239,9 +239,11 @@ void Task_Init()
     // UART初始化
     UART_Init(&huart5, DR16_UART5_Callback, 36);
     // 定时器初始化
+    HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+
     TIM_Init(&htim4, Task100us_TIM4_Callback);
     TIM_Init(&htim5, Task1ms_TIM5_Callback);
-    Chassis.Init();
+    chariot.Init();
 
     // 战车层初始化
 
@@ -255,13 +257,15 @@ void Task_Init()
     // 标记初始化完成
     init_finished = true;
 }
-
+uint32_t duty = 0;
 /**
  * @brief 前台循环任务
  *
  */
 void Task_Loop()
 {
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, duty);
+    HAL_Delay(100);
 }
 
 /************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/

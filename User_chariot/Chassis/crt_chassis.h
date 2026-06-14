@@ -43,6 +43,12 @@ public:
     // 四个舵轮模块
     Class_Swerve_Module Swerve_Modules[4];
 
+    float Velocity_X_Max = 1.5f;
+
+    float Velocity_Y_Max = 1.5f;
+
+    float Omega_Max = 3.0f;
+
     void Init();
 
     inline float Get_Now_Velocity_X();
@@ -58,6 +64,12 @@ public:
     inline float Get_Target_Velocity_Y();
 
     inline float Get_Target_Omega();
+
+    inline float Get_Velocity_X_Max();
+
+    inline float Get_Velocity_Y_Max();
+
+    inline float Get_Omega_Max();
 
     inline void Set_Chassis_Control_Type(Enum_Chassis_Control_Type __Chassis_Control_Type);
 
@@ -113,10 +125,10 @@ protected:
     };
 
     // 轮向参数
-    static constexpr float Wheel_Radius = 0.0265f;         // m
-    static constexpr float Wheel_Motor_Reduction = 7.5f;    // 减速比
+    static constexpr float Wheel_Radius = 0.0265f;                                   // m
+    static constexpr float Wheel_Motor_Reduction = 7.5f;                             // 减速比
     static constexpr float Wheel_To_Core_Distance[4] = {0.18f, 0.18f, 0.18f, 0.18f}; // m, 四轮到几何中心距离
-    static constexpr float Swerve_Module_Force_To_Current = 0.2f; // N -> A
+    static constexpr float Swerve_Module_Force_To_Current = 0.2f;                    // N -> A
 
     // 轮向电机静摩擦阻力电流值
     float Static_Resistance_Wheel_Current[4] = {3.0f,
@@ -181,7 +193,7 @@ protected:
     // 内部函数
 
     void Calculate();
-    
+
     void Self_Resolution();
 
     void Steer_Angle_Self_Resolution();
@@ -222,6 +234,21 @@ inline float Class_Chassis::Get_Target_Velocity_Y()
 inline float Class_Chassis::Get_Target_Omega()
 {
     return Target_Omega;
+}
+
+inline float Class_Chassis::Get_Velocity_X_Max()
+{
+    return Velocity_X_Max;
+}
+
+inline float Class_Chassis::Get_Velocity_Y_Max()
+{
+    return Velocity_Y_Max;
+}
+
+inline float Class_Chassis::Get_Omega_Max()
+{
+    return Omega_Max;
 }
 
 inline void Class_Chassis::Set_Chassis_Control_Type(Enum_Chassis_Control_Type __Chassis_Control_Type)

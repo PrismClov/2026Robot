@@ -7,18 +7,18 @@
 void Class_Chassis::Init()
 {
     // 底盘速度xPID, 输出摩擦力
-    PID_Velocity_X.Init(10.0f, 0.0f, 0.0f, 0.0f, 0.18f, 30.0f, 0.002f);
+    PID_Velocity_X.Init(10.0f, 0.0f, 0.0f, 0.0f, 0.18f, 30.0f, 0.001f);
 
     // 底盘速度yPID, 输出摩擦力
-    PID_Velocity_Y.Init(10.0f, 0.0f, 0.0f, 0.0f, 0.18f, 30.0f, 0.002f);
+    PID_Velocity_Y.Init(10.0f, 0.0f, 0.0f, 0.0f, 0.18f, 30.0f, 0.001f);
 
     // 底盘角速度PID, 输出扭矩
-    PID_Omega.Init(10.0f, 0.0f, 0.0f, 0.0f, 0.01f, 10.0f, 0.002f);
+    PID_Omega.Init(10.0f, 0.0f, 0.0f, 0.0f, 0.01f, 10.0f, 0.001f);
 
     // 舵向电机
     for (uint8_t i = 0; i < 4; i++)
     {
-        Motor_Steer[i].Init(&hfdcan1, static_cast<Enum_Motor_DJI_C610_ID>(0x201 + i),
+        Motor_Steer[i].Init(&hfdcan1, static_cast<Motor::Enum_Motor_DJI_ID>(0x201 + i),
                             Motor::Class_Motor_DJI_C610::Parameters{PID_Position_Parameters, PID_Omega_Parameters, false}, 36.0f, 10.0f);
     }
 
@@ -86,6 +86,9 @@ void Class_Chassis::Calculate()
             PID_Omega.Set_Integral_Error(0.0f);
             Wheel_Force[i] = 0.0f;
         }
+        Target_Velocity_X = 0.0f;
+        Target_Velocity_Y = 0.0f;
+        Target_Omega = 0.0f;
         Chassis_Force_X = 0.0f;
         Chassis_Force_Y = 0.0f;
         Chassis_Torque = 0.0f;
