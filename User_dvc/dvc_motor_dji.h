@@ -110,7 +110,7 @@ namespace Motor
         float K_F = 0.0f;
 
         float I_Out_Max = 0.0f;
-        float Out_Max = 0.0f;
+        float Out_Max = 30.0f;
         float D_T = 0.001f;
         float Dead_Zone = 0.0f;
 

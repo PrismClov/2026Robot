@@ -46,6 +46,9 @@ public:
 
     Class_FSM_Weapon FSM_Weapon;
 
+    bool Pick_Yaw_Flag = false;
+    bool Move_Yaw_Flag = false;
+
     friend class Class_FSM_Weapon;
 
     void Init();
@@ -73,6 +76,7 @@ private:
 
     // 位移电机参数
     float Move_Target_Position[3] = {0.0f, 0.0f, 0.0f}; // 移动电机目标位置
+    uint8_t Move_Index = 0;                                // 移动位置索引
 
     const float Stroke = 0.1f;             // 移动机构导程，输出轴每圈前进距离 m/rev
     const float Position_Threshold = 0.01f; // 位置误差阈值 m

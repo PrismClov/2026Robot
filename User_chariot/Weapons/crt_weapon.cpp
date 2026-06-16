@@ -96,6 +96,16 @@ void Class_Weapon::TIM_Weapon_PeriodElapsedCallback()
     Motor_Arm.Calculate();
 
     Motor_Move.Calculate();
+
+    // Move位置切换
+    if (Move_Yaw_Flag)
+    {
+        Move_Yaw_Flag = false;
+
+        Move_Index = (Move_Index + 1) % 3;
+
+        Move_To_Position(Move_Target_Position[Move_Index]);
+    }
 }
 
 /**
@@ -158,8 +168,9 @@ void Class_FSM_Weapon::Weapon_TIM_Status_PeriodElapsedCallback()
         {
             Weapon->Weapon_Grab_Status_Task();
 
-            if (Weapon->Is_Action_Finished())
+            if (Weapon->Is_Action_Finished() && Weapon->Pick_Yaw_Flag)
             {
+                Weapon->Pick_Yaw_Flag = false;
 
                 Status[Now_Status_Serial].Count_Time = 0;
 
@@ -172,8 +183,9 @@ void Class_FSM_Weapon::Weapon_TIM_Status_PeriodElapsedCallback()
         {
             Weapon->Weapon_Grab_Status_Task();
 
-            if (Weapon->Is_Action_Finished())
+            if (Weapon->Is_Action_Finished() && Weapon->Pick_Yaw_Flag)
             {
+                Weapon->Pick_Yaw_Flag = false;
 
                 Status[Now_Status_Serial].Count_Time = 0;
 
@@ -186,8 +198,9 @@ void Class_FSM_Weapon::Weapon_TIM_Status_PeriodElapsedCallback()
         {
             Weapon->Weapon_Grab_Status_Task();
 
-            if (Weapon->Is_Action_Finished())
+            if (Weapon->Is_Action_Finished() && Weapon->Pick_Yaw_Flag)
             {
+                Weapon->Pick_Yaw_Flag = false;
 
                 Status[Now_Status_Serial].Count_Time = 0;
 
@@ -200,8 +213,9 @@ void Class_FSM_Weapon::Weapon_TIM_Status_PeriodElapsedCallback()
         {
             Weapon->Weapon_Grab_Status_Task();
 
-            if (Weapon->Is_Action_Finished())
+            if (Weapon->Is_Action_Finished() && Weapon->Pick_Yaw_Flag)
             {
+                Weapon->Pick_Yaw_Flag = false;
 
                 Status[Now_Status_Serial].Count_Time = 0;
 
@@ -210,4 +224,6 @@ void Class_FSM_Weapon::Weapon_TIM_Status_PeriodElapsedCallback()
             break;
         }
     }
+
+    Weapon->Pick_Yaw_Flag = false;
 }

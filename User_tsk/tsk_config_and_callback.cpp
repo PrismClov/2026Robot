@@ -48,7 +48,7 @@
 #include "ita_robot.h"
 
 Class_Chariot chariot;
-Class_DS_Servo DS_Servo;
+
 /* Private macros ------------------------------------------------------------*/
 // static float vbat = 0;
 /* Private types -------------------------------------------------------------*/
@@ -76,7 +76,7 @@ void Device_FDCAN1_Callback(Struct_FDCAN_Rx_Buffer *FDCAN_RxMessage)
 
         case 0x201:
         {
-
+            // M3508.FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
             break;
         }
 
@@ -199,12 +199,12 @@ void DR16_UART5_Callback(uint8_t *Buffer, uint16_t Length)
 void Task100us_TIM4_Callback()
 {
 }
-
+float Target_Position = 0.0f;
 /**
  * @brief TIM5任务回调函数
  *
  */
-float Target_Position = 0.0;
+float current = 0.0f;
 uint8_t mod100 = 0;
 void Task1ms_TIM5_Callback()
 {
@@ -224,6 +224,10 @@ void Task1ms_TIM5_Callback()
         //   mod100 = 0;
         // chariot.Chassis.TIM_100ms_Alive_PeriodElapsedCallback();
     }
+    // M3508.Set_Control_Method(MOTOR_CONTROL_METHOD_CURRENT);
+    // M3508.Set_Target_Current(current);
+    // M3508.Calculate();
+    // Motor::DJI_TIM_Send_Group(&hfdcan1, Motor::CAN_Tx_ID_0x200_Only);
 }
 
 void Task_Init()
@@ -243,8 +247,14 @@ void Task_Init()
 
     TIM_Init(&htim4, Task100us_TIM4_Callback);
     TIM_Init(&htim5, Task1ms_TIM5_Callback);
-    chariot.Init();
 
+    // {
+    //     Motor::Class_Motor_DJI_C620::Parameters params;
+    //     params.PID_Position.Out_Max = 10.0f;
+    //     M3508.Init(&hfdcan1, Motor::Motor_DJI_ID_0x201, params);
+    // }
+    //chariot.Init();
+    // DS_Servo.Init(&htim1, TIM_CHANNEL_1, 500, 2500);
     // 战车层初始化
 
     // 交互层初始化
@@ -257,15 +267,14 @@ void Task_Init()
     // 标记初始化完成
     init_finished = true;
 }
-uint32_t duty = 0;
+
 /**
  * @brief 前台循环任务
  *
  */
 void Task_Loop()
 {
-    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, duty);
-    HAL_Delay(100);
+
 }
 
 /************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/

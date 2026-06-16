@@ -1,25 +1,29 @@
 
-GraphedExpression="(((FDCAN3_Manage_Object).Rx_Buffer).Header).Identifier", Color=#e56a6f
-OpenDocument="main.c", FilePath="F:/Embedded/Wulin_R1/2026Robot/Core/Src/main.c", Line=101
-OpenDocument="dvc_steer_encoder.cpp", FilePath="F:/Embedded/Wulin_R1/2026Robot/User_dvc/dvc_steer_encoder.cpp", Line=37
-OpenDocument="tsk_config_and_callback.cpp", FilePath="F:/Embedded/Wulin_R1/2026Robot/User_tsk/tsk_config_and_callback.cpp", Line=12
-OpenDocument="dvc_swerve_module.cpp", FilePath="F:/Embedded/Wulin_R1/2026Robot/User_dvc/dvc_swerve_module.cpp", Line=195
+
+Breakpoint=F:/Embedded/Wulin_R1/2026Robot/User_tsk/tsk_config_and_callback.cpp:227, State=BP_STATE_ON
+OpenDocument="dvc_motor_dji.h", FilePath="F:/Embedded/Wulin_R1/2026Robot/User_dvc/dvc_motor_dji.h", Line=680
+OpenDocument="stm32h7xx_it.c", FilePath="F:/Embedded/Wulin_R1/2026Robot/Core/Src/stm32h7xx_it.c", Line=96
+OpenDocument="tsk_config_and_callback.cpp", FilePath="F:/Embedded/Wulin_R1/2026Robot/User_tsk/tsk_config_and_callback.cpp", Line=73
+OpenDocument="main.c", FilePath="F:/Embedded/Wulin_R1/2026Robot/Core/Src/main.c", Line=66
 OpenToolbar="Debug", Floating=0, x=0, y=0
-OpenWindow="Registers 1", DockArea=RIGHT, x=0, y=1, w=591, h=762, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, FilteredItems=[], RefreshRate=1
+OpenWindow="Registers 1", DockArea=RIGHT, x=0, y=1, w=591, h=747, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, FilteredItems=[], RefreshRate=1
 OpenWindow="Source Files", DockArea=LEFT, x=0, y=0, w=1175, h=1074, TabPos=1, TopOfStack=0, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
-OpenWindow="Disassembly", DockArea=RIGHT, x=0, y=0, w=591, h=330, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Disassembly", DockArea=RIGHT, x=0, y=0, w=591, h=345, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
 OpenWindow="Memory 1", DockArea=BOTTOM, x=2, y=0, w=1290, h=328, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, EditorAddress=0x200001C8
 OpenWindow="Watched Data 1", DockArea=LEFT, x=0, y=0, w=1175, h=1074, TabPos=0, TopOfStack=1, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
 OpenWindow="Functions", DockArea=LEFT, x=0, y=0, w=1175, h=1074, TabPos=2, TopOfStack=0, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
 OpenWindow="Data Sampling", DockArea=BOTTOM, x=1, y=0, w=340, h=328, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, VisibleTab=0, UniformSampleSpacing=0
 OpenWindow="Console", DockArea=BOTTOM, x=0, y=0, w=928, h=328, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
-TableHeader="Source Files", SortCol="File", SortOrder="ASCENDING", VisibleCols=["File";"Status";"Size";"#Insts";"Path"], ColWidths=[255;100;100;100;1214]
-TableHeader="Watched Data 1", SortCol="Expression", SortOrder="ASCENDING", VisibleCols=["Expression";"Value";"Location";"Refresh"], ColWidths=[478;223;478;100]
 TableHeader="Functions", SortCol="Name", SortOrder="ASCENDING", VisibleCols=["Name";"Address";"Size";"#Insts";"Source"], ColWidths=[1458;104;100;100;100]
-TableHeader="Data Sampling Table", SortCol="None", SortOrder="ASCENDING", VisibleCols=["Index";"Time";" (((FDCAN3_Manage_Object).Rx_Buffer).Header).Identifier"], ColWidths=[100;100;100]
-TableHeader="Data Sampling Setup", SortCol="Expression", SortOrder="ASCENDING", VisibleCols=["Expression";"Type";"Value";"Min";"Max";"Average";"# Changes";"Min. Change";"Max. Change"], ColWidths=[494;144;100;100;100;100;110;126;126]
+TableHeader="Source Files", SortCol="File", SortOrder="ASCENDING", VisibleCols=["File";"Status";"Size";"#Insts";"Path"], ColWidths=[255;100;100;100;1214]
+TableHeader="Data Sampling Table", SortCol="Index", SortOrder="ASCENDING", VisibleCols=["Index";"Time"], ColWidths=[100;100]
+TableHeader="Data Sampling Setup", SortCol="Expression", SortOrder="ASCENDING", VisibleCols=["Expression";"Type";"Value";"Min";"Max";"Average";"# Changes";"Min. Change";"Max. Change"], ColWidths=[494;100;100;100;100;100;110;126;126]
 TableHeader="Power Sampling", SortCol="Index", SortOrder="ASCENDING", VisibleCols=["Index";"Time";"Ch 0"], ColWidths=[100;100;100]
 TableHeader="Registers 1", SortCol="Name", SortOrder="ASCENDING", VisibleCols=["Name";"Value";"Description"], ColWidths=[100;144;347]
 TableHeader="RegisterSelectionDialog", SortCol="None", SortOrder="ASCENDING", VisibleCols=[], ColWidths=[]
+TableHeader="Watched Data 1", SortCol="Expression", SortOrder="ASCENDING", VisibleCols=["Expression";"Value";"Location";"Refresh"], ColWidths=[478;223;478;100]
 TableHeader="TargetExceptionDialog", SortCol="Name", SortOrder="ASCENDING", VisibleCols=["Name";"Value";"Address";"Description"], ColWidths=[26;26;26;26]
-WatchedExpression="Chassis", RefreshRate=5, Window=Watched Data 1
+WatchedExpression="chariot", Window=Watched Data 1
+WatchedExpression="DS_Servo", Window=Watched Data 1
+WatchedExpression="Position", RefreshRate=5, Window=Watched Data 1
+WatchedExpression="M3508", Window=Watched Data 1

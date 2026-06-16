@@ -4,9 +4,9 @@
 *                         www.segger.com                             *
 **********************************************************************
 
-File          : 
-Created       : 29. May 2026 16:24
-Ozone Version : V3.40b
+File          : F:/Embedded/Wulin_R1/2026Robot/Wulin_R1.jdebug
+Created       : 15 Jun 2026 19:54
+Ozone Version : V3.24
 */
 
 /*********************************************************************
@@ -22,18 +22,16 @@ void OnProjectLoad (void) {
   //
   // Dialog-generated settings
   //
-  Project.AddPathSubstitute ("C:/Users/clover/Desktop/Wulin_R1", "$(ProjectDir)");
-  Project.AddPathSubstitute ("c:/users/clover/desktop/wulin_r1", "$(ProjectDir)");
+  Project.AddPathSubstitute ("F:/Embedded/Wulin_R1/2026Robot", "$(ProjectDir)");
+  Project.AddPathSubstitute ("f:/embedded/wulin_r1/2026robot", "$(ProjectDir)");
   Project.SetDevice ("STM32H723VG");
-  Project.SetHostIF ("USB", "");
+  Project.SetHostIF ("USB", "150712372");
   Project.SetTargetIF ("SWD");
   Project.SetTIFSpeed ("4 MHz");
   Project.AddSvdFile ("$(InstallDir)/Config/CPU/Cortex-M7F.svd");
-  Project.AddSvdFile ("$(InstallDir)/Config/Peripherals/STM32H723.svd");
   //
   // User settings
   //
-  Edit.SysVar (VAR_HSS_SPEED, Off);
   File.Open ("$(ProjectDir)/build/Debug/H723VGT6_Demo.elf");
 }
 
@@ -303,31 +301,6 @@ void AfterTargetDownload (void) {
 
 /*********************************************************************
 *
-*       AfterProjectLoad
-*
-* Function description
-*   After Project load routine. Optional.
-*
-**********************************************************************
-*/
-//void AfterProjectLoad (void) {
-//}
-
-/*********************************************************************
-*
-*       OnDebugStartBreakSymbolReached
-*
-* Function description
-*   Called when program execution has reached/passed
-*   the symbol to be breaked at during debug start. Optional.
-*
-**********************************************************************
-*/
-//void OnDebugStartBreakSymReached (void) {
-//}
-
-/*********************************************************************
-*
 *       _SetupTarget
 *
 * Function description
@@ -339,8 +312,15 @@ void AfterTargetDownload (void) {
 **********************************************************************
 */
 void _SetupTarget(void) {
+  unsigned int SP;
+  unsigned int VectorTableAddr;
+
+  VectorTableAddr = Elf.GetBaseAddr();
   //
-  // this function is intentionally empty because both inital PC and
-  // initial SP were chosen not to be set
+  // Set up initial stack pointer
   //
+  SP = Target.ReadU32(VectorTableAddr);
+  if (SP != 0xFFFFFFFF) {
+    Target.SetReg("SP", SP);
+  }
 }
