@@ -133,6 +133,19 @@ public:
      * - 输出 PWM
      */
     virtual void Output() = 0;
+
+    /**
+     * @brief 电机堵转校准
+     *
+     * 每控制周期调用一次，电机以恒定速度运动直到堵转。
+     * 堵转后速度置零，通过 offset 导出机械零点绝对角度。
+     *
+     * @param speed 校准速度，正负决定方向
+     * @param current_threshold 堵转电流阈值 (A)
+     * @param offset 输出，堵转时的机械零点绝对角度
+     * @return true 堵转完成，false 仍在校准中
+     */
+    bool Calibrate(float speed, float current_threshold, float &offset);
 };
 
 #endif

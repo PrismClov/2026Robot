@@ -45,7 +45,7 @@ void Class_Weapon::Move_To_Position(float x)
     // 目标从米转换为相对于校准零点的弧度
     float target_rad = x / Stroke * 2.0f * PI;
     // 转换为绝对角度
-    float absolute_target_rad = Calibration_Offset + target_rad;
+    float absolute_target_rad = Move_Calibration_Offset + target_rad;
 
     // 长度误差
     float error_linear = Math_Abs(absolute_target_rad - Motor_Move.Get_Now_Angle()) / (2.0f * PI) * Stroke;
@@ -53,19 +53,15 @@ void Class_Weapon::Move_To_Position(float x)
     if (error_linear > Position_Threshold)
     {
         // 需要移动，先校准再走
-        if (!Is_Calibrated)
+        if (!Move_Calibrated)
         {
             // 低速运行到堵转位置，完成机械零点校准
-            Motor_Move.Set_Control_Method(MOTOR_CONTROL_METHOD_SPEED);
-            Motor_Move.Set_Target_Speed(Calibrate_Speed);
-
-            if (Math_Abs(Motor_Move.Get_Now_Current()) >= Locked_Rotor_Current_Threshold)
+            float offset;
+            if (Motor_Move.Calibrate(Calibrate_Speed, Locked_Rotor_Current_Threshold, offset))
             {
-                // 到达机械限位，记录当前绝对角度作为偏移量
-                Calibration_Offset = Motor_Move.Get_Now_Angle();
-                Motor_Move.Set_Target_Speed(0.0f);
-                Motor_Move.Set_Target_Position(Calibration_Offset);
-                Is_Calibrated = true;
+                Move_Calibration_Offset = offset;
+                Motor_Move.Set_Target_Position(Move_Calibration_Offset);
+                Move_Calibrated = true;
             }
         }
         else
@@ -80,7 +76,7 @@ void Class_Weapon::Move_To_Position(float x)
         // 已到达目标附近，保持位置
         Motor_Move.Set_Control_Method(MOTOR_CONTROL_METHOD_POSITION);
         Motor_Move.Set_Target_Position(absolute_target_rad);
-        Is_Calibrated = false;
+        Move_Calibrated = false;
     }
 }
 
@@ -132,7 +128,10 @@ bool Class_Weapon::Is_Action_Finished()
     bool Motor_Is_Finished = Math_Abs(Motor_Arm.Get_Target_Position() - Motor_Arm.Get_Now_Angle()) < Position_Threshold &&
                              Math_Abs(Motor_Arm.Get_Target_Omega() - Motor_Arm.Get_Now_Omega()) < Omega_Threshold &&
                              Math_Abs(Motor_Move.Get_Target_Position() - Motor_Move.Get_Now_Angle()) / (2.0f * PI) * Stroke < Position_Threshold &&
-                             Math_Abs(Motor_Move.Get_Target_Omega() - Motor_Move.Get_Now_Omega()) < Omega_Threshold;
+                             Math_Abs(Motor_Move.Get_Target_Omega() - Motor_Move.Get_Now_Omega()) < Omega_Threshold &&
+                             Move_Calibrated &&  // 位移电机需要完成校准
+                             Pitch_Calibrated && // 俯仰电机需要完成校准
+                             Arm_Calibrated;     // 机械臂电机需要完成校准
 
     return Motor_Is_Finished;
 }
@@ -142,15 +141,46 @@ bool Class_Weapon::Is_Action_Finished()
  */
 void Class_Weapon::Weapon_Grab_Status_Task()
 {
-    // 电机动作
+    // 旋转电机
     Motor_Rotate.Set_Control_Angle(Rotate_Target_Position[FSM_Weapon.Get_Now_Status_Serial()]);
-    Motor_Arm.Set_Target_Position(Arm_Target_Position[FSM_Weapon.Get_Now_Status_Serial()]);
 
-    // 舵机动作
-    for (uint8_t i = 0; i < 3; i++)
+    // 机械臂电机
+    if (!Arm_Calibrated)
     {
-        Pick_Servo[i].Set_Normalized_Position(Pick_Servo_Target_Position[FSM_Weapon.Get_Now_Status_Serial()]);
+        // 低速运行到堵转位置，完成机械零点校准
+        float offset;
+        if (Motor_Arm.Calibrate(Calibrate_Speed, Locked_Rotor_Current_Threshold, offset))
+        {
+            Arm_Calibration_Offset = offset;
+            Arm_Calibrated = true;
+        }
     }
+    Motor_Arm.Set_Target_Position(Arm_Target_Position[FSM_Weapon.Get_Now_Status_Serial()] + Arm_Calibration_Offset);
+
+    // 位移电机
+    Move_To_Position(Move_Target_Position[Move_Index]);
+
+    // 俯仰电机
+    if (!Pitch_Calibrated)
+    {
+        // 低速运行到堵转位置，完成机械零点校准
+        float offset;
+        if (Motor_Pitch[0].Calibrate(Calibrate_Speed, Locked_Rotor_Current_Threshold, offset))
+        {
+            Pitch_Calibration_Offset = offset;
+            Pitch_Calibrated = true;
+        }
+    }
+    Motor_Pitch[0].Set_Target_Position(Pitch_Target_Position[FSM_Weapon.Get_Now_Status_Serial()] + Pitch_Calibration_Offset);
+    Motor_Pitch[1].Set_Target_Position(Pitch_Target_Position[FSM_Weapon.Get_Now_Status_Serial()] + Pitch_Calibration_Offset);
+
+    // 夹取舵机
+    Pick_Servo[0].Set_Normalized_Position(Pick_Servo_Target_Position[FSM_Weapon.Get_Now_Status_Serial()]);
+    Pick_Servo[1].Set_Normalized_Position(Pick_Servo_Target_Position[FSM_Weapon.Get_Now_Status_Serial()]);
+    Pick_Servo[2].Set_Normalized_Position(Pick_Servo_Target_Position[FSM_Weapon.Get_Now_Status_Serial()]);
+
+    // 抓取舵机
+    Grab_Servo.Set_Normalized_Position(Grab_Servo_Target_Position[FSM_Weapon.Get_Now_Status_Serial()]);
 }
 
 /**
@@ -159,7 +189,6 @@ void Class_Weapon::Weapon_Grab_Status_Task()
  */
 void Class_FSM_Weapon::Weapon_TIM_Status_PeriodElapsedCallback()
 {
-
     Status[Now_Status_Serial].Count_Time++;
 
     switch (Now_Status_Serial)
