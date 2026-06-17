@@ -95,12 +95,30 @@ void Device_FDCAN2_Callback(Struct_FDCAN_Rx_Buffer *FDCAN_RxMessage)
 {
     switch (FDCAN_RxMessage->Header.Identifier)
     {
-
-        static uint8_t FDCAN_ID = FDCAN_RxMessage->Header.Identifier >> 8;
-        static uint8_t Master_ID = FDCAN_RxMessage->Header.Identifier;
-        (void)Master_ID;
-        switch (FDCAN_ID)
+        // VESC 电调数据反馈
+        case 0x931:
+        case 0x1031:
         {
+            chariot.Chassis.Motor_Wheel[0].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+            break;
+        }
+        case 0x932:
+        case 0x1032:
+        {
+            chariot.Chassis.Motor_Wheel[1].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+            break;
+        }
+        case 0x933:
+        case 0x1033:
+        {
+            chariot.Chassis.Motor_Wheel[2].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+            break;
+        }
+        case 0x934:
+        case 0x1034:
+        {
+            chariot.Chassis.Motor_Wheel[3].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+            break;
         }
     }
 }
@@ -157,24 +175,6 @@ void Device_FDCAN3_Callback(Struct_FDCAN_Rx_Buffer *FDCAN_RxMessage)
             chariot.Chassis.Steer_Encoder[3].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
             break;
         }
-
-        case (0x931):
-        case (0x1031):
-        {
-            break;
-        }
-        case (0x933):
-        case (0x1033):
-        {
-
-            break;
-        }
-        case (0x934):
-        case (0x1034):
-        {
-
-            break;
-        }
     }
 }
 
@@ -210,24 +210,18 @@ void Task1ms_TIM5_Callback()
 {
     DWT_Update();
     flag++;
-    // chariot.Chassis.TIM_1ms_Control_PeriodElapsedCallback();
-    //  10ms检测存活状态
+
+    chariot.Chassis.TIM_1ms_Control_PeriodElapsedCallback();
+
+    // 10ms检测存活状态
     mod100++;
     if (mod100 >= 100)
     {
-        //   //chariot.TIM_100ms_Alive_PeriodElapsedCallback();
-        //  // M2006.TIM_100ms_Alive_PeriodElapsedCallback();
-        //   M2006.Set_Control_Method(MOTOR_CONTROL_METHOD_POSITION);
-        //   M2006.Set_Target_Position(Target_Position);
-        //   M2006.Calculate();
-        //   Motor::DJI_TIM_Send_Group(&hfdcan1, CAN_Tx_ID_0x200_Only);
-        //   mod100 = 0;
-        // chariot.Chassis.TIM_100ms_Alive_PeriodElapsedCallback();
+        chariot.Chassis.TIM_100ms_Alive_PeriodElapsedCallback();
+        mod100 = 0;
     }
-    // M3508.Set_Control_Method(MOTOR_CONTROL_METHOD_CURRENT);
-    // M3508.Set_Target_Current(current);
-    // M3508.Calculate();
-    // Motor::DJI_TIM_Send_Group(&hfdcan1, Motor::CAN_Tx_ID_0x200_Only);
+
+    Motor::DJI_TIM_Send_Group(&hfdcan1, Motor::CAN_Tx_ID_0x200_Only);
 }
 
 void Task_Init()
@@ -253,7 +247,7 @@ void Task_Init()
     //     params.PID_Position.Out_Max = 10.0f;
     //     M3508.Init(&hfdcan1, Motor::Motor_DJI_ID_0x201, params);
     // }
-    //chariot.Init();
+    chariot.Init();
     // DS_Servo.Init(&htim1, TIM_CHANNEL_1, 500, 2500);
     // 战车层初始化
 

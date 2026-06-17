@@ -34,64 +34,50 @@ public:
 
     struct Parameters
     {
-        Parameters() = default;
-
-        Parameters(
-            float force_to_current,
-            float speed_deadband,
-            float force_deadband,
-            float current_deadband,
-            float max_speed_mps,
-            float max_force_n,
-            float max_current_a,
-            float steer_zero_offset_rad,
-            bool steer_encoder_reverse)
-            : Force_To_Current(force_to_current),
-              Speed_Deadband(speed_deadband),
-              Force_Deadband(force_deadband),
-              Current_Deadband(current_deadband),
-              Max_Speed_Mps(max_speed_mps),
-              Max_Force_N(max_force_n),
-              Max_Current_A(max_current_a),
-              Steer_Zero_Offset_Rad(steer_zero_offset_rad),
-              Steer_Encoder_Reverse(steer_encoder_reverse)
-        {
-        }
-
         /*
-         * 牵引力 N -> 电机电流 A 的简化比例。
+         * 牵引力 N -> 电机电流 A 的换算系数。
          *
-         * current = force * Force_To_Current
+         * 完整公式：current = force * wheel_radius / reduction_ratio / kt
          *
-         * 更严谨的公式：
-         * current = force * wheel_radius / reduction_ratio / kt
-         *
-         * 注意：
-         * Force_To_Current 必须大于 0。
-         * 方向反的问题应通过电机方向、VESC 方向或轮组 Drive_Direction 处理。
+         * 力控路径实际使用完整公式计算，
+         * Force_To_Current 仅作为回退值。
          */
         float Force_To_Current = 0.2f;
 
         /*
-         * 小于死区时认为目标为 0，避免停止或低速时舵轮乱优化。
+         * 电机力矩常数 Kt (N·m/A)。
+         * 用于力→电流换算：
+         *   current = force * wheel_radius / reduction_ratio / kt
+         *
+         * Kt 必须大于 0。
          */
-        float Speed_Deadband = 0.03f;  // m/s
-        float Force_Deadband = 0.5f;   // N
+        float Motor_Kt = 0.0f;
+
+        /*
+         * 小于死区时认为目标为 0，避免停止或低速时舵轮乱优化
+         */
+        float Speed_Deadband = 0.0f;  // m/s
+        float Force_Deadband = 0.0f;   // N
         float Current_Deadband = 0.0f; // A
 
         /*
-         * 目标限幅。
-         * <= 0 表示不启用对应限幅。
+         * 目标限幅
          */
-        float Max_Speed_Mps = 0.0f; // m/s
-        float Max_Force_N = 0.0f;   // N
-        float Max_Current_A = 0.0f; // A
+        float Max_Speed_Mps = 10.0f; // m/s
+        float Max_Force_N = 1000.0f;   // N
+        float Max_Current_A = 20.0f; // A
 
         /*
-         * 舵向绝对编码器参数。
+         * 舵向绝对编码器参数
          */
         float Steer_Zero_Offset_Rad = 0.0f;
         bool Steer_Encoder_Reverse = false;
+
+        /*
+         * 轮向机械参数
+         */
+        float Wheel_Radius = 0.0f;            // 轮半径 m（需实测）
+        float Wheel_Motor_Reduction = 1.0f;   // 轮向减速比
     };
 
     struct Target
@@ -145,6 +131,8 @@ public:
     inline float Get_Target_Current() const;
 
     const inline Target &Get_Target() const;
+
+    const inline Parameters &Get_Parameters() const;
 
     void Calculate();
 
@@ -222,7 +210,7 @@ inline bool Class_Swerve_Module::Set_Target_Speed(float speed_mps)
         Clear_Drive_Target();
         return false;
     }
-    Module_Target.Speed_Mps = Math_Constrain(&speed_mps, Param.Max_Speed_Mps, -Param.Max_Speed_Mps);
+    Module_Target.Speed_Mps = Math_Constrain(&speed_mps, -Param.Max_Speed_Mps, Param.Max_Speed_Mps);
     return true;
 }
 
@@ -236,7 +224,7 @@ inline bool Class_Swerve_Module::Set_Target_Force(float force_n)
         Clear_Drive_Target();
         return false;
     }
-    Module_Target.Force_N = Math_Constrain(&force_n, Param.Max_Force_N, -Param.Max_Force_N);
+    Module_Target.Force_N = Math_Constrain(&force_n, -Param.Max_Force_N, Param.Max_Force_N);
     return true;
 }
 
@@ -308,6 +296,14 @@ inline float Class_Swerve_Module::Get_Target_Current() const
 const inline Class_Swerve_Module::Target &Class_Swerve_Module::Get_Target() const
 {
     return Module_Target;
+}
+
+/**
+ * @brief 获取当前参数结构体
+ */
+const inline Class_Swerve_Module::Parameters &Class_Swerve_Module::Get_Parameters() const
+{
+    return Param;
 }
 
 #endif

@@ -36,29 +36,13 @@ bool Class_Swerve_Module::Check_Parameters(const Parameters &parameters) const
         !isfinite(parameters.Max_Speed_Mps) ||
         !isfinite(parameters.Max_Force_N) ||
         !isfinite(parameters.Max_Current_A) ||
-        !isfinite(parameters.Steer_Zero_Offset_Rad))
+        !isfinite(parameters.Steer_Zero_Offset_Rad) ||
+        !isfinite(parameters.Wheel_Radius) ||
+        !isfinite(parameters.Wheel_Motor_Reduction) ||
+        !isfinite(parameters.Motor_Kt))
     {
         return false;
     }
-
-    /*
-     * Force_To_Current 必须为正。
-     * 方向反的问题不建议通过负比例系数解决。
-     */
-    if (parameters.Force_To_Current <= 0.0f)
-    {
-        return false;
-    }
-
-    if (parameters.Speed_Deadband < 0.0f ||
-        parameters.Force_Deadband < 0.0f)
-    {
-        return false;
-    }
-
-    /*
-     * Max_* <= 0 表示不启用限幅，所以这里不判定为非法。
-     */
 
     return true;
 }
@@ -84,8 +68,9 @@ void Class_Swerve_Module::Calculate()
 
     /*
      * 力控目标转换成电流目标。
+     * current = force * wheel_radius / reduction_ratio / kt
      */
-    Module_Target.Current_A = Module_Target.Force_N * Param.Force_To_Current;
+    Module_Target.Current_A = Module_Target.Force_N * Param.Wheel_Radius / Param.Wheel_Motor_Reduction / Param.Motor_Kt;
 
     Module_Target.Current_A = Math_Constrain(&Module_Target.Current_A, -Param.Max_Current_A, Param.Max_Current_A);
 
