@@ -84,7 +84,9 @@ void Class_Swerve_Steer_Encoder::Data_Process()
 
     // 计算角度
     uint16_t raw_angle = (tmp_buffer->raw_angle_high << 8) | tmp_buffer->raw_angle_low;
-    Rx_Data.angle = Math_Int_To_Float(raw_angle, 0, 65535, 0.0f, 360.0f);
+    // TODO: 确认编码器实际分辨率，替换 16383 为正确值（14位=16383, 12位=4095, 16位=65535）
+    raw_angle &= 0x3FFF; // 掩码到 14 位
+    Rx_Data.angle = Math_Int_To_Float(raw_angle, 0, 16383, 0.0f, 360.0f);
     Rx_Data.status = tmp_buffer->status;
     Rx_Data.no_mag_warning = tmp_buffer->no_mag_warning;
     Rx_Data.over_speed = tmp_buffer->over_speed_warning;

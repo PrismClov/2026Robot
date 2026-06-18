@@ -238,7 +238,7 @@ inline bool Class_Swerve_Module::Set_Target_Angle(float angle_rad)
         Clear_Drive_Target();
         return false;
     }
-    Module_Target.Angle_Rad = Math_Modulus_Normalization(angle_rad, PI);
+    Module_Target.Angle_Rad = Math_Modulus_Normalization(angle_rad, 2.0f * PI);
     return true;
 }
 

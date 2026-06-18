@@ -70,18 +70,21 @@ uint32_t flag = 0;
  */
 void Device_FDCAN1_Callback(Struct_FDCAN_Rx_Buffer *FDCAN_RxMessage)
 {
-
     switch (FDCAN_RxMessage->Header.Identifier)
     {
-
         case 0x201:
-        {
-            // M3508.FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+            chariot.Chassis.Motor_Steer[0].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
             break;
-        }
-
+        case 0x202:
+            chariot.Chassis.Motor_Steer[1].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+            break;
+        case 0x203:
+            chariot.Chassis.Motor_Steer[2].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+            break;
+        case 0x204:
+            chariot.Chassis.Motor_Steer[3].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+            break;
         default:
-
             break;
     }
 }
@@ -96,26 +99,26 @@ void Device_FDCAN2_Callback(Struct_FDCAN_Rx_Buffer *FDCAN_RxMessage)
     switch (FDCAN_RxMessage->Header.Identifier)
     {
         // VESC 电调数据反馈
-        case 0x931:
-        case 0x1031:
+        case 0x901:
+        case 0x1001:
         {
             chariot.Chassis.Motor_Wheel[0].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
             break;
         }
-        case 0x932:
-        case 0x1032:
+        case 0x902:
+        case 0x1002:
         {
             chariot.Chassis.Motor_Wheel[1].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
             break;
         }
-        case 0x933:
-        case 0x1033:
+        case 0x903:
+        case 0x1003:
         {
             chariot.Chassis.Motor_Wheel[2].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
             break;
         }
-        case 0x934:
-        case 0x1034:
+        case 0x904:
+        case 0x1004:
         {
             chariot.Chassis.Motor_Wheel[3].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
             break;
@@ -204,6 +207,8 @@ float Target_Position = 0.0f;
  * @brief TIM5任务回调函数
  *
  */
+float test_angle = 0.0f;    // 舵向目标角 0~360°，调试器直接改
+float test_speed = 0.0f;    // 轮向给小值（如 0.5），调试器直接改
 float current = 0.0f;
 uint8_t mod100 = 0;
 void Task1ms_TIM5_Callback()
@@ -211,13 +216,17 @@ void Task1ms_TIM5_Callback()
     DWT_Update();
     flag++;
 
-    chariot.Chassis.TIM_1ms_Control_PeriodElapsedCallback();
+    // 测试变量 test_speed 作为力 (N)，经 module 换算: Current = Force * 0.0535 / Kt
+    // 设 test_speed = 10 约相当于 0.5A
+    chariot.Chassis.Swerve_Modules[0].Set_Target_Force(test_speed);
+    chariot.Chassis.Swerve_Modules[0].Set_Target_Angle(test_angle * DEG_TO_RAD);
+    chariot.Chassis.Swerve_Modules[0].TIM_1ms_PeriodElapsedCallback();
 
     // 10ms检测存活状态
     mod100++;
     if (mod100 >= 100)
     {
-        chariot.Chassis.TIM_100ms_Alive_PeriodElapsedCallback();
+        //chariot.Chassis.TIM_100ms_Alive_PeriodElapsedCallback();
         mod100 = 0;
     }
 
@@ -268,7 +277,6 @@ void Task_Init()
  */
 void Task_Loop()
 {
-
 }
 
 /************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/

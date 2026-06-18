@@ -58,6 +58,7 @@ void Class_Motor_MKSESC::Init(FDCAN_HandleTypeDef *hfdcan, uint32_t __FDCAN_Moto
     Duty_Max = __Duty_Max;
     Current_Max = __Current_Max;
 
+    Base_Initialized = true;
 }
 
 void Class_Motor_MKSESC::Set_Base_Parameters(const Base_Parameters& parameters)
@@ -196,6 +197,7 @@ void Class_Motor_MKSESC::TIM_Send_PeriodElapsedCallback()
     }
     else if (Motor_Status == Motor_Status_DISABLE)
     {
+        Motor_Status = Motor_Status_ENABLE;
         return;
     }
 }

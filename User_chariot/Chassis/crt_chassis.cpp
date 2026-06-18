@@ -17,7 +17,7 @@ void Class_Chassis::Init()
         Motor_Steer[i].Init(&hfdcan1, static_cast<Motor::Enum_Motor_DJI_ID>(0x201 + i),
                             Motor::Class_Motor_DJI_C610::Parameters{
                                 .PID_Position = Motor::PID_Parameters{
-                                    .K_P = 23.0f,
+                                    .K_P = 30.0f,
                                     .K_I = 0.0f,
                                     .K_D = 0.0f,
                                     .K_F = 0.0f,
@@ -25,7 +25,7 @@ void Class_Chassis::Init()
                                     .Out_Max = 10.0f,
                                 },
                                 .PID_Omega = Motor::PID_Parameters{
-                                    .K_P = 1.3f,
+                                    .K_P = 30.0f,
                                     .K_I = 0.0f,
                                     .K_D = 0.0f,
                                     .K_F = 0.0f,
@@ -46,7 +46,8 @@ void Class_Chassis::Init()
     // 轮向电机
     for (uint8_t i = 0; i < 4; i++)
     {
-        Motor_Wheel[i].Init(&hfdcan2, 0x31 + i, 14, 6.2831f, 50.0f, 50.0f, 30.0f, MOTOR_CONTROL_METHOD_CURRENT);
+        uint32_t index = 0x01; 
+        Motor_Wheel[i].Init(&hfdcan2, index + i, 14, 6.2831f, 50.0f, 50.0f, 30.0f, MOTOR_CONTROL_METHOD_CURRENT);
     }
 
     // 模组绑定电机和编码器

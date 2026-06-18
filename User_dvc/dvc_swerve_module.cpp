@@ -153,7 +153,7 @@ void Class_Swerve_Module::Optimize_Target()
     const float current_angle = (Steer_Encoder->Get_Normalized_Angle() * DEG_TO_RAD) - Param.Steer_Zero_Offset_Rad;
 
     float error = Module_Target.Angle_Rad - current_angle;
-    error = Math_Modulus_Normalization(error, PI);
+    error = Math_Modulus_Normalization(error, 2.0f * PI);
 
     /*
      * 舵向优化：
@@ -204,7 +204,7 @@ void Class_Swerve_Module::Clear_Drive_Target()
  */
 void Class_Swerve_Module::Flip_Direction()
 {
-    Module_Target.Angle_Rad = Math_Modulus_Normalization(Module_Target.Angle_Rad + PI, PI);
+    Module_Target.Angle_Rad = Math_Modulus_Normalization(Module_Target.Angle_Rad + PI, 2.0f * PI);
 
     Module_Target.Speed_Mps = -Module_Target.Speed_Mps;
     Module_Target.Force_N = -Module_Target.Force_N;
