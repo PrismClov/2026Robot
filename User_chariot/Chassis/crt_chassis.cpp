@@ -2,6 +2,11 @@
 #include <math.h>
 
 /**
+ * 1[0] 3[4]
+ * 2[1] 3[2]
+ */
+
+/**
  * @brief 初始化底盘 PID、电机、编码器和舵轮模块
  */
 void Class_Chassis::Init()
@@ -16,7 +21,7 @@ void Class_Chassis::Init()
     {
         Motor_Steer[i].Init(&hfdcan1, static_cast<Motor::Enum_Motor_DJI_ID>(0x201 + i),
                             Motor::Class_Motor_DJI_C610::Parameters{
-                                .PID_Position = Motor::PID_Parameters{
+                                .PID_Position = PID_Parameters{
                                     .K_P = 30.0f,
                                     .K_I = 0.0f,
                                     .K_D = 0.0f,
@@ -24,7 +29,7 @@ void Class_Chassis::Init()
                                     .I_Out_Max = 0.0f,
                                     .Out_Max = 10.0f,
                                 },
-                                .PID_Omega = Motor::PID_Parameters{
+                                .PID_Omega = PID_Parameters{
                                     .K_P = 30.0f,
                                     .K_I = 0.0f,
                                     .K_D = 0.0f,
@@ -129,7 +134,7 @@ void Class_Chassis::Calculate()
     {
         float steer_angle = Swerve_Modules[i].Get_Current_Angle();
 
-        Wheel_Force[i] = Chassis_Force_X * arm_cos_f32(steer_angle) + Chassis_Force_Y * arm_sin_f32(steer_angle) - Chassis_Torque / Wheel_To_Core_Distance[i] * arm_sin_f32(Steer_Azimuth[i] - steer_angle);
+        Wheel_Force[i] = (Chassis_Force_X * arm_cos_f32(steer_angle) + Chassis_Force_Y * arm_sin_f32(steer_angle) - Chassis_Torque / Wheel_To_Core_Distance[i] * arm_sin_f32(Steer_Azimuth[i] - steer_angle)) / 4.0f;
     }
 }
 

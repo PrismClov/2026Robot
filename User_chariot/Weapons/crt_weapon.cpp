@@ -11,21 +11,31 @@ void Class_Weapon::Init()
     Grab_Servo.Init(&htim2, TIM_CHANNEL_3, 500, 2500);
 
     // 机械臂电机
-    Motor_Arm.Init(
+        Motor_Arm.Init(
         &hfdcan2,
-        Motor::Motor_DJI_ID_0x205,
+        Motor::Motor_DJI_ID_0x201,
         Motor::Class_Motor_DJI_C620::Parameters{
-            .PID_Position = Motor::PID_Parameters{}, // TODO
-            .PID_Omega = Motor::PID_Parameters{},    // TODO
-        });
+            .PID_Position = PID_Parameters{
+                .K_P = 6.0f,
+                .K_I = 0.0f,
+                .K_D = 0.0f,
+                .Out_Max = 30.0f
+            }, 
+            .PID_Omega = PID_Parameters{
+                .K_P = 8.0f,
+                .K_I = 0.0f,
+                .K_D = 0.0f,
+                .Out_Max = 30.0f
+            },   
+        },3591.0f / 187.0f / 18.0f * 28.0f);
 
     // 移动电机
     Motor_Move.Init(
         &hfdcan2,
         Motor::Motor_DJI_ID_0x206,
         Motor::Class_Motor_DJI_C620::Parameters{
-            .PID_Position = Motor::PID_Parameters{}, // TODO
-            .PID_Omega = Motor::PID_Parameters{},    // TODO
+            .PID_Position = PID_Parameters{}, // TODO
+            .PID_Omega = PID_Parameters{},    // TODO
         });
 
     // 旋转电机
@@ -57,7 +67,12 @@ void Class_Weapon::Move_To_Position(float x)
         {
             // 低速运行到堵转位置，完成机械零点校准
             float offset;
-            if (Motor_Move.Calibrate(Calibrate_Speed, Locked_Rotor_Current_Threshold, offset))
+            Calibrate_Params calib;
+            calib.motion_mode = CALIBRATE_MOTION_SPEED;
+            calib.motion_value = Calibrate_Speed;
+            calib.detect_mode = CALIBRATE_DETECT_CURRENT;
+            calib.detect_threshold = Locked_Rotor_Current_Threshold;
+            if (Motor_Move.Calibrate(calib, offset))
             {
                 Move_Calibration_Offset = offset;
                 Motor_Move.Set_Target_Position(Move_Calibration_Offset);
@@ -149,7 +164,12 @@ void Class_Weapon::Weapon_Grab_Status_Task()
     {
         // 低速运行到堵转位置，完成机械零点校准
         float offset;
-        if (Motor_Arm.Calibrate(Calibrate_Speed, Locked_Rotor_Current_Threshold, offset))
+        Calibrate_Params calib;
+        calib.motion_mode = CALIBRATE_MOTION_SPEED;
+        calib.motion_value = Calibrate_Speed;
+        calib.detect_mode = CALIBRATE_DETECT_CURRENT;
+        calib.detect_threshold = Locked_Rotor_Current_Threshold;
+        if (Motor_Arm.Calibrate(calib, offset))
         {
             Arm_Calibration_Offset = offset;
             Arm_Calibrated = true;
@@ -165,7 +185,12 @@ void Class_Weapon::Weapon_Grab_Status_Task()
     {
         // 低速运行到堵转位置，完成机械零点校准
         float offset;
-        if (Motor_Pitch[0].Calibrate(Calibrate_Speed, Locked_Rotor_Current_Threshold, offset))
+        Calibrate_Params calib_pitch;
+        calib_pitch.motion_mode = CALIBRATE_MOTION_SPEED;
+        calib_pitch.motion_value = Calibrate_Speed;
+        calib_pitch.detect_mode = CALIBRATE_DETECT_CURRENT;
+        calib_pitch.detect_threshold = Locked_Rotor_Current_Threshold;
+        if (Motor_Pitch[0].Calibrate(calib_pitch, offset))
         {
             Pitch_Calibration_Offset = offset;
             Pitch_Calibrated = true;

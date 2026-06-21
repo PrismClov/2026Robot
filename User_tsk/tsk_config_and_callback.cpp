@@ -46,13 +46,16 @@
 #include "dvc_motor_rs.h"
 #include "dvc_swerve_module.h"
 #include "ita_robot.h"
+#include "crt_KFS.h"
 
 Class_Chariot chariot;
 
 /* Private macros ------------------------------------------------------------*/
 // static float vbat = 0;
 /* Private types -------------------------------------------------------------*/
-
+Class_DS_Servo Pick_Servo[3];
+// Motor::Class_Motor_DJI_C620 Motor_Arm; // 机械臂电机
+Class_KFS KFS; // 夹取机构
 /* Private variables ---------------------------------------------------------*/
 
 // 全局初始化完成标志位
@@ -160,7 +163,9 @@ void Device_FDCAN3_Callback(Struct_FDCAN_Rx_Buffer *FDCAN_RxMessage)
         // 舵向编码器返回数据处理 (0x201-0x204)
         case 0x201:
         {
-            chariot.Chassis.Steer_Encoder[0].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+            //chariot.Chassis.Steer_Encoder[0].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+            // Motor_Arm.FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+            KFS.Motor_Move.FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
             break;
         }
         case 0x202:
@@ -202,35 +207,32 @@ void DR16_UART5_Callback(uint8_t *Buffer, uint16_t Length)
 void Task100us_TIM4_Callback()
 {
 }
-float Target_Position = 0.0f;
+float Target_Position = -0.2f;
 /**
  * @brief TIM5任务回调函数
  *
  */
-float test_angle = 0.0f;    // 舵向目标角 0~360°，调试器直接改
-float test_speed = 0.0f;    // 轮向给小值（如 0.5），调试器直接改
-float current = 0.0f;
 uint8_t mod100 = 0;
 void Task1ms_TIM5_Callback()
 {
     DWT_Update();
     flag++;
 
-    // 测试变量 test_speed 作为力 (N)，经 module 换算: Current = Force * 0.0535 / Kt
-    // 设 test_speed = 10 约相当于 0.5A
-    chariot.Chassis.Swerve_Modules[0].Set_Target_Force(test_speed);
-    chariot.Chassis.Swerve_Modules[0].Set_Target_Angle(test_angle * DEG_TO_RAD);
-    chariot.Chassis.Swerve_Modules[0].TIM_1ms_PeriodElapsedCallback();
-
     // 10ms检测存活状态
     mod100++;
     if (mod100 >= 100)
     {
         //chariot.Chassis.TIM_100ms_Alive_PeriodElapsedCallback();
+        KFS.TIM_Alive_PeriodElapsedCallback();
         mod100 = 0;
     }
+    // Motor_Arm.Set_Control_Method(MOTOR_CONTROL_METHOD_POSITION);
+    // Motor_Arm.Set_Target_Position(Target_Position);
+    // Motor_Arm.Calculate();
 
-    Motor::DJI_TIM_Send_Group(&hfdcan1, Motor::CAN_Tx_ID_0x200_Only);
+    KFS.Move_To_Position(Target_Position);
+    KFS.TIM_Control_PeriodElapsedCallback();
+    Motor::DJI_TIM_Send_Group(&hfdcan3, Motor::CAN_Tx_ID_0x200_Only);
 }
 
 void Task_Init()
@@ -247,6 +249,9 @@ void Task_Init()
     UART_Init(&huart5, DR16_UART5_Callback, 36);
     // 定时器初始化
     HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+    HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
+    HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
+    HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
 
     TIM_Init(&htim4, Task100us_TIM4_Callback);
     TIM_Init(&htim5, Task1ms_TIM5_Callback);
@@ -256,10 +261,29 @@ void Task_Init()
     //     params.PID_Position.Out_Max = 10.0f;
     //     M3508.Init(&hfdcan1, Motor::Motor_DJI_ID_0x201, params);
     // }
-    chariot.Init();
-    // DS_Servo.Init(&htim1, TIM_CHANNEL_1, 500, 2500);
+    // chariot.Init();
+    Pick_Servo[0].Init(&htim1, TIM_CHANNEL_1, 500, 2500);
+    Pick_Servo[1].Init(&htim1, TIM_CHANNEL_3, 500, 2500);
+    Pick_Servo[2].Init(&htim2, TIM_CHANNEL_3, 500, 2500);
+    //     Motor_Arm.Init(
+    //     &hfdcan3,
+    //     Motor::Motor_DJI_ID_0x201,
+    //     Motor::Class_Motor_DJI_C620::Parameters{
+    //         .PID_Position = PID_Parameters{
+    //             .K_P = 0.0f,
+    //             .K_I = 0.0f,
+    //             .K_D = 0.0f,
+    //             .Out_Max = 30.0f
+    //         }, 
+    //         .PID_Omega = PID_Parameters{
+    //             .K_P = 0.0f,
+    //             .K_I = 0.0f,
+    //             .K_D = 0.0f,
+    //             .Out_Max = 30.0f
+    //         },   
+    //     },3591.0f / 187.0f / 18.0f * 28.0f);
     // 战车层初始化
-
+    // KFS.Init();
     // 交互层初始化
 
     // 机器人战车初始化
@@ -270,13 +294,16 @@ void Task_Init()
     // 标记初始化完成
     init_finished = true;
 }
-
+float test_position = 0.0f; 
 /**
  * @brief 前台循环任务
  *
  */
 void Task_Loop()
 {
+    Pick_Servo[0].Set_Normalized_Position(test_position);
+    Pick_Servo[1].Set_Normalized_Position(test_position);
+    Pick_Servo[2].Set_Normalized_Position(test_position);
 }
 
 /************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/

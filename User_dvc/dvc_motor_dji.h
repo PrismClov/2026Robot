@@ -102,24 +102,6 @@ namespace Motor
      * - POSITION 模式使用外部绝对编码器反馈
      * - 通过 Set_Feedback_Position(absolute_angle_rad) 输入舵向真实角度
      */
-    struct PID_Parameters
-    {
-        float K_P = 0.0f;
-        float K_I = 0.0f;
-        float K_D = 0.0f;
-        float K_F = 0.0f;
-
-        float I_Out_Max = 0.0f;
-        float Out_Max = 30.0f;
-        float D_T = 0.001f;
-        float Dead_Zone = 0.0f;
-
-        float I_Variable_Speed_A = 0.0f;
-        float I_Variable_Speed_B = 0.0f;
-        float I_Separate_Threshold = 0.0f;
-
-        Enum_PID_D_First D_First = PID_D_First_DISABLE;
-    };
 
     uint8_t *Allocate_Tx_Data(
         FDCAN_HandleTypeDef *hfdcan,
