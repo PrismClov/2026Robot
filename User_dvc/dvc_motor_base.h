@@ -35,7 +35,8 @@ enum Enum_Motor_Control_Method
  */
 enum Enum_Calibrate_Motion_Mode
 {
-    CALIBRATE_MOTION_SPEED = 0,   // 恒速运动
+    CALIBRATE_MOTION_NONE = 0,    // 不运动，直接以当前位置为 offset
+    CALIBRATE_MOTION_SPEED,       // 恒速运动
     CALIBRATE_MOTION_CURRENT,     // 恒流运动
 };
 

@@ -1,204 +1,119 @@
-// #ifndef CRT_LIFT_H
-// #define CRT_LIFT_H
+#ifndef CRT_LIFT_H
+#define CRT_LIFT_H
 
-// #include "alg_pid.h"
-// #include "dvc_motor_base.h"
-// #include <array>
+#include "crt_lift_base.h"
+#include "alg_fsm.h"
+#include "dvc_motor_dji.h"
 
-// template <uint8_t motor_num>
-// class Class_Lift
-// {
-//     /**
-//      * @brief 控制类型
-//      */
-//     enum class Enum_Lift_Control_Type
-//     {
-//         Lift_Control_Type_DISABLE = 0,
-//         Lift_Control_Type_MOVE
-//     };
+class Class_Lift;
 
-//     enum class Enum_Lift_Calibrate_Method
-//     {
-//         Lift_Calibrate_Method_DISABLE = 0, // 不校准
-//         Lift_Calibrate_Method_Speed,       // 以恒定速度运动直到堵转
-//         Lift_Calibrate_Method_Current    // 以恒定电流运动直到堵转
-//     };
+/**
+ * @brief R2抬升状态机: Wait(等待/下降到位) → Lift(抬升) → Down(下降) 循环
+ *
+ * 每次状态切换由 Yaw_Flag 触发，到位后自动停止并等待下次触发。
+ */
+enum Enum_Lift_Status
+{
+    Lift_Status_Wait_R2 = 0,
+    Lift_Status_Lift_R2,
+    Lift_Status_Down_R2,
+};
 
-//     struct Parameters
-//     {
-//         PID_Parameters PID_Distance[motor_num];    // 路程环PID参数
-//         bool Need_Calibrate = false;               // 是否需要堵转校准
-//         float Calibrate_Speed = 0.3f;              // 堵转校准速度, m/s (正负决定方向)
-//         float Calibrate_Threshold_Current = 5.0f;  // 堵转电流阈值, A
-//         float Distance_Approach_Threshold = 0.01f; // 距离接近目标的阈值, m
-//         float Max_Velocity = 5.0f;                 // 速度开环模式下的最大速度, m/s
-//         float Angle_To_Distance = 0.0f;            // 电机 rad → 同步带 m 转换系数
-//     };
+class Class_FSM_Lift : public Class_FSM
+{
+public:
+    Class_Lift *Lift;
 
-// public:
-//     Enum_Lift_Control_Type Lift_Control_Type = Enum_Lift_Control_Type::Lift_Control_Type_DISABLE;
+    void Lift_TIM_Status_PeriodElapsedCallback();
 
-//     Class_PID Distance_PID[motor_num];
-//     Class_Motor_Base *Motor_Lift[motor_num] = {};
+    Enum_Lift_Status Lift_Status = Lift_Status_Wait_R2;
+};
 
-//     void Init(std::array<Class_Motor_Base *, motor_num> motors, const Parameters &parameters);
+class Class_Lift : public Class_Lift_Base<2>
+{
+public:
+    Class_FSM_Lift FSM_Lift;
+    friend class Class_FSM_Lift;
 
-//     void Calibrate();
+    Motor::Class_Motor_DJI_C620 Motor_Lift_L;
+    Motor::Class_Motor_DJI_C620 Motor_Lift_R;
 
-//     void Set_Target_Position(float target_position);
+    void TIM_Calculate_PeriodElapsedCallback();       // 1ms控制回调
+    void Init();
 
-//     float Get_Now_Distance(uint8_t i) const;
+    void Move_To(float target_l, float target_r);     // 设定期望目标位置(米)
 
-//     float Get_Target_Position() const;
+    bool Is_Wait_R2_Finished_step();
+    bool Is_Lift_R2_Finished_step();
+    bool Is_Down_R2_Finished_step();
 
-//     bool Get_Is_Calibrated() const;
+    void UP_Cancel();                                  // 急停
+    void TIM_100ms_Alive_PeriodElapsedCallback();
+    bool Check_Motor_Block();                          // 堵转检测(100ms周期)
 
-//     void TIM_Control_PeriodElapsedCallback();
+    inline void Set_Target_Distance(float Distance_Limit);
+    inline float Get_Target_Distance_Limit();
+    inline float Get_Now_Distance_L();
+    inline float Get_Now_Distance_R();
+    inline void Set_Offset(float __offset_l, float __offset_r);  // 设定机械零点偏移(米)
+    inline void Yaw_Flag_True();
+    inline float Get_Velocity_Max();
 
-// private:
-//     Parameters Param = {};
+private:
+    bool Yaw_Flag = false;                             // Yaw到位触发，FSM检测到后切换状态
+    bool Block_Flag = false;                           // 堵转总标志，置位后急停
 
-//     float Now_Distance[motor_num] = {0.0f};
+    float Max_Velocity = 200.0f;                       // 冗余，实际使用Param.Max_Velocity
 
-//     float Offset[motor_num] = {0.0f};
+    float Target_Distance_Wait_R2[2] = {-0.40f, -0.40f};
+    float Target_Distance_Lift_R2[2] = {-0.15f, -0.15f};
+    float Target_Distance_Down_R2[2] = {-0.40f, -0.40f};
 
-//     float Target_Position = 0.0f;
+    float Distance_Error = 0.008f;                     // 到位判定误差(米)
 
-//     bool Is_Calibrated = false;
-// };
+    bool Lift_Block_Flag[2] = {false, false};          // 逐电机堵转标志
+};
 
-// /**
-//  * @brief 初始化
-//  */
-// template <uint8_t motor_num>
-// void Class_Lift<motor_num>::Init(std::array<Class_Motor_Base *, motor_num> motors, const Parameters &parameters)
-// {
-//     Param = parameters;
-//     for (uint8_t i = 0; i < motor_num; i++)
-//     {
-//         Motor_Lift[i] = motors[i];
-//         const auto &p = parameters.PID_Distance[i];
-//         Distance_PID[i].Init(
-//             p.K_P, p.K_I, p.K_D, p.K_F,
-//             p.I_Out_Max, p.Out_Max, p.D_T, p.Dead_Zone,
-//             p.I_Variable_Speed_A, p.I_Variable_Speed_B,
-//             p.I_Separate_Threshold, p.D_First);
-//     }
-// }
+inline void Class_Lift::Set_Target_Distance(float Distance_Limit)
+{
+    Param.Target_Distance_Limit = Distance_Limit;
+}
 
-// /**
-//  * @brief 堵转校准
-//  */
-// template <uint8_t motor_num>
-// void Class_Lift<motor_num>::Calibrate()
-// {
-//     bool all_done = true;
-//     for (uint8_t i = 0; i < motor_num; i++)
-//     {
-//         if (!Calibrate)
-//         {
-//             float offset;
-//             if (Motor_Lift[i]->Calibrate(Param.Calibrate_Speed, Param.Calibrate_Threshold_Current, offset))
-//             {
-//                 Offset[i] = offset;
-//                 Motor_Lift[i]->Set_Target_Speed(0.0f);
-//                 Calibrate_Done[i] = true;
-//             }
-//             else
-//             {
-//                 all_done = false;
-//             }
-//         }
-//     }
+inline float Class_Lift::Get_Target_Distance_Limit()
+{
+    return Param.Target_Distance_Limit;
+}
 
-//     if (all_done)
-//     {
-//         Is_Calibrated = true;
+inline void Class_Lift::Move_To(float target_l, float target_r)
+{
+    Target_Distance[0] = target_l;
+    Target_Distance[1] = target_r;
+}
 
-//         // 校准完成后, 将当前位置记为零点
-//         for (uint8_t i = 0; i < motor_num; i++)
-//         {
-//             Motor_Lift[i]->Update_Feedback();
-//             float raw_pos = Motor_Lift[i]->Get_Position();
-//             Now_Distance[i] = (raw_pos - Offset[i]) * Param.Angle_To_Distance;
-//         }
-//         Lift_Control_Type = Enum_Lift_Control_Type::Lift_Control_Type_MOVE;
-//     }
-// }
+inline float Class_Lift::Get_Now_Distance_L()
+{
+    return Now_Distance[0];
+}
 
-// /**
-//  * @brief 设置目标位置，单位 m
-//  */
-// template <uint8_t motor_num>
-// void Class_Lift<motor_num>::Set_Target_Position(float target_position)
-// {
-//     Target_Position = target_position;
-// }
+inline float Class_Lift::Get_Now_Distance_R()
+{
+    return Now_Distance[1];
+}
 
-// /**
-//  * @brief 定时器周期回调函数
-//  */
-// template <uint8_t motor_num>
-// void Class_Lift<motor_num>::TIM_Control_PeriodElapsedCallback()
-// {
-//     if (Lift_Control_Type != Enum_Lift_Control_Type::Lift_Control_Type_MOVE)
-//     {
-//         return;
-//     }
+inline void Class_Lift::Set_Offset(float __offset_l, float __offset_r)
+{
+    Offset[0] = __offset_l / Param.Angle_To_Distance;
+    Offset[1] = __offset_r / Param.Angle_To_Distance;
+}
 
-//     // 更新各电机当前距离
-//     for (uint8_t i = 0; i < motor_num; i++)
-//     {
-//         float raw_pos = Motor_Lift[i]->Get_Position();
-//         Now_Distance[i] = (raw_pos - Offset[i]) * Param.Angle_To_Distance;
-//         Distance_PID[i].Set_Now(Now_Distance[i]);
-//     }
+inline void Class_Lift::Yaw_Flag_True()
+{
+    Yaw_Flag = true;
+}
 
-//     // 大误差速度开环, 小误差位置闭环
-//     for (uint8_t i = 0; i < motor_num; i++)
-//     {
-//         float error = Target_Position - Now_Distance[i];
+inline float Class_Lift::Get_Velocity_Max()
+{
+    return Max_Velocity;
+}
 
-//         if (Math_Abs(error) > Param.Distance_Approach_Threshold)
-//         {
-//             // 定速度运动
-//             float speed = (error > 0) ? Param.Max_Velocity : -Param.Max_Velocity;
-//             Motor_Lift[i]->Set_Control_Method(MOTOR_CONTROL_METHOD_SPEED);
-//             Motor_Lift[i]->Set_Target_Speed(speed);
-//         }
-//         else
-//         {
-//             // 位置闭环: PID 路程环输出速度目标
-//             Distance_PID[i].Set_Target(Target_Position);
-//             Distance_PID[i].TIM_Calculate_PeriodElapsedCallback();
-//             Motor_Lift[i]->Set_Control_Method(MOTOR_CONTROL_METHOD_SPEED);
-//             Motor_Lift[i]->Set_Target_Speed(Distance_PID[i].Get_Out());
-//         }
-//     }
-
-//     // 3. 执行电机 PID 计算
-//     for (uint8_t i = 0; i < motor_num; i++)
-//     {
-//         Motor_Lift[i]->Calculate();
-//     }
-// }
-
-// template <uint8_t motor_num>
-// float Class_Lift<motor_num>::Get_Now_Distance(uint8_t i) const
-// {
-//     return (i < motor_num) ? Now_Distance[i] : 0.0f;
-// }
-
-// template <uint8_t motor_num>
-// float Class_Lift<motor_num>::Get_Target_Position() const
-// {
-//     return Target_Position;
-// }
-
-// template <uint8_t motor_num>
-// bool Class_Lift<motor_num>::Get_Is_Calibrated() const
-// {
-//     return Is_Calibrated;
-// }
-
-// #endif
+#endif

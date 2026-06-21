@@ -1,5 +1,4 @@
 #include "crt_KFS.h"
-#include "dvc_dwt.h"
 
 void Class_KFS::Init()
 {
@@ -32,7 +31,7 @@ void Class_KFS::Init()
                 .K_P = 2.0f,
                 .K_I = 0.0f,
                 .K_D = 0.0f,
-                .Out_Max = 20.0f, // 速度环输出电流目标限制
+                .Out_Max = 20.0f,  // 速度环输出电流目标限制
                 .Dead_Zone = 0.5f, // 速度环死区，避免小幅抖动
             },
         });
@@ -51,34 +50,16 @@ void Class_KFS::Init()
     // FSM_KFS.Init(1, 0);
 }
 
-uint32_t cnt = 0;
 void Class_KFS::Move_To_Position(float x)
 {
     if (!Is_Move_Calibrated)
     {
-        Motor_Move.Set_Control_Method(MOTOR_CONTROL_METHOD_SPEED);
-        Motor_Move.Set_Target_Speed(Move_Calibrate_Speed);
-        if (Math_Abs(Motor_Move.Get_Speed()) < 0.05f) // 速度接近零且已持续一段时间，认为已堵转
-        {
-            cnt++;
-            if (cnt > 200) // 连续200次（约200ms）速度接近零，认为堵转完成
-            {
-                Is_Move_Calibrated = true;
-                Calibrate_Offset = Motor_Move.Get_Now_Angle(); // 记录堵转时的角度作为校准零点
-                // Motor_Move.Set_Control_Method(MOTOR_CONTROL_METHOD_POSITION);
-                // Motor_Move.Set_Target_Position(Calibrate_Offset - 0.1f); // 先移动到校准零点位置
-            }
-        }
-        else
-        {
-            cnt = 0;
-        }
+        Is_Move_Calibrated = Motor_Move.Calibrate(calibarate_param, Calibrate_Offset);
     }
     else
     {
-
         Motor_Move.Set_Control_Method(MOTOR_CONTROL_METHOD_POSITION);
-        Motor_Move.Set_Target_Position(x + Calibrate_Offset); // 使用校准零点调整目标位置
+        Motor_Move.Set_Target_Position(x + Calibrate_Offset);
     }
 }
 

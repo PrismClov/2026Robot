@@ -10,10 +10,16 @@ bool Class_Motor_Base::Calibrate(const Calibrate_Params &params, float &offset)
     // 设置运动模式
     switch (params.motion_mode)
     {
+        case CALIBRATE_MOTION_NONE:
+            offset = Get_Position();
+            Stall_Debounce_Start_Time = 0;
+            return true;
+
         case CALIBRATE_MOTION_SPEED:
             Set_Control_Method(MOTOR_CONTROL_METHOD_SPEED);
             Set_Target_Speed(params.motion_value);
             break;
+
         case CALIBRATE_MOTION_CURRENT:
             Set_Control_Method(MOTOR_CONTROL_METHOD_CURRENT);
             Set_Target_Current(params.motion_value);

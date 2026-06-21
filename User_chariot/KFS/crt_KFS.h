@@ -65,16 +65,21 @@ public:
     /**
      * @brief 移动电机位置控制
      *
-     * @param x 目标位置 
+     * @param x 目标位置
      */
     void Move_To_Position(float x);
 
 private:
     bool Is_Move_Calibrated = false;
 
-    float Move_Calibrate_Speed = 10.0f;
-
     float Calibrate_Offset = 0.0f;
 
+    Calibrate_Params calibarate_param = {
+        .motion_mode = CALIBRATE_MOTION_SPEED,
+        .motion_value = 10.0f,
+        .detect_mode = CALIBRATE_DETECT_SPEED,
+        .detect_threshold = 0.05f,
+        .debounce_us = 200000,
+    };
 };
 #endif
