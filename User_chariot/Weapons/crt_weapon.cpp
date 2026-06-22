@@ -11,7 +11,7 @@ void Class_Weapon::Init()
     Grab_Servo.Init(&htim2, TIM_CHANNEL_3, 500, 2500);
 
     // 机械臂电机
-        Motor_Arm.Init(
+    Motor_Arm.Init(
         &hfdcan2,
         Motor::Motor_DJI_ID_0x201,
         Motor::Class_Motor_DJI_C620::Parameters{
@@ -19,15 +19,10 @@ void Class_Weapon::Init()
                 .K_P = 6.0f,
                 .K_I = 0.0f,
                 .K_D = 0.0f,
-                .Out_Max = 30.0f
-            }, 
-            .PID_Omega = PID_Parameters{
-                .K_P = 8.0f,
-                .K_I = 0.0f,
-                .K_D = 0.0f,
-                .Out_Max = 30.0f
-            },   
-        },3591.0f / 187.0f / 18.0f * 28.0f);
+                .Out_Max = 30.0f},
+            .PID_Omega = PID_Parameters{.K_P = 8.0f, .K_I = 0.0f, .K_D = 0.0f, .Out_Max = 30.0f},
+        },
+        3591.0f / 187.0f / 18.0f * 28.0f);
 
     // 移动电机
     Motor_Move.Init(
@@ -44,6 +39,25 @@ void Class_Weapon::Init()
         0x01, // CAN Rx ID
         0x01, // CAN Tx ID
         Motor_DM_Control_Method_NORMAL_MIT);
+
+    // 俯仰电机 — TODO: 确认CAN ID和PID参数
+    Motor_Pitch[0].Init(&hfdcan2, Motor::Motor_DJI_ID_0x203);
+    Motor_Pitch[1].Init(&hfdcan2, Motor::Motor_DJI_ID_0x204);
+
+    // 俯仰同步 — TODO: 填写实际PID参数和机械参数
+    Pitch.Init({&Motor_Pitch[0], &Motor_Pitch[1]},
+               Class_MultiMotorSync_Base<2>::Parameters{
+                   .PID_Distance = {
+                       PID_Parameters{}, // TODO
+                       PID_Parameters{}, // TODO
+                   },
+                   .Calibrate = {
+                       .motion_mode = CALIBRATE_MOTION_SPEED,
+                       .motion_value = Calibrate_Speed,
+                       .detect_mode = CALIBRATE_DETECT_SPEED,
+                       .detect_threshold = 0.05f,
+                   },
+               });
 
     FSM_Weapon.Weapon = this;
 
@@ -108,6 +122,12 @@ void Class_Weapon::TIM_Weapon_PeriodElapsedCallback()
 
     Motor_Move.Calculate();
 
+    // 俯仰控制
+    Pitch.Distance_Update();
+    Pitch.Move_To_Position();
+    Motor_Pitch[0].Calculate();
+    Motor_Pitch[1].Calculate();
+
     // Move位置切换
     if (Move_Yaw_Flag)
     {
@@ -129,6 +149,9 @@ void Class_Weapon::TIM_Alive_PeriodElapsedCallback()
     Motor_Arm.TIM_100ms_Alive_PeriodElapsedCallback();
 
     Motor_Move.TIM_100ms_Alive_PeriodElapsedCallback();
+
+    Motor_Pitch[0].TIM_100ms_Alive_PeriodElapsedCallback();
+    Motor_Pitch[1].TIM_100ms_Alive_PeriodElapsedCallback();
 }
 
 /**
@@ -144,9 +167,8 @@ bool Class_Weapon::Is_Action_Finished()
                              Math_Abs(Motor_Arm.Get_Target_Omega() - Motor_Arm.Get_Now_Omega()) < Omega_Threshold &&
                              Math_Abs(Motor_Move.Get_Target_Position() - Motor_Move.Get_Now_Angle()) / (2.0f * PI) * Stroke < Position_Threshold &&
                              Math_Abs(Motor_Move.Get_Target_Omega() - Motor_Move.Get_Now_Omega()) < Omega_Threshold &&
-                             Move_Calibrated &&  // 位移电机需要完成校准
-                             Pitch_Calibrated && // 俯仰电机需要完成校准
-                             Arm_Calibrated;     // 机械臂电机需要完成校准
+                             Move_Calibrated &&           // 位移电机需要完成校准
+                             Pitch.Get_Is_Calibrated();   // 俯仰电机需要完成校准
 
     return Motor_Is_Finished;
 }
@@ -160,44 +182,14 @@ void Class_Weapon::Weapon_Grab_Status_Task()
     Motor_Rotate.Set_Control_Angle(Rotate_Target_Position[FSM_Weapon.Get_Now_Status_Serial()]);
 
     // 机械臂电机
-    if (!Arm_Calibrated)
-    {
-        // 低速运行到堵转位置，完成机械零点校准
-        float offset;
-        Calibrate_Params calib;
-        calib.motion_mode = CALIBRATE_MOTION_SPEED;
-        calib.motion_value = Calibrate_Speed;
-        calib.detect_mode = CALIBRATE_DETECT_CURRENT;
-        calib.detect_threshold = Locked_Rotor_Current_Threshold;
-        if (Motor_Arm.Calibrate(calib, offset))
-        {
-            Arm_Calibration_Offset = offset;
-            Arm_Calibrated = true;
-        }
-    }
-    Motor_Arm.Set_Target_Position(Arm_Target_Position[FSM_Weapon.Get_Now_Status_Serial()] + Arm_Calibration_Offset);
+    Motor_Arm.Set_Target_Position(Arm_Target_Position[FSM_Weapon.Get_Now_Status_Serial()]);
 
     // 位移电机
     Move_To_Position(Move_Target_Position[Move_Index]);
 
-    // 俯仰电机
-    if (!Pitch_Calibrated)
-    {
-        // 低速运行到堵转位置，完成机械零点校准
-        float offset;
-        Calibrate_Params calib_pitch;
-        calib_pitch.motion_mode = CALIBRATE_MOTION_SPEED;
-        calib_pitch.motion_value = Calibrate_Speed;
-        calib_pitch.detect_mode = CALIBRATE_DETECT_CURRENT;
-        calib_pitch.detect_threshold = Locked_Rotor_Current_Threshold;
-        if (Motor_Pitch[0].Calibrate(calib_pitch, offset))
-        {
-            Pitch_Calibration_Offset = offset;
-            Pitch_Calibrated = true;
-        }
-    }
-    Motor_Pitch[0].Set_Target_Position(Pitch_Target_Position[FSM_Weapon.Get_Now_Status_Serial()] + Pitch_Calibration_Offset);
-    Motor_Pitch[1].Set_Target_Position(Pitch_Target_Position[FSM_Weapon.Get_Now_Status_Serial()] + Pitch_Calibration_Offset);
+    // 俯仰电机同步
+    Pitch.Calibrate_Update();
+    Pitch.Set_Target_Position(Pitch_Target_Position[FSM_Weapon.Get_Now_Status_Serial()]);
 
     // 夹取舵机
     Pick_Servo[0].Set_Normalized_Position(Pick_Servo_Target_Position[FSM_Weapon.Get_Now_Status_Serial()]);

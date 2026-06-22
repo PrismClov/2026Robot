@@ -1,7 +1,7 @@
 #ifndef CRT_LIFT_H
 #define CRT_LIFT_H
 
-#include "crt_lift_base.h"
+#include "crt_multi_motor_sync.h"
 #include "alg_fsm.h"
 #include "dvc_motor_dji.h"
 
@@ -29,7 +29,7 @@ public:
     Enum_Lift_Status Lift_Status = Lift_Status_Wait_R2;
 };
 
-class Class_Lift : public Class_Lift_Base<2>
+class Class_Lift : public Class_MultiMotorSync_Base<2>
 {
 public:
     Class_FSM_Lift FSM_Lift;
@@ -49,10 +49,7 @@ public:
 
     void UP_Cancel();                                  // 急停
     void TIM_100ms_Alive_PeriodElapsedCallback();
-    bool Check_Motor_Block();                          // 堵转检测(100ms周期)
 
-    inline void Set_Target_Distance(float Distance_Limit);
-    inline float Get_Target_Distance_Limit();
     inline float Get_Now_Distance_L();
     inline float Get_Now_Distance_R();
     inline void Set_Offset(float __offset_l, float __offset_r);  // 设定机械零点偏移(米)
@@ -61,7 +58,6 @@ public:
 
 private:
     bool Yaw_Flag = false;                             // Yaw到位触发，FSM检测到后切换状态
-    bool Block_Flag = false;                           // 堵转总标志，置位后急停
 
     float Max_Velocity = 200.0f;                       // 冗余，实际使用Param.Max_Velocity
 
@@ -70,19 +66,7 @@ private:
     float Target_Distance_Down_R2[2] = {-0.40f, -0.40f};
 
     float Distance_Error = 0.008f;                     // 到位判定误差(米)
-
-    bool Lift_Block_Flag[2] = {false, false};          // 逐电机堵转标志
 };
-
-inline void Class_Lift::Set_Target_Distance(float Distance_Limit)
-{
-    Param.Target_Distance_Limit = Distance_Limit;
-}
-
-inline float Class_Lift::Get_Target_Distance_Limit()
-{
-    return Param.Target_Distance_Limit;
-}
 
 inline void Class_Lift::Move_To(float target_l, float target_r)
 {

@@ -2,19 +2,38 @@
 
 void Class_KFS::Init()
 {
-    // // 抬升电机初始化
-    // Motor_Lift[0].Init(&hfdcan2, Motor::Motor_DJI_ID_0x201);
-    // Motor_Lift[1].Init(&hfdcan2, Motor::Motor_DJI_ID_0x202);
+    // 抬升电机初始化
+    Motor_Lift[0].Init(&hfdcan2, Motor::Motor_DJI_ID_0x201,
+                       Motor::Class_Motor_DJI_C620::Parameters{
+                           .PID_Omega = PID_Parameters{
+                               .K_P = 0.0f,
+                               .K_I = 0.0f,
+                               .K_D = 0.0f,
+                               .Out_Max = 20.0f, 
+                           },
+                       });
+    Motor_Lift[1].Init(&hfdcan2, Motor::Motor_DJI_ID_0x202,
+                       Motor::Class_Motor_DJI_C620::Parameters{
+                           .PID_Omega = PID_Parameters{
+                               .K_P = 0.0f,
+                               .K_I = 0.0f,
+                               .K_D = 0.0f,
+                               .Out_Max = 20.0f,
+                           },
+                       });
 
-    // // 抬升速度环
-    // Motor_Lift[0].PID_Omega.Init(6.0f, 0.1f, 0.00f, 0.0f);
-    // Motor_Lift[1].PID_Omega.Init(6.0f, 0.1f, 0.00f, 0.0f);
-    // Motor_Lift[0].Set_Feedforward_Omega(0.6f);
-    // Motor_Lift[1].Set_Feedforward_Omega(0.6f);
+    Motor_Lift[0].Set_Feedforward_Omega(0.0f);
+    Motor_Lift[1].Set_Feedforward_Omega(0.0f);
 
-    // 抬升行程环
-    // PID_Lift_Distance[0].Init(-60.0f, 0.07f, 0.02f, 0.0f, 0.0f, 3.0f);
-    // PID_Lift_Distance[1].Init(-60.0f, 0.07f, 0.02f, 0.0f, 0.0f, 3.0f);
+    // 抬升路程环 
+    Lift.Init({&Motor_Lift[0], &Motor_Lift[1]},
+              Class_MultiMotorSync_Base<2>::Parameters{
+                  .PID_Distance = {
+                      PID_Parameters{}, 
+                      PID_Parameters{}, 
+                  },
+                  .Calibrate = {.motion_mode = CALIBRATE_MOTION_NONE},
+              });
 
     // 移动电机初始化
     Motor_Move.Init(
@@ -67,9 +86,18 @@ void Class_KFS::TIM_Control_PeriodElapsedCallback()
 {
     Motor_Move.Update_Feedback();
     Motor_Move.Calculate();
+
+    // 抬升控制
+    Lift.Distance_Update();
+    Lift.Move_To_Position();
+    Motor_Lift[0].Calculate();
+    Motor_Lift[1].Calculate();
 }
 
 void Class_KFS::TIM_Alive_PeriodElapsedCallback()
 {
     Motor_Move.TIM_100ms_Alive_PeriodElapsedCallback();
+
+    Motor_Lift[0].TIM_100ms_Alive_PeriodElapsedCallback();
+    Motor_Lift[1].TIM_100ms_Alive_PeriodElapsedCallback();
 }

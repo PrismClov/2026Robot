@@ -2,6 +2,7 @@
 #define CRT_WEAPON_H
 
 #include "alg_fsm.h"
+#include "crt_multi_motor_sync.h"
 #include "dvc_ds_servo.h"
 #include "dvc_motor_dji.h"
 #include "dvc_motor_dm.h"
@@ -45,6 +46,7 @@ public:
     Motor::Class_Motor_DJI_C620 Motor_Move; // 移动电机
 
     Motor::Class_Motor_DJI_C620 Motor_Pitch[2]; // 俯仰电机
+    Class_MultiMotorSync_Base<2> Pitch;
 
     Class_Motor_DM_Normal Motor_Rotate; // 旋转电机
 
@@ -69,8 +71,6 @@ private:
     // 机械臂参数
     // 机械臂电机(M3508)参数
     float Arm_Target_Position[4] = {0.0f, 0.0f, 0.0f, 0.0f}; // 机械臂目标位置
-    float Arm_Calibration_Offset = 0.0f;                     // 机械臂校准偏移
-    bool Arm_Calibrated = false;                             // 机械臂是否已完成校准
 
     // 夹取舵机参数
     float Pick_Servo_Target_Position[4] = {0.0f, 0.0f, 0.0f, 0.0f}; // 夹取舵机目标位置
@@ -81,10 +81,8 @@ private:
     // 旋转电机参数
     float Rotate_Target_Position[4] = {0.0f, 0.0f, 0.0f, 0.0f}; // 旋转电机目标位置
 
-    // 俯仰电机(M3508)参数
-    float Pitch_Target_Position[4] = {0.0f, 0.0f, 0.0f, 0.0f}; // 俯仰电机目标位置
-    float Pitch_Calibration_Offset = 0.0f;                     // 俯仰电机校准偏移
-    bool Pitch_Calibrated = false;                             // 俯仰电机是否已完成校准
+    // 俯仰电机目标位置
+    float Pitch_Target_Position[4] = {0.0f, 0.0f, 0.0f, 0.0f};
 
     // 位移电机(M3508)参数
     float Move_Target_Position[3] = {0.0f, 0.0f, 0.0f}; // 移动电机目标位置

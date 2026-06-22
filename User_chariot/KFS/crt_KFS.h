@@ -3,6 +3,7 @@
 
 #include "alg_fsm.h"
 #include "alg_pid.h"
+#include "crt_multi_motor_sync.h"
 #include "dvc_airtool.h"
 #include "dvc_motor_dji.h"
 #include "dvc_motor_dm.h"
@@ -34,11 +35,9 @@ public:
 class Class_KFS
 {
 public:
-    // 抬升PID
-    Class_PID PID_Lift_Distance[2];
-
     // 抬升电机
     Motor::Class_Motor_DJI_C620 Motor_Lift[2];
+    Class_MultiMotorSync_Base<2> Lift;
 
     // 移动电机
     Motor::Class_Motor_DJI_C620 Motor_Move;

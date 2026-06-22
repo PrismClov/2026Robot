@@ -262,9 +262,9 @@ void Task_Init()
     //     M3508.Init(&hfdcan1, Motor::Motor_DJI_ID_0x201, params);
     // }
     // chariot.Init();
-    Pick_Servo[0].Init(&htim1, TIM_CHANNEL_1, 500, 2500);
-    Pick_Servo[1].Init(&htim1, TIM_CHANNEL_3, 500, 2500);
-    Pick_Servo[2].Init(&htim2, TIM_CHANNEL_3, 500, 2500);
+    // Pick_Servo[0].Init(&htim1, TIM_CHANNEL_1, 500, 2500);
+    // Pick_Servo[1].Init(&htim1, TIM_CHANNEL_3, 500, 2500);
+    // Pick_Servo[2].Init(&htim2, TIM_CHANNEL_3, 500, 2500);
     //     Motor_Arm.Init(
     //     &hfdcan3,
     //     Motor::Motor_DJI_ID_0x201,
@@ -283,7 +283,7 @@ void Task_Init()
     //         },   
     //     },3591.0f / 187.0f / 18.0f * 28.0f);
     // 战车层初始化
-    // KFS.Init();
+    KFS.Init();
     // 交互层初始化
 
     // 机器人战车初始化
@@ -301,9 +301,9 @@ float test_position = 0.0f;
  */
 void Task_Loop()
 {
-    Pick_Servo[0].Set_Normalized_Position(test_position);
-    Pick_Servo[1].Set_Normalized_Position(test_position);
-    Pick_Servo[2].Set_Normalized_Position(test_position);
+    // Pick_Servo[0].Set_Normalized_Position(test_position);
+    // Pick_Servo[1].Set_Normalized_Position(test_position);
+    // Pick_Servo[2].Set_Normalized_Position(test_position);
 }
 
 /************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/

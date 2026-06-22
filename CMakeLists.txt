@@ -93,6 +93,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/User_chariot/Chassis
     ${CMAKE_SOURCE_DIR}/User_chariot/KFS
     ${CMAKE_SOURCE_DIR}/User_chariot/Weapons
+    ${CMAKE_SOURCE_DIR}/User_chariot/Lift
     ${CMAKE_SOURCE_DIR}/User_ita
     ${CMAKE_SOURCE_DIR}/User_tsk
     ${CMAKE_SOURCE_DIR}/Drivers/CMSIS/DSP/Include

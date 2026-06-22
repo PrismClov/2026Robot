@@ -180,13 +180,12 @@ public:
      * @brief 电机堵转校准
      *
      * 每控制周期调用一次。支持恒速 / 恒流两种运动模式，
-     * 支持电流阈值 / 速度阈值两种堵转判定方式，带消抖。
-     * 内置 DWT 超时保护防止卡死。
+     * 支持电流阈值 / 速度阈值两种堵转判定方式，带 DWT 消抖。
      * 校准完成后将电机置零，通过 offset 导出机械零点绝对角度。
      *
-     * @param params  校准参数 (运动/检测模式, 阈值, 消抖时间, 超时)
+     * @param params  校准参数 (运动/检测模式, 阈值, 消抖时间)
      * @param offset  输出，堵转时的机械零点绝对角度
-     * @return true   校准完成 (堵转检测到或超时)
+     * @return true   校准完成 (堵转检测到)
      * @return false  仍在校准中
      */
     bool Calibrate(const Calibrate_Params &params, float &offset);
