@@ -46,8 +46,6 @@ bool Class_Motor_Base::Calibrate(const Calibrate_Params &params, float &offset)
 
         if (now - Stall_Debounce_Start_Time >= params.debounce_us)
         {
-            Set_Target_Speed(0.0f);
-            Set_Target_Current(0.0f);
             offset = Get_Position();
             Stall_Debounce_Start_Time = 0;
             return true;

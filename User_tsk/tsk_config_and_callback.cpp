@@ -34,7 +34,9 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "tsk_config_and_callback.h"
+#include "crt_KFS.h"
 #include "crt_chassis.h"
+#include "crt_weapon.h"
 #include "drv_bsp.h"
 #include "drv_can.h"
 #include "drv_tim.h"
@@ -46,16 +48,15 @@
 #include "dvc_motor_rs.h"
 #include "dvc_swerve_module.h"
 #include "ita_robot.h"
-#include "crt_KFS.h"
-
 Class_Chariot chariot;
 
 /* Private macros ------------------------------------------------------------*/
 // static float vbat = 0;
 /* Private types -------------------------------------------------------------*/
-Class_DS_Servo Pick_Servo[3];
+// Class_DS_Servo Pick_Servo[3];
 // Motor::Class_Motor_DJI_C620 Motor_Arm; // 机械臂电机
-Class_KFS KFS; // 夹取机构
+// Class_KFS KFS; // 夹取机构
+Class_Weapon Weapon; // 武器夹取机构
 /* Private variables ---------------------------------------------------------*/
 
 // 全局初始化完成标志位
@@ -163,9 +164,9 @@ void Device_FDCAN3_Callback(Struct_FDCAN_Rx_Buffer *FDCAN_RxMessage)
         // 舵向编码器返回数据处理 (0x201-0x204)
         case 0x201:
         {
-            //chariot.Chassis.Steer_Encoder[0].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
-            // Motor_Arm.FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
-            KFS.Motor_Move.FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+            // chariot.Chassis.Steer_Encoder[0].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+            //  Motor_Arm.FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+            Weapon.Motor_Move.FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
             break;
         }
         case 0x202:
@@ -187,14 +188,14 @@ void Device_FDCAN3_Callback(Struct_FDCAN_Rx_Buffer *FDCAN_RxMessage)
 }
 
 /**
- * @brief UART5遥控器回调函数
+ * @brief UART5 CRSF遥控器回调函数
  *
  * @param Buffer UART5收到的消息
  * @param Length 长度
  */
-void DR16_UART5_Callback(uint8_t *Buffer, uint16_t Length)
+void CRSF_UART5_Callback(uint8_t *Buffer, uint16_t Length)
 {
-    chariot.DR16.DR16_UART_RxCpltCallback(Buffer);
+    chariot.CRSF.CRSF_UART_RxCpltCallback(Buffer, Length);
     // 底盘 云台 发射机构 的控制策略
     chariot.TIM_Control_Callback();
 }
@@ -207,7 +208,7 @@ void DR16_UART5_Callback(uint8_t *Buffer, uint16_t Length)
 void Task100us_TIM4_Callback()
 {
 }
-float Target_Position = -0.2f;
+float Target_Position = 0.0f;
 /**
  * @brief TIM5任务回调函数
  *
@@ -222,16 +223,17 @@ void Task1ms_TIM5_Callback()
     mod100++;
     if (mod100 >= 100)
     {
-        //chariot.Chassis.TIM_100ms_Alive_PeriodElapsedCallback();
-        KFS.TIM_Alive_PeriodElapsedCallback();
+        // chariot.Chassis.TIM_100ms_Alive_PeriodElapsedCallback();
+        Weapon.TIM_Alive_PeriodElapsedCallback();
         mod100 = 0;
     }
     // Motor_Arm.Set_Control_Method(MOTOR_CONTROL_METHOD_POSITION);
     // Motor_Arm.Set_Target_Position(Target_Position);
     // Motor_Arm.Calculate();
 
-    KFS.Move_To_Position(Target_Position);
-    KFS.TIM_Control_PeriodElapsedCallback();
+    Weapon.Motor_Move.Update_Feedback();
+    Weapon.Move_To_Position(Target_Position);
+    Weapon.Motor_Move.Calculate();
     Motor::DJI_TIM_Send_Group(&hfdcan3, Motor::CAN_Tx_ID_0x200_Only);
 }
 
@@ -246,7 +248,7 @@ void Task_Init()
     FDCAN_Init(&hfdcan2, Device_FDCAN2_Callback);
     FDCAN_Init(&hfdcan3, Device_FDCAN3_Callback);
     // UART初始化
-    UART_Init(&huart5, DR16_UART5_Callback, 36);
+    UART_Init(&huart5, CRSF_UART5_Callback, 64);
     // 定时器初始化
     HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
     HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
@@ -274,16 +276,16 @@ void Task_Init()
     //             .K_I = 0.0f,
     //             .K_D = 0.0f,
     //             .Out_Max = 30.0f
-    //         }, 
+    //         },
     //         .PID_Omega = PID_Parameters{
     //             .K_P = 0.0f,
     //             .K_I = 0.0f,
     //             .K_D = 0.0f,
     //             .Out_Max = 30.0f
-    //         },   
+    //         },
     //     },3591.0f / 187.0f / 18.0f * 28.0f);
     // 战车层初始化
-    KFS.Init();
+    Weapon.Init();
     // 交互层初始化
 
     // 机器人战车初始化
@@ -294,7 +296,7 @@ void Task_Init()
     // 标记初始化完成
     init_finished = true;
 }
-float test_position = 0.0f; 
+float test_position = 0.0f;
 /**
  * @brief 前台循环任务
  *

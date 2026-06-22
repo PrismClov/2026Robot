@@ -15,7 +15,7 @@
 
 /* Includes -----------------------------------------------------------------*/
 #include "crt_chassis.h"
-#include "dvc_dr16.h"
+#include "dvc_crsf.h"
 
 #include "dvc_motor_dji.h"
 
@@ -23,20 +23,19 @@
 
 /* Exported types ------------------------------------------------------------*/
 /**
- * @brief DR16控制数据来源
+ * @brief CRSF控制数据来源
  *
  */
-enum Enum_DR16_Control_Type
+enum Enum_CRSF_Control_Type
 {
-    DR16_Control_Type_REMOTE = 0,
-    DR16_Control_Type_KEYBOARD,
+    CRSF_Control_Type_REMOTE = 0,
 
-    DR16_Control_Type_NONE,
+    CRSF_Control_Type_NONE,
 };
 
 enum Enum_Control_Source
 {
-    DR16_Control,
+    CRSF_Control,
     Control_DISABLE,
 };
 
@@ -44,16 +43,16 @@ enum Enum_Control_Source
 enum Enum_Active_Controller
 {
     Controller_NONE = 0,
-    Controller_DR16,
+    Controller_CRSF,
 };
 
 class Class_Chariot
 {
 public:
     // 遥控器
-    Class_DR16 DR16;
+    Class_CRSF CRSF;
     // 遥控器角度环
-    Class_PID PID_Angle_DR16;
+    Class_PID PID_Angle_CRSF;
     // 舵轮底盘
     Class_Chassis Chassis;
 
@@ -63,13 +62,13 @@ public:
     void TIM_Unline_Protect_PeriodElapsedCallback();
     void TIM_100ms_Alive_PeriodElapsedCallback();
 
-    void Judge_DR16_Control_Type();
+    void Judge_CRSF_Control_Type();
     void Judge_Active_Controller();
     void Control_Chassis();
 
 protected:
-    // DR16控制数据来源
-    Enum_DR16_Control_Type DR16_Control_Type = DR16_Control_Type_NONE;
+    // CRSF控制数据来源
+    Enum_CRSF_Control_Type CRSF_Control_Type = CRSF_Control_Type_NONE;
 
     // 当前活动的控制器
     Enum_Active_Controller Active_Controller = Controller_NONE;

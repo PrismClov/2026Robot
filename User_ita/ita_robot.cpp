@@ -14,7 +14,7 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "drv_math.h"
-#include "dvc_dr16.h"
+#include "dvc_crsf.h"
 #include "ita_robot.h"
 
 /* Private macros ------------------------------------------------------------*/
@@ -32,7 +32,7 @@
  */
 void Class_Chariot::Init()
 {
-    DR16.Init(&huart5);
+    CRSF.Init(&huart5);
 
     Chassis.Init();
 }
@@ -43,7 +43,7 @@ void Class_Chariot::Init()
  */
 void Class_Chariot::TIM_100ms_Alive_PeriodElapsedCallback()
 {
-    DR16.TIM1msMod50_Alive_PeriodElapsedCallback();
+    CRSF.TIM1msMod50_Alive_PeriodElapsedCallback();
     Chassis.TIM_100ms_Alive_PeriodElapsedCallback();
 }
 
@@ -53,7 +53,7 @@ void Class_Chariot::TIM_100ms_Alive_PeriodElapsedCallback()
  */
 void Class_Chariot::TIM_Unline_Protect_PeriodElapsedCallback()
 {
-    if (DR16.Get_DR16_Status() == DR16_Status_DISABLE)
+    if (CRSF.Get_Status() == CRSF_Status_DISABLE)
     {
         Chassis.Set_Chassis_Control_Type(Class_Chassis::Enum_Chassis_Control_Type::Chassis_Control_Type_DISABLE);
     }
@@ -63,30 +63,19 @@ void Class_Chariot::TIM_Unline_Protect_PeriodElapsedCallback()
  * @brief 获取当前活动的控制器
  *
  */
-void Class_Chariot::Judge_DR16_Control_Type()
+void Class_Chariot::Judge_CRSF_Control_Type()
 {
-    if (DR16.Get_Left_X() != 0 ||
-        DR16.Get_Left_Y() != 0 ||
-        DR16.Get_Right_X() != 0 ||
-        DR16.Get_Right_Y() != 0 ||
-        DR16.Get_Yaw() != 0)
+    if (CRSF.Get_Left_X() != 0 ||
+        CRSF.Get_Left_Y() != 0 ||
+        CRSF.Get_Right_X() != 0 ||
+        CRSF.Get_Right_Y() != 0)
     {
-        DR16_Control_Type = DR16_Control_Type_REMOTE;
-    }
-    else if (DR16.Get_Mouse_X() != 0 ||
-             DR16.Get_Mouse_Y() != 0 ||
-             DR16.Get_Mouse_Z() != 0 ||
-             DR16.Get_Keyboard_Key_A() != 0 ||
-             DR16.Get_Keyboard_Key_D() != 0 ||
-             DR16.Get_Keyboard_Key_W() != 0 ||
-             DR16.Get_Keyboard_Key_S() != 0)
-    {
-        DR16_Control_Type = DR16_Control_Type_KEYBOARD;
+        CRSF_Control_Type = CRSF_Control_Type_REMOTE;
     }
     else
     {
-        if (DR16.Get_DR16_Status() == DR16_Status_DISABLE)
-            DR16_Control_Type = DR16_Control_Type_NONE;
+        if (CRSF.Get_Status() == CRSF_Status_DISABLE)
+            CRSF_Control_Type = CRSF_Control_Type_NONE;
     }
 }
 /**
@@ -95,13 +84,13 @@ void Class_Chariot::Judge_DR16_Control_Type()
  */
 void Class_Chariot::Judge_Active_Controller()
 {
-    // 检查DR16是否有输入
-    Judge_DR16_Control_Type();
+    // 检查CRSF是否有输入
+    Judge_CRSF_Control_Type();
 
     // 判断当前活动的控制器
-    if (DR16_Control_Type != DR16_Control_Type_NONE)
+    if (CRSF_Control_Type != CRSF_Control_Type_NONE)
     {
-        Active_Controller = Controller_DR16;
+        Active_Controller = Controller_CRSF;
     }
     else
     {
@@ -124,28 +113,28 @@ void Class_Chariot::Control_Chassis()
 
     /************************************遥控器控制逻辑*********************************************/
 
-    if (Active_Controller == Controller_DR16 && DR16_Control_Type == DR16_Control_Type_REMOTE)
+    if (Active_Controller == Controller_CRSF && CRSF_Control_Type == CRSF_Control_Type_REMOTE)
     {
-        float dr16_l_x, dr16_l_y, dr16_yaw;
+        float crsf_l_x, crsf_l_y, crsf_r_x;
         // 排除遥控器死区
-        dr16_l_x = (Math_Abs(DR16.Get_Left_X()) > Dead_Zone) ? DR16.Get_Left_X() : 0;
-        dr16_l_y = (Math_Abs(DR16.Get_Left_Y()) > Dead_Zone) ? DR16.Get_Left_Y() : 0;
-        // yaw和xy的死区是否相同存疑
-        dr16_yaw = (Math_Abs(DR16.Get_Yaw()) > Dead_Zone) ? DR16.Get_Yaw() : 0;
+        crsf_l_x = (Math_Abs(CRSF.Get_Left_X()) > Dead_Zone) ? CRSF.Get_Left_X() : 0;
+        crsf_l_y = (Math_Abs(CRSF.Get_Left_Y()) > Dead_Zone) ? CRSF.Get_Left_Y() : 0;
+        // 右摇杆X作为旋转
+        crsf_r_x = (Math_Abs(CRSF.Get_Right_X()) > Dead_Zone) ? CRSF.Get_Right_X() : 0;
         // 设定矩形到圆形映射进行控制
-        chassis_velocity_x = dr16_l_x * sqrt(1.0f - dr16_l_y * dr16_l_y / 2.0f) * Chassis.Get_Velocity_X_Max();
-        chassis_velocity_y = dr16_l_y * sqrt(1.0f - dr16_l_x * dr16_l_x / 2.0f) * Chassis.Get_Velocity_Y_Max();
-        chassis_omega = dr16_yaw * Chassis.Get_Omega_Max();
+        chassis_velocity_x = crsf_l_x * sqrt(1.0f - crsf_l_y * crsf_l_y / 2.0f) * Chassis.Get_Velocity_X_Max();
+        chassis_velocity_y = crsf_l_y * sqrt(1.0f - crsf_l_x * crsf_l_x / 2.0f) * Chassis.Get_Velocity_Y_Max();
+        chassis_omega = crsf_r_x * Chassis.Get_Omega_Max();
         chassis_angle += chassis_omega;
-        // 键盘遥控器操作逻辑
-        if (DR16.Get_Right_Switch() == DR16_Switch_Status_UP) // 右上 随动模式
+        // 遥控器开关操作逻辑
+        if (CRSF.Get_SC() == CRSF_SWITCH_LOW) // SC低档 禁用模式
         {
             Chassis.Set_Chassis_Control_Type(Class_Chassis::Enum_Chassis_Control_Type::Chassis_Control_Type_DISABLE);
         }
-        else if (DR16.Get_Right_Switch() == DR16_Switch_Status_DOWN) // 右下 小陀螺模式
+        else if (CRSF.Get_SC() == CRSF_SWITCH_HIGH) // SC高档 
         {
         }
-        else if (DR16.Get_Right_Switch() == DR16_Switch_Status_MIDDLE)
+        else if (CRSF.Get_SC() == CRSF_SWITCH_MIDDLE) // SC中档 随动模式
         {
             // 底盘随动
             Chassis.Set_Chassis_Control_Type(Class_Chassis::Enum_Chassis_Control_Type::Chassis_Control_Type_NORMAL);

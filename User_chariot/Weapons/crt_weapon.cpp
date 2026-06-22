@@ -26,11 +26,23 @@ void Class_Weapon::Init()
 
     // 移动电机
     Motor_Move.Init(
-        &hfdcan2,
-        Motor::Motor_DJI_ID_0x206,
+        &hfdcan3,
+        Motor::Motor_DJI_ID_0x201,
         Motor::Class_Motor_DJI_C620::Parameters{
-            .PID_Position = PID_Parameters{}, // TODO
-            .PID_Omega = PID_Parameters{},    // TODO
+            .PID_Position = PID_Parameters{
+                .K_P = 0.0f,
+                .K_I = 0.0f,
+                .K_D = 0.0f,
+                .Out_Max = 30.0f,
+                .Dead_Zone = 0.0f,
+            },
+            .PID_Omega = PID_Parameters{
+                .K_P = 2.0f,
+                .K_I = 0.0f,
+                .K_D = 0.0f,
+                .Out_Max = 30.0f,
+                .Dead_Zone = 0.0f,
+            },
         });
 
     // 旋转电机
@@ -51,12 +63,8 @@ void Class_Weapon::Init()
                        PID_Parameters{}, // TODO
                        PID_Parameters{}, // TODO
                    },
-                   .Calibrate = {
-                       .motion_mode = CALIBRATE_MOTION_SPEED,
-                       .motion_value = Calibrate_Speed,
-                       .detect_mode = CALIBRATE_DETECT_SPEED,
-                       .detect_threshold = 0.05f,
-                   },
+                   .Distance_Approach_Threshold = 0.01f,
+                   .Calibrate = Pitch_Calibrate_Params,
                });
 
     FSM_Weapon.Weapon = this;
@@ -66,46 +74,22 @@ void Class_Weapon::Init()
 
 void Class_Weapon::Move_To_Position(float x)
 {
-    // 目标从米转换为相对于校准零点的弧度
-    float target_rad = x / Stroke * 2.0f * PI;
-    // 转换为绝对角度
-    float absolute_target_rad = Move_Calibration_Offset + target_rad;
-
-    // 长度误差
-    float error_linear = Math_Abs(absolute_target_rad - Motor_Move.Get_Now_Angle()) / (2.0f * PI) * Stroke;
-
-    if (error_linear > Position_Threshold)
+    if (!Move_Calibrated)
     {
-        // 需要移动，先校准再走
-        if (!Move_Calibrated)
+        // 低速运行到堵转位置，完成机械零点校准
+        float offset;
+        if (Motor_Move.Calibrate(Move_Calibration_Param, offset))
         {
-            // 低速运行到堵转位置，完成机械零点校准
-            float offset;
-            Calibrate_Params calib;
-            calib.motion_mode = CALIBRATE_MOTION_SPEED;
-            calib.motion_value = Calibrate_Speed;
-            calib.detect_mode = CALIBRATE_DETECT_CURRENT;
-            calib.detect_threshold = Locked_Rotor_Current_Threshold;
-            if (Motor_Move.Calibrate(calib, offset))
-            {
-                Move_Calibration_Offset = offset;
-                Motor_Move.Set_Target_Position(Move_Calibration_Offset);
-                Move_Calibrated = true;
-            }
-        }
-        else
-        {
-            // 已校准，角度环运行到目标绝对角度
-            Motor_Move.Set_Control_Method(MOTOR_CONTROL_METHOD_POSITION);
-            Motor_Move.Set_Target_Position(absolute_target_rad);
+            Move_Calibration_Offset = offset;
+            Motor_Move.Set_Target_Position(Move_Calibration_Offset);
+            Move_Calibrated = true;
         }
     }
     else
     {
-        // 已到达目标附近，保持位置
+        // 已校准，角度环运行到目标绝对角度
         Motor_Move.Set_Control_Method(MOTOR_CONTROL_METHOD_POSITION);
-        Motor_Move.Set_Target_Position(absolute_target_rad);
-        Move_Calibrated = false;
+        Motor_Move.Set_Target_Position(x + Move_Calibration_Offset);
     }
 }
 
@@ -165,10 +149,10 @@ bool Class_Weapon::Is_Action_Finished()
     // 只看了电机，舵机动作较快且不易测量，暂不考虑
     bool Motor_Is_Finished = Math_Abs(Motor_Arm.Get_Target_Position() - Motor_Arm.Get_Now_Angle()) < Position_Threshold &&
                              Math_Abs(Motor_Arm.Get_Target_Omega() - Motor_Arm.Get_Now_Omega()) < Omega_Threshold &&
-                             Math_Abs(Motor_Move.Get_Target_Position() - Motor_Move.Get_Now_Angle()) / (2.0f * PI) * Stroke < Position_Threshold &&
+                             Math_Abs(Motor_Move.Get_Target_Position() - Motor_Move.Get_Now_Angle()) < Position_Threshold &&
                              Math_Abs(Motor_Move.Get_Target_Omega() - Motor_Move.Get_Now_Omega()) < Omega_Threshold &&
-                             Move_Calibrated &&           // 位移电机需要完成校准
-                             Pitch.Get_Is_Calibrated();   // 俯仰电机需要完成校准
+                             Move_Calibrated &&         // 位移电机需要完成校准
+                             Pitch.Get_Is_Calibrated(); // 俯仰电机需要完成校准
 
     return Motor_Is_Finished;
 }

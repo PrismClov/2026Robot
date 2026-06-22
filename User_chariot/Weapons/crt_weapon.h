@@ -56,6 +56,8 @@ public:
 
     void Init();
 
+    void Move_To_Position(float x);
+
     void TIM_Weapon_PeriodElapsedCallback();
 
     void TIM_Alive_PeriodElapsedCallback();
@@ -83,22 +85,30 @@ private:
 
     // 俯仰电机目标位置
     float Pitch_Target_Position[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+    Calibrate_Params Pitch_Calibrate_Params = {
+        .motion_mode = CALIBRATE_MOTION_SPEED,
+        .motion_value = 10.0f,
+        .detect_mode = CALIBRATE_DETECT_SPEED,
+        .detect_threshold = 0.05f,
+        .debounce_us = 200000};
 
     // 位移电机(M3508)参数
     float Move_Target_Position[3] = {0.0f, 0.0f, 0.0f}; // 移动电机目标位置
     uint8_t Move_Index = 0;                             // 移动位置索引
     bool Move_Calibrated = false;                       // 移动电机是否已完成堵转校准
     float Move_Calibration_Offset = 0.0f;               // 校准时记录的电机绝对角度，用于将目标转为绝对角度
-    float Calibrate_Speed = -0.3f;                      // 校准时的目标速度 rad/s
-    const float Stroke = 0.1f;                          // 移动机构导程，输出轴每圈前进距离 m/rev
+    Calibrate_Params Move_Calibration_Param = {
+        .motion_mode = CALIBRATE_MOTION_SPEED,
+        .motion_value = 10.0f,
+        .detect_mode = CALIBRATE_DETECT_SPEED,
+        .detect_threshold = 0.05f,
+        .debounce_us = 200000};
 
     // 动作完成判定阈值
     const float Position_Threshold = 0.01f; // 位置误差阈值 m
     const float Omega_Threshold = 0.01f;    // 速度误差阈值 rad/s
 
     const float Locked_Rotor_Current_Threshold = 5.0f; // 堵转电流阈值 A
-
-    void Move_To_Position(float x);
 
     void Weapon_Grab_Status_Task();
 
