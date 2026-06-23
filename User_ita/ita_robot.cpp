@@ -32,7 +32,7 @@
  */
 void Class_Chariot::Init()
 {
-    CRSF.Init(&huart5);
+    CRSF.Init(&huart7);
 
     Chassis.Init();
 }
@@ -47,6 +47,10 @@ void Class_Chariot::TIM_100ms_Alive_PeriodElapsedCallback()
     Chassis.TIM_100ms_Alive_PeriodElapsedCallback();
 }
 
+void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
+{
+    Chassis.TIM_2ms_Control_PeriodElapsedCallback();
+} 
 /**
  * @brief 50ms定时任务
  *
@@ -55,7 +59,7 @@ void Class_Chariot::TIM_Unline_Protect_PeriodElapsedCallback()
 {
     if (CRSF.Get_Status() == CRSF_Status_DISABLE)
     {
-        Chassis.Set_Chassis_Control_Type(Class_Chassis::Enum_Chassis_Control_Type::Chassis_Control_Type_DISABLE);
+        Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
     }
 }
 
@@ -104,40 +108,38 @@ void Class_Chariot::Judge_Active_Controller()
  */
 void Class_Chariot::Control_Chassis()
 {
-    // 遥控器摇杆值
-    Judge_Active_Controller();
     // 云台坐标系速度目标值 float
     float chassis_velocity_x = 0, chassis_velocity_y = 0;
-    static float chassis_omega = 0;
-    static float chassis_angle = 0;
+    float chassis_omega = 0;
 
     /************************************遥控器控制逻辑*********************************************/
 
     if (Active_Controller == Controller_CRSF && CRSF_Control_Type == CRSF_Control_Type_REMOTE)
     {
-        float crsf_l_x, crsf_l_y, crsf_r_x;
+        float crsf_l_x, crsf_l_y, crsf_r_x, crsf_r_y;
         // 排除遥控器死区
         crsf_l_x = (Math_Abs(CRSF.Get_Left_X()) > Dead_Zone) ? CRSF.Get_Left_X() : 0;
         crsf_l_y = (Math_Abs(CRSF.Get_Left_Y()) > Dead_Zone) ? CRSF.Get_Left_Y() : 0;
         // 右摇杆X作为旋转
         crsf_r_x = (Math_Abs(CRSF.Get_Right_X()) > Dead_Zone) ? CRSF.Get_Right_X() : 0;
-        // 设定矩形到圆形映射进行控制
-        chassis_velocity_x = crsf_l_x * sqrt(1.0f - crsf_l_y * crsf_l_y / 2.0f) * Chassis.Get_Velocity_X_Max();
-        chassis_velocity_y = crsf_l_y * sqrt(1.0f - crsf_l_x * crsf_l_x / 2.0f) * Chassis.Get_Velocity_Y_Max();
-        chassis_omega = crsf_r_x * Chassis.Get_Omega_Max();
-        chassis_angle += chassis_omega;
+        crsf_r_y = (Math_Abs(CRSF.Get_Right_Y()) > Dead_Zone) ? CRSF.Get_Right_Y() : 0;
+        // 遥控器前Y右X 
+        chassis_velocity_x = crsf_r_y * sqrt(1.0f - crsf_r_x * crsf_r_x / 2.0f) * Chassis.Get_Velocity_Y_Max();
+        chassis_velocity_y = crsf_r_x * sqrt(1.0f - crsf_r_y * crsf_r_y / 2.0f) * Chassis.Get_Velocity_X_Max();
+        chassis_omega = crsf_l_x * Chassis.Get_Omega_Max();
         // 遥控器开关操作逻辑
         if (CRSF.Get_SC() == CRSF_SWITCH_LOW) // SC低档 禁用模式
         {
-            Chassis.Set_Chassis_Control_Type(Class_Chassis::Enum_Chassis_Control_Type::Chassis_Control_Type_DISABLE);
+            Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
         }
-        else if (CRSF.Get_SC() == CRSF_SWITCH_HIGH) // SC高档 
+        else if (CRSF.Get_SC() == CRSF_SWITCH_HIGH) // SC高档 禁用模式（预留小陀螺）
         {
+            Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
         }
         else if (CRSF.Get_SC() == CRSF_SWITCH_MIDDLE) // SC中档 随动模式
         {
             // 底盘随动
-            Chassis.Set_Chassis_Control_Type(Class_Chassis::Enum_Chassis_Control_Type::Chassis_Control_Type_NORMAL);
+            Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_NORMAL);
             Chassis.Set_Target_Velocity_X(chassis_velocity_x);
             Chassis.Set_Target_Velocity_Y(chassis_velocity_y);
             Chassis.Set_Target_Omega(chassis_omega);
@@ -149,5 +151,5 @@ void Class_Chariot::TIM_Control_Callback()
     Judge_Active_Controller();
 
     // 底盘，云台，发射机构控制逻辑
-    Control_Chassis();
+     Control_Chassis();
 }

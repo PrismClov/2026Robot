@@ -4,8 +4,9 @@
  * @brief 初始化舵轮 CAN 编码器
  * @param hfdcan 绑定的 CAN 句柄
  * @param __FDCAN_Encoder_ID 编码器绑定的 CAN ID
+ * @param offset_rad 角度偏移量
  */
-void Class_Swerve_Steer_Encoder::Init(FDCAN_HandleTypeDef *hfdcan, uint32_t __FDCAN_Encoder_ID)
+void Class_Swerve_Steer_Encoder::Init(FDCAN_HandleTypeDef *hfdcan, uint32_t __FDCAN_Encoder_ID, float offset_deg)
 {
     if (hfdcan == nullptr)
     {
@@ -37,6 +38,7 @@ void Class_Swerve_Steer_Encoder::Init(FDCAN_HandleTypeDef *hfdcan, uint32_t __FD
     Encoder_Status = Enum_Encoder_Status::Encoder_Status_DISABLE;
 
     memset(&Rx_Data, 0, sizeof(Rx_Data));
+    Offset_Deg = offset_deg;
 }
 
 /**
@@ -45,8 +47,9 @@ void Class_Swerve_Steer_Encoder::Init(FDCAN_HandleTypeDef *hfdcan, uint32_t __FD
  */
 void Class_Swerve_Steer_Encoder::FDCAN_RxCpltCallback(uint8_t *Rx_Data)
 {
-    Encoder_Flag += 1;
     Data_Process();
+
+    Encoder_Flag += 1;
 }
 
 void Class_Swerve_Steer_Encoder::TIM_100ms_Alive_PeriodElapsedCallback()
@@ -77,16 +80,32 @@ void Class_Swerve_Steer_Encoder::Data_Process()
     // crc校验
     uint8_t calculated_crc = Algorithm::CRC_Lib::CRC8::Calculate(tmp_buffer, sizeof(Struct_Encoder_Steer_CAN_RX_Data) - sizeof(tmp_buffer->checksum) - sizeof(tmp_buffer->reserved)); // 不包括checksum和reserved
 
-    if (calculated_crc != tmp_buffer->checksum)
+    if (calculated_crc != tmp_buffer->checksum )
     {
         return;
     }
 
     // 计算角度
     uint16_t raw_angle = (tmp_buffer->raw_angle_high << 8) | tmp_buffer->raw_angle_low;
-    // TODO: 确认编码器实际分辨率，替换 16383 为正确值（14位=16383, 12位=4095, 16位=65535）
     raw_angle &= 0x3FFF; // 掩码到 14 位
-    Rx_Data.angle = Math_Int_To_Float(raw_angle, 0, 16383, 0.0f, 360.0f);
+    angle = Math_Int_To_Float(raw_angle, 0, 16383, -180.0f, 180.0f);
+
+    angle -= Offset_Deg;                               // 添加偏移量
+    angle = Math_Modulus_Normalization(angle, 360.0f); // 归一化到 [-180, 180) 范围
+
+    float error_angle = angle - pre_angle;
+    if (error_angle > 180.0f)
+    {
+        total_round -= 1;
+    }
+    else if (error_angle < -180.0f)
+    {
+        total_round += 1;
+    }
+    pre_angle = angle;
+ 
+    Rx_Data.angle = angle + total_round * 360.0f;;
+
     Rx_Data.status = tmp_buffer->status;
     Rx_Data.no_mag_warning = tmp_buffer->no_mag_warning;
     Rx_Data.over_speed = tmp_buffer->over_speed_warning;

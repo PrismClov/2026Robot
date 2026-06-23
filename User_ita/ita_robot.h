@@ -76,6 +76,6 @@ protected:
     Enum_Control_Source Control_Source = Control_DISABLE;
 
     // 遥控器拨动的死区, 0~1
-    float Dead_Zone = 0;
+    float Dead_Zone = 0.01f;
 };
 #endif

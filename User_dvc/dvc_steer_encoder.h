@@ -48,7 +48,7 @@ struct Struct_Encoder_Steer_Rx_Data
 class Class_Swerve_Steer_Encoder : public Class_Encoder_Base
 {
 public:
-    void Init(FDCAN_HandleTypeDef *hfdcan, uint32_t __FDCAN_Encoder_ID);
+    void Init(FDCAN_HandleTypeDef *hfdcan, uint32_t __FDCAN_Encoder_ID, float offset_deg = 0.0f);
 
     void FDCAN_RxCpltCallback(uint8_t *Rx_Data);
 
@@ -76,6 +76,11 @@ private:
 
     Struct_Encoder_Steer_Rx_Data Rx_Data;
 
+    float Offset_Deg = 0.0f;
+
+    float angle = 0.0f; // 当前的角度值
+    float pre_angle = 0.0f; // 上一次的角度值
+    int32_t total_round = 0; // 总圈数
     // 数据处理函数，负责将原始 CAN 数据转换为角度值和状态信息
     void Data_Process();
 };

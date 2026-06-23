@@ -162,7 +162,7 @@ private:
 
     void Clear_Drive_Target();
 
-    void Flip_Direction();
+    void Flip_Direction(float error);
 
     void Apply_Steer_Target();
 

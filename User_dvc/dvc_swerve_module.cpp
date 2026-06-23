@@ -16,7 +16,7 @@ bool Class_Swerve_Module::Init(Class_Motor_Base &steer_motor, Class_Motor_Base &
     Steer_Encoder = &steer_encoder;
 
     Param = parameters;
-
+    
     Current_Mode = mode;
 
     Initialized = true;
@@ -101,7 +101,7 @@ void Class_Swerve_Module::Apply_Steer_Target()
     /*
      * 舵向位置反馈使用外置绝对编码器。
      */
-    Steer_Motor->Set_Feedback_Position((Steer_Encoder->Get_Normalized_Angle() * DEG_TO_RAD) - Param.Steer_Zero_Offset_Rad);
+    Steer_Motor->Set_Feedback_Position(Steer_Encoder->Get_Total_Angle() * DEG_TO_RAD);
 
     Steer_Motor->Set_Target_Position(Module_Target.Angle_Rad);
 
@@ -150,8 +150,7 @@ void Class_Swerve_Module::Optimize_Target()
 {
     Deadband_Process();
 
-    const float current_angle = (Steer_Encoder->Get_Normalized_Angle() * DEG_TO_RAD) - Param.Steer_Zero_Offset_Rad;
-
+    const float current_angle = (Steer_Encoder->Get_Total_Angle() * DEG_TO_RAD);
     float error = Module_Target.Angle_Rad - current_angle;
     error = Math_Modulus_Normalization(error, 2.0f * PI);
 
@@ -168,8 +167,9 @@ void Class_Swerve_Module::Optimize_Target()
      */
     if (Math_Abs(error) > PI * 0.5f)
     {
-        Flip_Direction();
+       Flip_Direction(error);
     }
+   
 }
 
 /**
@@ -202,9 +202,9 @@ void Class_Swerve_Module::Clear_Drive_Target()
 /**
  * @brief 舵向电机反转优化
  */
-void Class_Swerve_Module::Flip_Direction()
+void Class_Swerve_Module::Flip_Direction(float error)
 {
-    Module_Target.Angle_Rad = Math_Modulus_Normalization(Module_Target.Angle_Rad + PI, 2.0f * PI);
+    Module_Target.Angle_Rad = Math_Modulus_Normalization(error + PI, 2.0f * PI) + Steer_Encoder->Get_Total_Angle() * DEG_TO_RAD;
 
     Module_Target.Speed_Mps = -Module_Target.Speed_Mps;
     Module_Target.Force_N = -Module_Target.Force_N;

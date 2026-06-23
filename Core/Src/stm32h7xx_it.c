@@ -58,9 +58,8 @@
 extern FDCAN_HandleTypeDef hfdcan1;
 extern FDCAN_HandleTypeDef hfdcan2;
 extern FDCAN_HandleTypeDef hfdcan3;
-extern TIM_HandleTypeDef htim4;
 extern TIM_HandleTypeDef htim5;
-extern DMA_HandleTypeDef hdma_uart5_rx;
+extern DMA_HandleTypeDef hdma_uart7_rx;
 extern DMA_HandleTypeDef hdma_usart1_rx;
 extern DMA_HandleTypeDef hdma_usart1_tx;
 extern DMA_HandleTypeDef hdma_usart2_rx;
@@ -69,7 +68,6 @@ extern DMA_HandleTypeDef hdma_usart3_rx;
 extern DMA_HandleTypeDef hdma_usart3_tx;
 extern DMA_HandleTypeDef hdma_usart10_rx;
 extern DMA_HandleTypeDef hdma_usart10_tx;
-extern UART_HandleTypeDef huart5;
 extern UART_HandleTypeDef huart1;
 extern UART_HandleTypeDef huart2;
 extern UART_HandleTypeDef huart3;
@@ -343,20 +341,6 @@ void FDCAN2_IT0_IRQHandler(void)
 }
 
 /**
-  * @brief This function handles TIM4 global interrupt.
-  */
-void TIM4_IRQHandler(void)
-{
-  /* USER CODE BEGIN TIM4_IRQn 0 */
-
-  /* USER CODE END TIM4_IRQn 0 */
-  HAL_TIM_IRQHandler(&htim4);
-  /* USER CODE BEGIN TIM4_IRQn 1 */
-
-  /* USER CODE END TIM4_IRQn 1 */
-}
-
-/**
   * @brief This function handles USART1 global interrupt.
   */
 void USART1_IRQHandler(void)
@@ -444,31 +428,17 @@ void TIM5_IRQHandler(void)
 }
 
 /**
-  * @brief This function handles UART5 global interrupt.
+  * @brief This function handles DMA2 stream1 global interrupt.
   */
-void UART5_IRQHandler(void)
+void DMA2_Stream1_IRQHandler(void)
 {
-  /* USER CODE BEGIN UART5_IRQn 0 */
+  /* USER CODE BEGIN DMA2_Stream1_IRQn 0 */
 
-  /* USER CODE END UART5_IRQn 0 */
-  HAL_UART_IRQHandler(&huart5);
-  /* USER CODE BEGIN UART5_IRQn 1 */
+  /* USER CODE END DMA2_Stream1_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_uart7_rx);
+  /* USER CODE BEGIN DMA2_Stream1_IRQn 1 */
 
-  /* USER CODE END UART5_IRQn 1 */
-}
-
-/**
-  * @brief This function handles DMA2 stream0 global interrupt.
-  */
-void DMA2_Stream0_IRQHandler(void)
-{
-  /* USER CODE BEGIN DMA2_Stream0_IRQn 0 */
-
-  /* USER CODE END DMA2_Stream0_IRQn 0 */
-  HAL_DMA_IRQHandler(&hdma_uart5_rx);
-  /* USER CODE BEGIN DMA2_Stream0_IRQn 1 */
-
-  /* USER CODE END DMA2_Stream0_IRQn 1 */
+  /* USER CODE END DMA2_Stream1_IRQn 1 */
 }
 
 /**
