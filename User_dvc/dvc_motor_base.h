@@ -14,6 +14,7 @@
 
 #include <stdint.h>
 #include "drv_math.h"
+#include "dvc_dwt.h"
 /**
  * @brief 通用电机状态
  */
@@ -41,6 +42,47 @@ enum Enum_Motor_Control_Method
 };
 
 /**
+ * @brief 校准运动模式
+ */
+enum Enum_Calibrate_Motion_Mode
+{
+    CALIBRATE_MOTION_NONE = 0,    // 不运动，直接以当前位置为 offset
+    CALIBRATE_MOTION_SPEED,       // 恒速运动
+    CALIBRATE_MOTION_CURRENT,     // 恒流运动
+};
+
+/**
+ * @brief 校准堵转检测模式
+ */
+enum Enum_Calibrate_Detect_Mode
+{
+    CALIBRATE_DETECT_CURRENT = 0, // 电流超过阈值判定堵转
+    CALIBRATE_DETECT_SPEED,       // 速度低于阈值判定堵转
+};
+
+/**
+ * @brief 校准参数
+ *
+ * 用法:
+ *   Calibrate_Params p;
+ *   p.motion_mode = CALIBRATE_MOTION_SPEED;
+ *   p.motion_value = -0.3f;
+ *   p.detect_mode = CALIBRATE_DETECT_CURRENT;
+ *   p.detect_threshold = 5.0f;
+ *   mot.Calibrate(p, offset);
+ */
+struct Calibrate_Params
+{
+    Enum_Calibrate_Motion_Mode motion_mode = CALIBRATE_MOTION_SPEED;
+    float motion_value = 0.3f;                              // 速度(rad/s)或电流(A), 正负决定方向
+
+    Enum_Calibrate_Detect_Mode detect_mode = CALIBRATE_DETECT_CURRENT;
+    float detect_threshold = 5.0f;                          // 电流阈值(A)或速度阈值(rad/s)
+
+    uint32_t debounce_us = 0;                               // 检测消抖时间(us), 条件持续满足此时间后判定堵转; 0=立即判定
+};
+
+/**
  * @brief 通用电机抽象基类
  *
  * 设计原则：
@@ -59,14 +101,6 @@ class Class_Motor_Base
 {
 public:
     virtual ~Class_Motor_Base() {}
-
-    /**
-     * @brief 无参初始化接口
-     *
-     * 对于适配器类，真正的绑定初始化通常会额外提供带参数 Init()。
-     * 这个无参 Init() 主要用于统一接口。
-     */
-    virtual void Init() = 0;
 
     /**
      * @brief 设置电机控制模式
@@ -152,6 +186,23 @@ public:
      * - 输出 PWM
      */
     virtual void Output() = 0;
+
+    /**
+     * @brief 电机堵转校准
+     *
+     * 每控制周期调用一次。支持恒速 / 恒流两种运动模式，
+     * 支持电流阈值 / 速度阈值两种堵转判定方式，带 DWT 消抖。
+     * 校准完成后将电机置零，通过 offset 导出机械零点绝对角度。
+     *
+     * @param params  校准参数 (运动/检测模式, 阈值, 消抖时间)
+     * @param offset  输出，堵转时的机械零点绝对角度
+     * @return true   校准完成 (堵转检测到)
+     * @return false  仍在校准中
+     */
+    bool Calibrate(const Calibrate_Params &params, float &offset);
+
+protected:
+    uint32_t Stall_Debounce_Start_Time = 0; // 堵转消抖计时起点
 };
 
 #endif

@@ -3,7 +3,7 @@
 /**
  * @brief 单个舵轮模块实现
  */
-bool Class_Swerve_Module::Init(Class_Motor_Base &steer_motor, Class_Motor_Base &drive_motor, const Parameters &parameters, Mode mode)
+bool Class_Swerve_Module::Init(Class_Motor_Base &steer_motor, Class_Motor_Base &drive_motor, Class_Swerve_Steer_Encoder &steer_encoder, const Parameters &parameters, Mode mode)
 {
     if (!Check_Parameters(parameters))
     {
@@ -13,11 +13,10 @@ bool Class_Swerve_Module::Init(Class_Motor_Base &steer_motor, Class_Motor_Base &
 
     Steer_Motor = &steer_motor;
     Drive_Motor = &drive_motor;
+    Steer_Encoder = &steer_encoder;
 
     Param = parameters;
-
-    Steer_Encoder.Init(Param.Steer_Zero_Offset_Rad, Param.Steer_Encoder_Reverse);
-
+    
     Current_Mode = mode;
 
     Initialized = true;
@@ -37,44 +36,15 @@ bool Class_Swerve_Module::Check_Parameters(const Parameters &parameters) const
         !isfinite(parameters.Max_Speed_Mps) ||
         !isfinite(parameters.Max_Force_N) ||
         !isfinite(parameters.Max_Current_A) ||
-        !isfinite(parameters.Steer_Zero_Offset_Rad))
+        !isfinite(parameters.Steer_Zero_Offset_Rad) ||
+        !isfinite(parameters.Wheel_Radius) ||
+        !isfinite(parameters.Wheel_Motor_Reduction) ||
+        !isfinite(parameters.Motor_Kt))
     {
         return false;
     }
-
-    /*
-     * Force_To_Current 必须为正。
-     * 方向反的问题不建议通过负比例系数解决。
-     */
-    if (parameters.Force_To_Current <= 0.0f)
-    {
-        return false;
-    }
-
-    if (parameters.Speed_Deadband < 0.0f ||
-        parameters.Force_Deadband < 0.0f)
-    {
-        return false;
-    }
-
-    /*
-     * Max_* <= 0 表示不启用限幅，所以这里不判定为非法。
-     */
 
     return true;
-}
-
-/**
- * @brief 更新舵向绝对编码器原始值
- */
-void Class_Swerve_Module::Update_Encoder(uint16_t encoder_raw)
-{
-    if (!Initialized)
-    {
-        return;
-    }
-
-    Steer_Encoder.Update(encoder_raw);
 }
 
 /**
@@ -98,8 +68,9 @@ void Class_Swerve_Module::Calculate()
 
     /*
      * 力控目标转换成电流目标。
+     * current = force * wheel_radius / reduction_ratio / kt
      */
-    Module_Target.Current_A = Module_Target.Force_N * Param.Force_To_Current;
+    Module_Target.Current_A = Module_Target.Force_N * Param.Wheel_Radius / Param.Wheel_Motor_Reduction / Param.Motor_Kt;
 
     Module_Target.Current_A = Math_Constrain(&Module_Target.Current_A, -Param.Max_Current_A, Param.Max_Current_A);
 
@@ -130,7 +101,7 @@ void Class_Swerve_Module::Apply_Steer_Target()
     /*
      * 舵向位置反馈使用外置绝对编码器。
      */
-    Steer_Motor->Set_Feedback_Position(Steer_Encoder.Get_Angle_Rad());
+    Steer_Motor->Set_Feedback_Position(Steer_Encoder->Get_Total_Angle() * DEG_TO_RAD);
 
     Steer_Motor->Set_Target_Position(Module_Target.Angle_Rad);
 
@@ -179,10 +150,9 @@ void Class_Swerve_Module::Optimize_Target()
 {
     Deadband_Process();
 
-    const float current_angle = Steer_Encoder.Get_Angle_Rad();
-
+    const float current_angle = (Steer_Encoder->Get_Total_Angle() * DEG_TO_RAD);
     float error = Module_Target.Angle_Rad - current_angle;
-    error = Math_Modulus_Normalization(error, PI);
+    error = Math_Modulus_Normalization(error, 2.0f * PI);
 
     /*
      * 舵向优化：
@@ -197,8 +167,9 @@ void Class_Swerve_Module::Optimize_Target()
      */
     if (Math_Abs(error) > PI * 0.5f)
     {
-        Flip_Direction();
+       Flip_Direction(error);
     }
+   
 }
 
 /**
@@ -231,9 +202,9 @@ void Class_Swerve_Module::Clear_Drive_Target()
 /**
  * @brief 舵向电机反转优化
  */
-void Class_Swerve_Module::Flip_Direction()
+void Class_Swerve_Module::Flip_Direction(float error)
 {
-    Module_Target.Angle_Rad = Math_Modulus_Normalization(Module_Target.Angle_Rad + PI, PI);
+    Module_Target.Angle_Rad = Math_Modulus_Normalization(error + PI, 2.0f * PI) + Steer_Encoder->Get_Total_Angle() * DEG_TO_RAD;
 
     Module_Target.Speed_Mps = -Module_Target.Speed_Mps;
     Module_Target.Force_N = -Module_Target.Force_N;
@@ -297,7 +268,7 @@ void Class_Swerve_Module::Stop()
     {
         Steer_Motor->Set_Control_Method(MOTOR_CONTROL_METHOD_POSITION);
 
-        Steer_Motor->Set_Feedback_Position(Steer_Encoder.Get_Angle_Rad());
+        Steer_Motor->Set_Feedback_Position((Steer_Encoder->Get_Normalized_Angle() * DEG_TO_RAD) - Param.Steer_Zero_Offset_Rad);
 
         Steer_Motor->Set_Target_Position(Module_Target.Angle_Rad);
 
