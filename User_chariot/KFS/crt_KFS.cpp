@@ -2,17 +2,8 @@
 
 void Class_KFS::Init()
 {
-    // 抬升电机初始化
-    Motor_Lift[0].Init(&hfdcan2, Motor::Motor_DJI_ID_0x201,
-                       Motor::Class_Motor_DJI_C620::Parameters{
-                           .PID_Omega = PID_Parameters{
-                               .K_P = 0.0f,
-                               .K_I = 0.0f,
-                               .K_D = 0.0f,
-                               .Out_Max = 20.0f, 
-                           },
-                       });
-    Motor_Lift[1].Init(&hfdcan2, Motor::Motor_DJI_ID_0x202,
+    // 抬升电机初始化 (CAN1, ID 0x202-0x203)
+    Motor_Lift[0].Init(&hfdcan1, Motor::Motor_DJI_ID_0x202,
                        Motor::Class_Motor_DJI_C620::Parameters{
                            .PID_Omega = PID_Parameters{
                                .K_P = 0.0f,
@@ -20,24 +11,41 @@ void Class_KFS::Init()
                                .K_D = 0.0f,
                                .Out_Max = 20.0f,
                            },
-                       });
+                       },3591.0f / 187.0f * 30.0f / 20.0f);
+    Motor_Lift[1].Init(&hfdcan1, Motor::Motor_DJI_ID_0x203,
+                       Motor::Class_Motor_DJI_C620::Parameters{
+                           .PID_Omega = PID_Parameters{
+                               .K_P = 0.0f,
+                               .K_I = 0.0f,
+                               .K_D = 0.0f,
+                               .Out_Max = 20.0f,
+                           },
+                       },3591.0f / 187.0f * 30.0f / 20.0f);
 
-    Motor_Lift[0].Set_Feedforward_Omega(0.0f);
-    Motor_Lift[1].Set_Feedforward_Omega(0.0f);
-
-    // 抬升路程环 
+    // 抬升路程环
     Lift.Init({&Motor_Lift[0], &Motor_Lift[1]},
               Class_MultiMotorSync_Base<2>::Parameters{
                   .PID_Distance = {
-                      PID_Parameters{}, 
-                      PID_Parameters{}, 
+                      PID_Parameters{
+                          .K_P = 0.0f,
+                          .K_I = 0.0f,
+                          .K_D = 0.0f,
+                          .Out_Max = 5.0f,
+                      },
+                      PID_Parameters{
+                          .K_P = 0.0f,
+                          .K_I = 0.0f,
+                          .K_D = 0.0f,
+                          .Out_Max = 5.0f,
+                      },
                   },
+                  .Angle_To_Distance = 0.16f / (2.0f * PI), // 32齿×5mm齿距=160mm周长
                   .Calibrate = {.motion_mode = CALIBRATE_MOTION_NONE},
               });
 
-    // 移动电机初始化
+    // 移动电机初始化 (CAN1, ID 0x201)
     Motor_Move.Init(
-        &hfdcan3,
+        &hfdcan1,
         Motor::Motor_DJI_ID_0x201,
         Motor::Class_Motor_DJI_C620::Parameters{
             .PID_Position = PID_Parameters{
@@ -84,19 +92,23 @@ void Class_KFS::Move_To_Position(float x)
 
 void Class_KFS::TIM_Control_PeriodElapsedCallback()
 {
-    Motor_Move.Update_Feedback();
-    Motor_Move.Calculate();
+    // Motor_Move.Update_Feedback();
+    // Motor_Move.Calculate();
 
     // 抬升控制
+    Lift.Set_Target_Position(Target_Distance);
     Lift.Distance_Update();
     Lift.Move_To_Position();
-    Motor_Lift[0].Calculate();
-    Motor_Lift[1].Calculate();
+    for (int i = 0; i < 2; i++)
+    {
+        Motor_Lift[i].Update_Feedback();
+        Motor_Lift[i].Calculate();
+    }
 }
 
 void Class_KFS::TIM_Alive_PeriodElapsedCallback()
 {
-    Motor_Move.TIM_100ms_Alive_PeriodElapsedCallback();
+    // Motor_Move.TIM_100ms_Alive_PeriodElapsedCallback();
 
     Motor_Lift[0].TIM_100ms_Alive_PeriodElapsedCallback();
     Motor_Lift[1].TIM_100ms_Alive_PeriodElapsedCallback();

@@ -15,11 +15,6 @@ enum Enum_KFS_Status
     KFS_Status_Init = 0, // 初始化
 };
 
-enum Enum_KFS_Lift_Control_Mode
-{
-    KFS_Lift_MODE_SPEED_OPEN,
-    KFS_Lift_MODE_POSITION_CLOSE,
-};
 
 class Class_FSM_KFS : public Class_FSM
 {
@@ -72,6 +67,8 @@ private:
     bool Is_Move_Calibrated = false;
 
     float Calibrate_Offset = 0.0f;
+
+    float Target_Distance = 0.0f;
 
     Calibrate_Params calibarate_param = {
         .motion_mode = CALIBRATE_MOTION_SPEED,

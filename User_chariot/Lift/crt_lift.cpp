@@ -2,7 +2,8 @@
 
 void Class_Lift::Init()
 {
-    Motor_Lift_L.Init(&hfdcan2, Motor::Motor_DJI_ID_0x201,
+    // Lift抬升电机 (CAN2, ID 0x204-0x205)
+    Motor_Lift_L.Init(&hfdcan2, Motor::Motor_DJI_ID_0x204,
                       Motor::Class_Motor_DJI_C620::Parameters{
                           .PID_Omega = PID_Parameters{
                               .K_P = 6.0f,
@@ -11,7 +12,7 @@ void Class_Lift::Init()
                               .Out_Max = 20.0f,
                           },
                       });
-    Motor_Lift_R.Init(&hfdcan2, Motor::Motor_DJI_ID_0x202,
+    Motor_Lift_R.Init(&hfdcan2, Motor::Motor_DJI_ID_0x205,
                       Motor::Class_Motor_DJI_C620::Parameters{
                           .PID_Omega = PID_Parameters{
                               .K_P = 6.0f,

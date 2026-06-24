@@ -35,6 +35,8 @@ void Class_Chariot::Init()
     CRSF.Init(&huart7);
 
     Chassis.Init();
+    Lift.Init();
+    Weapon.Init();
 }
 
 /**
@@ -45,11 +47,23 @@ void Class_Chariot::TIM_100ms_Alive_PeriodElapsedCallback()
 {
     CRSF.TIM1msMod50_Alive_PeriodElapsedCallback();
     Chassis.TIM_100ms_Alive_PeriodElapsedCallback();
+    Lift.TIM_100ms_Alive_PeriodElapsedCallback();
 }
 
 void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
 {
-    Chassis.TIM_2ms_Control_PeriodElapsedCallback();
+    // // Lift
+    // Lift.TIM_Calculate_PeriodElapsedCallback();
+
+    // // 底盘控制 (填充CAN3 0x200 Tx缓冲区，并发送CAN3)
+    // Chassis.TIM_2ms_Control_PeriodElapsedCallback();
+
+    // KFS
+    KFS.TIM_Control_PeriodElapsedCallback();
+
+    // // Weapon
+    // Weapon.TIM_Weapon_PeriodElapsedCallback();
+
 } 
 /**
  * @brief 50ms定时任务

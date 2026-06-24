@@ -15,9 +15,10 @@
 
 /* Includes -----------------------------------------------------------------*/
 #include "crt_chassis.h"
+#include "crt_lift.h"
+#include "crt_weapon.h"
 #include "dvc_crsf.h"
-
-#include "dvc_motor_dji.h"
+#include "crt_KFS.h"
 
 /* Exported macros -----------------------------------------------------------*/
 
@@ -51,10 +52,18 @@ class Class_Chariot
 public:
     // 遥控器
     Class_CRSF CRSF;
-    // 遥控器角度环
-    Class_PID PID_Angle_CRSF;
+
     // 舵轮底盘
     Class_Chassis Chassis;
+
+    // KFS夹取
+    Class_KFS KFS;
+
+    // 抬升机构
+    Class_Lift Lift;
+
+    // 武器夹取机构
+    Class_Weapon Weapon;
 
     void Init();
     void TIM_Control_Callback();

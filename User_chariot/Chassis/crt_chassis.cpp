@@ -428,7 +428,7 @@ void Class_Chassis::Output_To_Motor()
     {
         Motor_Steer[i].Calculate();
     }
-     Motor::DJI_TIM_Send_Group(&hfdcan3, Motor::CAN_Tx_ID_0x200_Only);
+     Motor::DJI_TIM_Send_Group(&hfdcan3, Motor::CAN_Tx_ID_Both);
 
     // 轮向电机数据发送
     for (int i = 0; i < 4; i++)

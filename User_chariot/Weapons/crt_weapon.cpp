@@ -24,9 +24,9 @@ void Class_Weapon::Init()
         },
         3591.0f / 187.0f / 18.0f * 28.0f);
 
-    // 移动电机
+    // 移动电机 (CAN2, ID 0x201)
     Motor_Move.Init(
-        &hfdcan3,
+        &hfdcan2,
         Motor::Motor_DJI_ID_0x201,
         Motor::Class_Motor_DJI_C620::Parameters{
             .PID_Position = PID_Parameters{
@@ -52,9 +52,9 @@ void Class_Weapon::Init()
         0x01, // CAN Tx ID
         Motor_DM_Control_Method_NORMAL_MIT);
 
-    // 俯仰电机 — TODO: 确认CAN ID和PID参数
-    Motor_Pitch[0].Init(&hfdcan2, Motor::Motor_DJI_ID_0x203);
-    Motor_Pitch[1].Init(&hfdcan2, Motor::Motor_DJI_ID_0x204);
+    // 俯仰电机 (CAN2, ID 0x202-0x203)
+    Motor_Pitch[0].Init(&hfdcan2, Motor::Motor_DJI_ID_0x202);
+    Motor_Pitch[1].Init(&hfdcan2, Motor::Motor_DJI_ID_0x203);
 
     // 俯仰同步 — TODO: 填写实际PID参数和机械参数
     Pitch.Init({&Motor_Pitch[0], &Motor_Pitch[1]},

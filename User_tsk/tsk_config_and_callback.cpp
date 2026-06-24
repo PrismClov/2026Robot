@@ -56,7 +56,7 @@ Class_Chariot chariot;
 // Class_DS_Servo Pick_Servo[3];
 // Motor::Class_Motor_DJI_C620 Motor_Arm; // 机械臂电机
 // Class_KFS KFS; // 夹取机构
-// Class_Weapon Weapon; // 武器夹取机构
+// Class_Weapon Weapon; // 武器夹取机构 (已改用全局对象)
 /* Private variables ---------------------------------------------------------*/
 
 // 全局初始化完成标志位
@@ -67,15 +67,44 @@ uint32_t flag = 0;
 
 /* Function prototypes -------------------------------------------------------*/
 
-/**
- * @brief FDCAN1回调函数
- *
- * @param FDCAN_RxMessage FDCAN1收到的消息
- */
 void Device_FDCAN1_Callback(Struct_FDCAN_Rx_Buffer *FDCAN_RxMessage)
 {
     switch (FDCAN_RxMessage->Header.Identifier)
     {
+            // KFS 移动电机数据反馈
+        case 0x201:
+        {
+            chariot.KFS.Motor_Move.FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+            break;
+        }
+            // KFS 抬升电机数据反馈
+        case 0x202:
+        {
+            chariot.KFS.Motor_Lift[0].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+            break;
+        }
+        case 0x203:
+        {
+            chariot.KFS.Motor_Lift[1].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+            break;
+        }
+
+        case 0xF0:
+        {
+            break;
+        }
+
+        case 0xF1:
+        {
+            break;
+        }
+
+        case 0xF2:
+        {
+            break;
+        }
+        default:
+            break;
     }
 }
 
@@ -88,6 +117,91 @@ void Device_FDCAN2_Callback(Struct_FDCAN_Rx_Buffer *FDCAN_RxMessage)
 {
     switch (FDCAN_RxMessage->Header.Identifier)
     {
+        // Weapon 移动电机数据反馈
+        case 0x201:
+        {
+            chariot.Weapon.Motor_Move.FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+            break;
+        }
+        // Weapon 俯仰电机数据反馈
+        case 0x202:
+        {
+            chariot.Weapon.Motor_Pitch[0].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+            break;
+        }
+        case 0x203:
+        {
+            chariot.Weapon.Motor_Pitch[1].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+            break;
+        }
+
+        // Lift 抬升电机数据反馈
+        case 0x204:
+        {
+            chariot.Lift.Motor_Lift_L.FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+            break;
+        }
+        case 0x205:
+        {
+            chariot.Lift.Motor_Lift_R.FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+            break;
+        }
+    }
+}
+
+/**
+ * @brief FDCAN3回调函数,此函数为本杰明电调通信用，FDCAN配置为扩展ID
+ *
+ * @param FDCAN_RxMessage FDCAN3收到的消息
+ */
+void Device_FDCAN3_Callback(Struct_FDCAN_Rx_Buffer *FDCAN_RxMessage)
+{
+    switch (FDCAN_RxMessage->Header.Identifier)
+    {
+        // 舵向编码器返回数据处理 (0x101-0x104)
+        case 0x101:
+        {
+            chariot.Chassis.Steer_Encoder[0].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+            break;
+        }
+        case 0x102:
+        {
+            chariot.Chassis.Steer_Encoder[1].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+            break;
+        }
+        case 0x103:
+        {
+            chariot.Chassis.Steer_Encoder[2].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+            break;
+        }
+        case 0x104:
+        {
+            chariot.Chassis.Steer_Encoder[3].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+            break;
+        }
+
+        // C610 舵向电机数据反馈
+        case 0x201:
+        {
+            chariot.Chassis.Motor_Steer[0].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+            break;
+        }
+        case 0x202:
+        {
+            chariot.Chassis.Motor_Steer[1].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+            break;
+        }
+        case 0x203:
+        {
+            chariot.Chassis.Motor_Steer[2].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+            break;
+        }
+        case 0x204:
+        {
+            chariot.Chassis.Motor_Steer[3].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+            break;
+        }
+
         // VESC 电调数据反馈
         case 0x901:
         case 0x1001:
@@ -111,53 +225,6 @@ void Device_FDCAN2_Callback(Struct_FDCAN_Rx_Buffer *FDCAN_RxMessage)
         case 0x1004:
         {
             chariot.Chassis.Motor_Wheel[3].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
-            break;
-        }
-    }
-}
-
-/**
- * @brief FDCAN3回调函数,此函数为本杰明电调通信用，FDCAN配置为扩展ID
- *
- * @param FDCAN_RxMessage FDCAN3收到的消息
- */
-void Device_FDCAN3_Callback(Struct_FDCAN_Rx_Buffer *FDCAN_RxMessage)
-{
-    switch (FDCAN_RxMessage->Header.Identifier)
-    {
-        // C610 电机数据反馈
-        case 0x201:
-            chariot.Chassis.Motor_Steer[0].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
-            break;
-        case 0x202:
-            chariot.Chassis.Motor_Steer[1].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
-            break;
-        case 0x203:
-            chariot.Chassis.Motor_Steer[2].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
-            break;
-        case 0x204:
-            chariot.Chassis.Motor_Steer[3].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
-            break;
-
-        // 舵向编码器返回数据处理 (0x101-0x104)
-        case 0x101:
-        {
-            chariot.Chassis.Steer_Encoder[0].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
-            break;
-        }
-        case 0x102:
-        {
-            chariot.Chassis.Steer_Encoder[1].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
-            break;
-        }
-        case 0x103:
-        {
-            chariot.Chassis.Steer_Encoder[2].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
-            break;
-        }
-        case 0x104:
-        {
-            chariot.Chassis.Steer_Encoder[3].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
             break;
         }
         default:
@@ -184,6 +251,7 @@ float Target_Position = 0.0f;
  *
  */
 uint8_t mod100 = 0;
+uint8_t mod2 = 0;
 void Task1ms_TIM5_Callback()
 {
     DWT_Update();
@@ -197,18 +265,17 @@ void Task1ms_TIM5_Callback()
         // Weapon.TIM_Alive_PeriodElapsedCallback();
         mod100 = 0;
     }
-    // Motor_Arm.Set_Control_Method(MOTOR_CONTROL_METHOD_POSITION);
-    // Motor_Arm.Set_Target_Position(Target_Position);
-    // Motor_Arm.Calculate();
 
-    // Weapon.Motor_Move.Update_Feedback();
-    // Weapon.Move_To_Position(Target_Position);
-    // Weapon.Motor_Move.Calculate();
+    mod2++;
+    if (mod2 >= 2)
+    {
+        chariot.TIM_Calculate_PeriodElapsedCallback();
+    }
+
     chariot.TIM_Unline_Protect_PeriodElapsedCallback();
-   chariot.TIM_Calculate_PeriodElapsedCallback();
-    // chariot.Chassis.Swerve_Modules->Calculate();
-    // chariot.Chassis.Swerve_Modules->Output();
-   // Motor::DJI_TIM_Send_Group(&hfdcan3, Motor::CAN_Tx_ID_0x200_Only);
+
+    Motor::DJI_TIM_Send_Group(&hfdcan3, Motor::CAN_Tx_ID_Both);
+    // Motor::DJI_TIM_Send_Group(&hfdcan1, Motor::CAN_Tx_ID_0x200_Only);
 }
 
 void Task_Init()
