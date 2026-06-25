@@ -10,10 +10,10 @@ void Class_Weapon::Init()
     // 抓取舵机
     Grab_Servo.Init(&htim2, TIM_CHANNEL_3, 500, 2500);
 
-    // 机械臂电机
+    // 机械臂电机 (CAN2, ID 0x206)
     Motor_Arm.Init(
         &hfdcan2,
-        Motor::Motor_DJI_ID_0x201,
+        Motor::Motor_DJI_ID_0x206,
         Motor::Class_Motor_DJI_C620::Parameters{
             .PID_Position = PID_Parameters{
                 .K_P = 6.0f,
@@ -24,10 +24,10 @@ void Class_Weapon::Init()
         },
         3591.0f / 187.0f / 18.0f * 28.0f);
 
-    // 移动电机 (CAN2, ID 0x201)
+    // 移动电机 (CAN1, ID 0x204)
     Motor_Move.Init(
-        &hfdcan2,
-        Motor::Motor_DJI_ID_0x201,
+        &hfdcan1,
+        Motor::Motor_DJI_ID_0x204,
         Motor::Class_Motor_DJI_C620::Parameters{
             .PID_Position = PID_Parameters{
                 .K_P = 0.0f,
@@ -52,9 +52,9 @@ void Class_Weapon::Init()
         0x01, // CAN Tx ID
         Motor_DM_Control_Method_NORMAL_MIT);
 
-    // 俯仰电机 (CAN2, ID 0x202-0x203)
-    Motor_Pitch[0].Init(&hfdcan2, Motor::Motor_DJI_ID_0x202);
-    Motor_Pitch[1].Init(&hfdcan2, Motor::Motor_DJI_ID_0x203);
+    // 俯仰电机 (CAN3, ID 0x205-0x206)
+    Motor_Pitch[0].Init(&hfdcan3, Motor::Motor_DJI_ID_0x205);
+    Motor_Pitch[1].Init(&hfdcan3, Motor::Motor_DJI_ID_0x206);
 
     // 俯仰同步 — TODO: 填写实际PID参数和机械参数
     Pitch.Init({&Motor_Pitch[0], &Motor_Pitch[1]},
@@ -106,11 +106,14 @@ void Class_Weapon::TIM_Weapon_PeriodElapsedCallback()
 
     Motor_Move.Calculate();
 
-    // 俯仰控制
-    Pitch.Distance_Update();
-    Pitch.Move_To_Position();
-    Motor_Pitch[0].Calculate();
-    Motor_Pitch[1].Calculate();
+    // 俯仰控制 (校准完成后才运行Move_To_Position和Calculate)
+    if (Pitch.Get_Is_Calibrated())
+    {
+        Pitch.Distance_Update();
+        Pitch.Move_To_Position();
+        Motor_Pitch[0].Calculate();
+        Motor_Pitch[1].Calculate();
+    }
 
     // Move位置切换
     if (Move_Yaw_Flag)
@@ -172,8 +175,14 @@ void Class_Weapon::Weapon_Grab_Status_Task()
     Move_To_Position(Move_Target_Position[Move_Index]);
 
     // 俯仰电机同步
-    Pitch.Calibrate_Update();
-    Pitch.Set_Target_Position(Pitch_Target_Position[FSM_Weapon.Get_Now_Status_Serial()]);
+    if (!Pitch.Get_Is_Calibrated())
+    {
+        Pitch.Calibrate_Update();
+    }
+    else
+    {
+        Pitch.Set_Target_Position(Pitch_Target_Position[FSM_Weapon.Get_Now_Status_Serial()]);
+    }
 
     // 夹取舵机
     Pick_Servo[0].Set_Normalized_Position(Pick_Servo_Target_Position[FSM_Weapon.Get_Now_Status_Serial()]);

@@ -77,7 +77,7 @@ private:
     Struct_Encoder_Steer_Rx_Data Rx_Data;
 
     float Offset_Deg = 0.0f;
-
+    uint16_t raw_angle;
     float angle = 0.0f; // 当前的角度值
     float pre_angle = 0.0f; // 上一次的角度值
     int32_t total_round = 0; // 总圈数

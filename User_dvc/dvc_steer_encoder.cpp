@@ -86,23 +86,27 @@ void Class_Swerve_Steer_Encoder::Data_Process()
     }
 
     // 计算角度
-    uint16_t raw_angle = (tmp_buffer->raw_angle_high << 8) | tmp_buffer->raw_angle_low;
+     raw_angle = (tmp_buffer->raw_angle_high << 8) | tmp_buffer->raw_angle_low;
     raw_angle &= 0x3FFF; // 掩码到 14 位
     angle = Math_Int_To_Float(raw_angle, 0, 16383, -180.0f, 180.0f);
 
     angle -= Offset_Deg;                               // 添加偏移量
     angle = Math_Modulus_Normalization(angle, 360.0f); // 归一化到 [-180, 180) 范围
 
-    float error_angle = angle - pre_angle;
-    if (error_angle > 180.0f)
+    if(Encoder_Flag != 0)
     {
-        total_round -= 1;
+        float error_angle = angle - pre_angle;
+        if (error_angle > 180.0f)
+        {
+            total_round -= 1;
+        }
+        else if (error_angle < -180.0f)
+        {
+            total_round += 1;
+        }
+        pre_angle = angle;
     }
-    else if (error_angle < -180.0f)
-    {
-        total_round += 1;
-    }
-    pre_angle = angle;
+    
  
     Rx_Data.angle = angle + total_round * 360.0f;;
 

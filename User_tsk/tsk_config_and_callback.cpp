@@ -71,7 +71,7 @@ void Device_FDCAN1_Callback(Struct_FDCAN_Rx_Buffer *FDCAN_RxMessage)
 {
     switch (FDCAN_RxMessage->Header.Identifier)
     {
-            // KFS 移动电机数据反馈
+        // KFS 移动电机数据反馈
         case 0x201:
         {
             chariot.KFS.Motor_Move.FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
@@ -89,6 +89,12 @@ void Device_FDCAN1_Callback(Struct_FDCAN_Rx_Buffer *FDCAN_RxMessage)
             break;
         }
 
+        // Weapon 移动电机数据反馈
+        case 0x204:
+        {
+            chariot.Weapon.Motor_Move.FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+            break;
+        }
         case 0xF0:
         {
             break;
@@ -117,33 +123,29 @@ void Device_FDCAN2_Callback(Struct_FDCAN_Rx_Buffer *FDCAN_RxMessage)
 {
     switch (FDCAN_RxMessage->Header.Identifier)
     {
-        // Weapon 移动电机数据反馈
-        case 0x201:
+            // VESC 电调数据反馈
+        case 0x901:
+        case 0x1001:
         {
-            chariot.Weapon.Motor_Move.FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+            chariot.Chassis.Motor_Wheel[0].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
             break;
         }
-        // Weapon 俯仰电机数据反馈
-        case 0x202:
+        case 0x902:
+        case 0x1002:
         {
-            chariot.Weapon.Motor_Pitch[0].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+            chariot.Chassis.Motor_Wheel[1].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
             break;
         }
-        case 0x203:
+        case 0x903:
+        case 0x1003:
         {
-            chariot.Weapon.Motor_Pitch[1].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+            chariot.Chassis.Motor_Wheel[2].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
             break;
         }
-
-        // Lift 抬升电机数据反馈
-        case 0x204:
+        case 0x904:
+        case 0x1004:
         {
-            chariot.Lift.Motor_Lift_L.FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
-            break;
-        }
-        case 0x205:
-        {
-            chariot.Lift.Motor_Lift_R.FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+            chariot.Chassis.Motor_Wheel[3].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
             break;
         }
     }
@@ -202,29 +204,27 @@ void Device_FDCAN3_Callback(Struct_FDCAN_Rx_Buffer *FDCAN_RxMessage)
             break;
         }
 
-        // VESC 电调数据反馈
-        case 0x901:
-        case 0x1001:
+        // Weapon 俯仰电机数据反馈
+        case 0x205:
         {
-            chariot.Chassis.Motor_Wheel[0].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+            chariot.Weapon.Motor_Pitch[0].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
             break;
         }
-        case 0x902:
-        case 0x1002:
+        case 0x206:
         {
-            chariot.Chassis.Motor_Wheel[1].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+            chariot.Weapon.Motor_Pitch[1].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
             break;
         }
-        case 0x903:
-        case 0x1003:
+
+        // Lift 抬升电机数据反馈
+        case 0x207:
         {
-            chariot.Chassis.Motor_Wheel[2].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+            chariot.Lift.Motor_Lift_L.FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
             break;
         }
-        case 0x904:
-        case 0x1004:
+        case 0x208:
         {
-            chariot.Chassis.Motor_Wheel[3].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+            chariot.Lift.Motor_Lift_R.FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
             break;
         }
         default:
@@ -262,20 +262,19 @@ void Task1ms_TIM5_Callback()
     if (mod100 >= 100)
     {
         chariot.TIM_100ms_Alive_PeriodElapsedCallback();
-        // Weapon.TIM_Alive_PeriodElapsedCallback();
         mod100 = 0;
     }
 
     mod2++;
-    if (mod2 >= 2)
+    if (mod2 >= 10)
     {
         chariot.TIM_Calculate_PeriodElapsedCallback();
+        Motor::DJI_TIM_Send_Group(&hfdcan1, Motor::CAN_Tx_ID_0x200_Only);
+        // Motor::DJI_TIM_Send_Group(&hfdcan3, Motor::CAN_Tx_ID_Both);
+        mod2 = 0;
     }
 
     chariot.TIM_Unline_Protect_PeriodElapsedCallback();
-
-    Motor::DJI_TIM_Send_Group(&hfdcan3, Motor::CAN_Tx_ID_Both);
-    // Motor::DJI_TIM_Send_Group(&hfdcan1, Motor::CAN_Tx_ID_0x200_Only);
 }
 
 void Task_Init()

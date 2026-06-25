@@ -6,7 +6,7 @@ void Class_KFS::Init()
     Motor_Lift[0].Init(&hfdcan1, Motor::Motor_DJI_ID_0x202,
                        Motor::Class_Motor_DJI_C620::Parameters{
                            .PID_Omega = PID_Parameters{
-                               .K_P = 0.0f,
+                               .K_P = 1.0f,
                                .K_I = 0.0f,
                                .K_D = 0.0f,
                                .Out_Max = 20.0f,
@@ -15,7 +15,7 @@ void Class_KFS::Init()
     Motor_Lift[1].Init(&hfdcan1, Motor::Motor_DJI_ID_0x203,
                        Motor::Class_Motor_DJI_C620::Parameters{
                            .PID_Omega = PID_Parameters{
-                               .K_P = 0.0f,
+                               .K_P = 1.0f,
                                .K_I = 0.0f,
                                .K_D = 0.0f,
                                .Out_Max = 20.0f,
@@ -27,20 +27,29 @@ void Class_KFS::Init()
               Class_MultiMotorSync_Base<2>::Parameters{
                   .PID_Distance = {
                       PID_Parameters{
-                          .K_P = 0.0f,
+                          .K_P = 1200.0f,
                           .K_I = 0.0f,
                           .K_D = 0.0f,
                           .Out_Max = 5.0f,
                       },
                       PID_Parameters{
-                          .K_P = 0.0f,
+                          .K_P = 1200.0f,
                           .K_I = 0.0f,
                           .K_D = 0.0f,
                           .Out_Max = 5.0f,
                       },
                   },
-                  .Angle_To_Distance = 0.16f / (2.0f * PI), // 32齿×5mm齿距=160mm周长
-                  .Calibrate = {.motion_mode = CALIBRATE_MOTION_NONE},
+                  .Distance_Approach_Threshold = 0.01f, // 速度环位置环切换阈值
+                  .Max_Velocity = 12.0f, // 速度
+                  .Angle_To_Distance = 0.16f / (2.0f * PI),
+                  .Direction_Sign = {1, -1},  // 右电机镜像安装，方向反向
+                  .Calibrate = {
+                      .motion_mode = CALIBRATE_MOTION_SPEED,
+                      .motion_value = -5.0f,
+                      .detect_mode = CALIBRATE_DETECT_SPEED,
+                      .detect_threshold = 0.5f,
+                      .debounce_us = 200000,
+                  },
               });
 
     // 移动电机初始化 (CAN1, ID 0x201)
@@ -52,14 +61,15 @@ void Class_KFS::Init()
                 .K_P = 8.0f,
                 .K_I = 0.0f,
                 .K_D = 0.0f,
-                .Out_Max = 7.0f, // 位置环输出速度目标限制
+                .Out_Max = 7.0f, 
+                .Dead_Zone = 0.1f,
             },
             .PID_Omega = PID_Parameters{
                 .K_P = 2.0f,
                 .K_I = 0.0f,
                 .K_D = 0.0f,
-                .Out_Max = 20.0f,  // 速度环输出电流目标限制
-                .Dead_Zone = 0.5f, // 速度环死区，避免小幅抖动
+                .Out_Max = 20.0f,  
+                .Dead_Zone = 0.5f, 
             },
         });
 
@@ -81,7 +91,7 @@ void Class_KFS::Move_To_Position(float x)
 {
     if (!Is_Move_Calibrated)
     {
-        Is_Move_Calibrated = Motor_Move.Calibrate(calibarate_param, Calibrate_Offset);
+        Is_Move_Calibrated = Motor_Move.Calibrate(move_calibarate_param, Calibrate_Offset);
     }
     else
     {
@@ -90,9 +100,22 @@ void Class_KFS::Move_To_Position(float x)
     }
 }
 
+void Class_KFS::Move_To_Height(float height)
+{
+    Target_Distance = height;
+}
+
 void Class_KFS::TIM_Control_PeriodElapsedCallback()
 {
+    // 抬升校准（未完成则执行校准并跳过控制）
+    if (!Lift.Get_Is_Calibrated())
+    {
+        Lift.Calibrate_Update();
+        return;
+    }
+
     // Motor_Move.Update_Feedback();
+    // Move_To_Position(Target_Distance);
     // Motor_Move.Calculate();
 
     // 抬升控制
@@ -101,7 +124,7 @@ void Class_KFS::TIM_Control_PeriodElapsedCallback()
     Lift.Move_To_Position();
     for (int i = 0; i < 2; i++)
     {
-        Motor_Lift[i].Update_Feedback();
+        Motor_Lift[i].Set_Feedforward_Current(Force_Compensation[i]);
         Motor_Lift[i].Calculate();
     }
 }

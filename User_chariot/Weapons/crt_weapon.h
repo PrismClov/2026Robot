@@ -56,7 +56,7 @@ public:
 
     void Init();
 
-    void Move_To_Position(float x);
+    inline void Set_Move_Index(uint8_t index);
 
     void TIM_Weapon_PeriodElapsedCallback();
 
@@ -110,9 +110,19 @@ private:
 
     const float Locked_Rotor_Current_Threshold = 5.0f; // 堵转电流阈值 A
 
+    void Move_To_Position(float x);
+
     void Weapon_Grab_Status_Task();
 
     bool Is_Action_Finished();
 };
+
+inline void Class_Weapon::Set_Move_Index(uint8_t index)
+{
+    if (index < 3)
+    {
+        Move_Index = index;
+    }
+}
 
 #endif

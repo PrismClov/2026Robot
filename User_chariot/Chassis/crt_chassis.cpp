@@ -59,7 +59,7 @@ void Class_Chassis::Init(float __Velocity_X_Max, float __Velocity_Y_Max, float _
         Motor_Steer[i].Init(&hfdcan3, static_cast<Motor::Enum_Motor_DJI_ID>(0x201 + i),
                             Motor::Class_Motor_DJI_C610::Parameters{
                                 .PID_Position = PID_Parameters{
-                                    .K_P = 20.0f,
+                                    .K_P = 10.0f,
                                     .K_I = 0.0f,
                                     .K_D = 0.0f,
                                     .K_F = 0.0f,
@@ -67,7 +67,7 @@ void Class_Chassis::Init(float __Velocity_X_Max, float __Velocity_Y_Max, float _
                                     .Dead_Zone = 0.5f,
                                 },
                                 .PID_Omega = PID_Parameters{
-                                    .K_P = 30.0f,
+                                    .K_P = 10.0f,
                                     .K_I = 0.0f,
                                     .K_D = 0.0f,
                                     .K_F = 0.0f,
@@ -110,10 +110,6 @@ void Class_Chassis::TIM_100ms_Alive_PeriodElapsedCallback()
  */
 void Class_Chassis::TIM_2ms_Control_PeriodElapsedCallback()
 {
-    for (int i = 0; i < 4; i++)
-    {
-        Motor_Steer[i].Set_Feedback_Position(Steer_Encoder[i].Get_Total_Angle() * DEG_TO_RAD);
-    }
 
     // 自身解算
     Self_Resolution();
@@ -174,9 +170,9 @@ void Class_Chassis::Steer_Angle_Self_Resolution()
         // 计算角度
         tmp_angle = Steer_Encoder[i].Get_Total_Angle() * DEG_TO_RAD;
 
-        //Now_Steer_Angle[i] = fmod(tmp_angle, 2.0f * PI);
+        Now_Steer_Angle[i] = tmp_angle;
 
-        //Now_Steer_Angle[i] = Math_Modulus_Normalization(Now_Steer_Angle[i], 2.0f * PI);
+        // Now_Steer_Angle[i] = Math_Modulus_Normalization(Now_Steer_Angle[i], 2.0f * PI);
     }
 }
 
@@ -222,7 +218,9 @@ void Class_Chassis::_Steer_Motor_Kinematics_Nearest_Transposition()
 {
     for (int i = 0; i < 4; i++)
     {
-        float tmp_delta_angle = Math_Modulus_Normalization(Target_Steer_Angle[i] - Now_Steer_Angle[i], 2.0f * PI);
+        float tmp_delta_angle = Target_Steer_Angle[i] - Now_Steer_Angle[i];
+        tmp_delta_angle = fmod(tmp_delta_angle, 2.0f * PI);
+        tmp_delta_angle = Math_Modulus_Normalization(tmp_delta_angle, 2.0f * PI);
 
         // 根据转动角度范围决定是否需要就近转位
         if (-PI / 2.0f <= tmp_delta_angle && tmp_delta_angle <= PI / 2.0f)
@@ -409,6 +407,8 @@ void Class_Chassis::Output_To_Motor()
 
                 Motor_Steer[i].Set_Target_Position(Target_Steer_Angle[i]);
 
+                Motor_Steer[i].Set_Feedback_Position(Steer_Encoder[i].Get_Total_Angle() * DEG_TO_RAD);
+    
                 if (Math_Abs(Target_Wheel_Current[i]) >= Wheel_Current_Limit)
                 {
                     Motor_Wheel[i].Set_Control_Current(Target_Wheel_Current[i]);
@@ -428,12 +428,12 @@ void Class_Chassis::Output_To_Motor()
     {
         Motor_Steer[i].Calculate();
     }
-     Motor::DJI_TIM_Send_Group(&hfdcan3, Motor::CAN_Tx_ID_Both);
+    //  Motor::DJI_TIM_Send_Group(&hfdcan3, Motor::CAN_Tx_ID_Both);
 
     // 轮向电机数据发送
     for (int i = 0; i < 4; i++)
     {
-        // Motor_Wheel[i].Calculate();
+        Motor_Wheel[i].Calculate();
     }
 }
 /************************ COPYRIGHT(C) ROBOPIONEER **************************/

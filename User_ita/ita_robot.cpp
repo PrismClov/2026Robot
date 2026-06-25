@@ -35,8 +35,9 @@ void Class_Chariot::Init()
     CRSF.Init(&huart7);
 
     Chassis.Init();
-    Lift.Init();
-    Weapon.Init();
+    // Lift.Init();
+    // Weapon.Init();
+    KFS.Init();
 }
 
 /**
@@ -45,9 +46,10 @@ void Class_Chariot::Init()
  */
 void Class_Chariot::TIM_100ms_Alive_PeriodElapsedCallback()
 {
-    CRSF.TIM1msMod50_Alive_PeriodElapsedCallback();
-    Chassis.TIM_100ms_Alive_PeriodElapsedCallback();
-    Lift.TIM_100ms_Alive_PeriodElapsedCallback();
+    // CRSF.TIM1msMod50_Alive_PeriodElapsedCallback();
+    // Chassis.TIM_100ms_Alive_PeriodElapsedCallback();
+    // Lift.TIM_100ms_Alive_PeriodElapsedCallback();
+    KFS.TIM_Alive_PeriodElapsedCallback();
 }
 
 void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
@@ -55,7 +57,7 @@ void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
     // // Lift
     // Lift.TIM_Calculate_PeriodElapsedCallback();
 
-    // // 底盘控制 (填充CAN3 0x200 Tx缓冲区，并发送CAN3)
+    // 底盘控制 (填充CAN3 0x200 Tx缓冲区，并发送CAN3)
     // Chassis.TIM_2ms_Control_PeriodElapsedCallback();
 
     // KFS
@@ -63,8 +65,7 @@ void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
 
     // // Weapon
     // Weapon.TIM_Weapon_PeriodElapsedCallback();
-
-} 
+}
 /**
  * @brief 50ms定时任务
  *
@@ -137,20 +138,14 @@ void Class_Chariot::Control_Chassis()
         // 右摇杆X作为旋转
         crsf_r_x = (Math_Abs(CRSF.Get_Right_X()) > Dead_Zone) ? CRSF.Get_Right_X() : 0;
         crsf_r_y = (Math_Abs(CRSF.Get_Right_Y()) > Dead_Zone) ? CRSF.Get_Right_Y() : 0;
-        // 遥控器前Y右X 
+        // 遥控器前Y右X
         chassis_velocity_x = crsf_r_y * sqrt(1.0f - crsf_r_x * crsf_r_x / 2.0f) * Chassis.Get_Velocity_Y_Max();
         chassis_velocity_y = crsf_r_x * sqrt(1.0f - crsf_r_y * crsf_r_y / 2.0f) * Chassis.Get_Velocity_X_Max();
         chassis_omega = crsf_l_x * Chassis.Get_Omega_Max();
+
         // 遥控器开关操作逻辑
-        if (CRSF.Get_SC() == CRSF_SWITCH_LOW) // SC低档 禁用模式
-        {
-            Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
-        }
-        else if (CRSF.Get_SC() == CRSF_SWITCH_HIGH) // SC高档 禁用模式（预留小陀螺）
-        {
-            Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
-        }
-        else if (CRSF.Get_SC() == CRSF_SWITCH_MIDDLE) // SC中档 随动模式
+        // SA开关控制底盘模式
+        if (CRSF.Get_SA() == CRSF_SWITCH_LOW) // SA低档，底盘随动
         {
             // 底盘随动
             Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_NORMAL);
@@ -158,6 +153,28 @@ void Class_Chariot::Control_Chassis()
             Chassis.Set_Target_Velocity_Y(chassis_velocity_y);
             Chassis.Set_Target_Omega(chassis_omega);
         }
+        else if (CRSF.Get_SA() == CRSF_SWITCH_HIGH) // SA高档 禁用模式
+        {
+            Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
+        }
+
+        // SB开关控制Move序号
+        if(CRSF.Get_SB() == CRSF_SWITCH_LOW)
+        {
+            Weapon.Set_Move_Index(0);
+        }
+        else if(CRSF.Get_SB() == CRSF_SWITCH_MIDDLE)
+        {
+            Weapon.Set_Move_Index(1);
+        }
+        else if(CRSF.Get_SB() == CRSF_SWITCH_HIGH)
+        {
+            Weapon.Set_Move_Index(2);
+        }
+
+        // SC,SD开关控制武器状态机
+        // TODO: SD开关控制武器状态机
+
     }
 }
 void Class_Chariot::TIM_Control_Callback()
@@ -165,5 +182,5 @@ void Class_Chariot::TIM_Control_Callback()
     Judge_Active_Controller();
 
     // 底盘，云台，发射机构控制逻辑
-     Control_Chassis();
+    Control_Chassis();
 }

@@ -63,14 +63,18 @@ public:
      */
     void Move_To_Position(float x);
 
+    void Move_To_Height(float height);
+
 private:
     bool Is_Move_Calibrated = false;
 
     float Calibrate_Offset = 0.0f;
 
-    float Target_Distance = 0.0f;
+    float Target_Distance = 0.2f;
 
-    Calibrate_Params calibarate_param = {
+    float Force_Compensation[2] = {0.5f, -0.4f};
+
+    Calibrate_Params move_calibarate_param = {
         .motion_mode = CALIBRATE_MOTION_SPEED,
         .motion_value = 10.0f,
         .detect_mode = CALIBRATE_DETECT_SPEED,
