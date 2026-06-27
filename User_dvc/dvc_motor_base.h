@@ -1,3 +1,14 @@
+/**
+ * @file dvc_motor_base.h
+ * @author hzy
+ * @brief 通用电机配置与操作
+ * @version 0.1
+ * @date 2026-05-28
+ *
+ * @copyright NEUQ (cpp) 2026
+ */
+
+
 #ifndef DVC_MOTOR_BASE_H
 #define DVC_MOTOR_BASE_H
 
