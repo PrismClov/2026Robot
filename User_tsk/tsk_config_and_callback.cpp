@@ -51,12 +51,9 @@
 Class_Chariot chariot;
 
 /* Private macros ------------------------------------------------------------*/
-// static float vbat = 0;
+
 /* Private types -------------------------------------------------------------*/
-// Class_DS_Servo Pick_Servo[3];
-// Motor::Class_Motor_DJI_C620 Motor_Arm; // 机械臂电机
-// Class_KFS KFS; // 夹取机构
-// Class_Weapon Weapon; // 武器夹取机构 (已改用全局对象)
+
 /* Private variables ---------------------------------------------------------*/
 
 // 全局初始化完成标志位
@@ -75,12 +72,15 @@ void Device_FDCAN1_Callback(Struct_FDCAN_Rx_Buffer *FDCAN_RxMessage)
         case 0x201:
         {
             chariot.KFS.Motor_Move.FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+            // chariot.Lift.Motor_Lift_L.FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
             break;
         }
             // KFS 抬升电机数据反馈
         case 0x202:
         {
             chariot.KFS.Motor_Lift[0].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+            // chariot.Lift.Motor_Lift_R.FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+
             break;
         }
         case 0x203:
@@ -95,13 +95,18 @@ void Device_FDCAN1_Callback(Struct_FDCAN_Rx_Buffer *FDCAN_RxMessage)
             chariot.Weapon.Motor_Move.FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
             break;
         }
+
+        //  KFS 手腕电机数据反馈
         case 0xF0:
         {
+            chariot.KFS.Motor_Wrist.CAN_RxCpltCallback(FDCAN_RxMessage->Data);
             break;
         }
 
-        case 0xF1:
+        // KFS 机械臂电机数据反馈 (达妙, Master_ID=0x00)
+        case 0x00:
         {
+            chariot.KFS.Motor_Arm.CAN_RxCpltCallback(FDCAN_RxMessage->Data);
             break;
         }
 
@@ -269,8 +274,8 @@ void Task1ms_TIM5_Callback()
     if (mod2 >= 10)
     {
         chariot.TIM_Calculate_PeriodElapsedCallback();
-        Motor::DJI_TIM_Send_Group(&hfdcan1, Motor::CAN_Tx_ID_0x200_Only);
-        // Motor::DJI_TIM_Send_Group(&hfdcan3, Motor::CAN_Tx_ID_Both);
+        // Motor::DJI_TIM_Send_Group(&hfdcan1, Motor::CAN_Tx_ID_0x200_Only);
+        Motor::DJI_TIM_Send_Group(&hfdcan3, Motor::CAN_Tx_ID_Both);
         mod2 = 0;
     }
 
@@ -297,32 +302,6 @@ void Task_Init()
 
     TIM_Init(&htim5, Task1ms_TIM5_Callback);
 
-    // {
-    //     Motor::Class_Motor_DJI_C620::Parameters params;
-    //     params.PID_Position.Out_Max = 10.0f;
-    //     M3508.Init(&hfdcan1, Motor::Motor_DJI_ID_0x201, params);
-    // }
-    // chariot.Init();
-    // Pick_Servo[0].Init(&htim1, TIM_CHANNEL_1, 500, 2500);
-    // Pick_Servo[1].Init(&htim1, TIM_CHANNEL_3, 500, 2500);
-    // Pick_Servo[2].Init(&htim2, TIM_CHANNEL_3, 500, 2500);
-    //     Motor_Arm.Init(
-    //     &hfdcan3,
-    //     Motor::Motor_DJI_ID_0x201,
-    //     Motor::Class_Motor_DJI_C620::Parameters{
-    //         .PID_Position = PID_Parameters{
-    //             .K_P = 0.0f,
-    //             .K_I = 0.0f,
-    //             .K_D = 0.0f,
-    //             .Out_Max = 30.0f
-    //         },
-    //         .PID_Omega = PID_Parameters{
-    //             .K_P = 0.0f,
-    //             .K_I = 0.0f,
-    //             .K_D = 0.0f,
-    //             .Out_Max = 30.0f
-    //         },
-    //     },3591.0f / 187.0f / 18.0f * 28.0f);
     // 战车层初始化
     chariot.Init();
     // 交互层初始化
@@ -334,16 +313,13 @@ void Task_Init()
     // 标记初始化完成
     init_finished = true;
 }
-float test_position = 0.0f;
+
 /**
  * @brief 前台循环任务
  *
  */
 void Task_Loop()
 {
-    // Pick_Servo[0].Set_Normalized_Position(test_position);
-    // Pick_Servo[1].Set_Normalized_Position(test_position);
-    // Pick_Servo[2].Set_Normalized_Position(test_position);
 }
 
 /************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/

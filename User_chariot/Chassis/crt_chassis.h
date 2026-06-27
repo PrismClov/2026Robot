@@ -3,7 +3,7 @@
  * @author hzy by Lucy (2478427315@qq.com)
  * @brief 舵轮底盘电控
  * @version 0.1
- * @date 2026-01-18 
+ * @date 2026-01-18
  *
  * @copyright Robopioneer (c) 2025-2026
  *
@@ -21,10 +21,11 @@
 
 /* Includes ------------------------------------------------------------------*/
 
+#include "alg_slope.h"
+#include "dvc_dwt.h"
 #include "dvc_motor_dji.h"
 #include "dvc_motor_mksesc.h"
 #include "dvc_steer_encoder.h"
-#include "dvc_dwt.h"
 
 /* Exported macros -----------------------------------------------------------*/
 
@@ -48,8 +49,8 @@ enum Enum_Chassis_Control_Type
  */
 enum Enum_Chassis_Steer_Calibration_Type
 {
-    Chassis_Steer_Calibration_Type_UNCALIBRATED = 0,  // 未标定
-    Chassis_Steer_Calibration_Type_CALIBRATED,        // 标定完成
+    Chassis_Steer_Calibration_Type_UNCALIBRATED = 0, // 未标定
+    Chassis_Steer_Calibration_Type_CALIBRATED,       // 标定完成
 };
 
 /**
@@ -59,6 +60,12 @@ enum Enum_Chassis_Steer_Calibration_Type
 class Class_Chassis
 {
 public:
+    Class_Slope Slope_Velocity_X;
+
+    Class_Slope Slope_Velocity_Y;
+
+    Class_Slope Slope_Omega;
+
     // 底盘速度值PID
     Class_PID PID_Velocity_X;
 
@@ -78,11 +85,11 @@ public:
     Class_Swerve_Steer_Encoder Steer_Encoder[4];
 
     void Init(float __Velocity_X_Max = 8.0f, float __Velocity_Y_Max = 8.0f, float __Omega_Max = 16.0f);
-		
+
     inline float Get_Velocity_X_Max();
-		
+
     inline float Get_Velocity_Y_Max();
-    
+
     inline float Get_Omega_Max();
 
     inline float Get_Now_Velocity_X();
@@ -98,7 +105,7 @@ public:
     inline float Get_Target_Velocity_Y();
 
     inline float Get_Target_Omega();
-        
+
     inline float Get_Now_Steer_Angle(uint8_t num);
 
     inline float Get_Now_Target_Wheel_Current(uint8_t num);
@@ -126,32 +133,27 @@ protected:
     // 舵向电机角度目标值
     float Target_Steer_Angle[4];
     // 当前舵向角度
-    float Now_Steer_Angle[4] = {0.0f, 0.0f, 0.0f,0.0f};
+    float Now_Steer_Angle[4] = {0.0f, 0.0f, 0.0f, 0.0f};
 
     // 轮组方位角
-    float Steer_Azimuth[4] = {0.785, 2.356, 3.925, 5.495};  // 轮组方位角，单位为弧度，顺时针为正，前x右y上z
-    
+    float Steer_Azimuth[4] = {0.785, 2.356, 3.925, 5.495}; // 轮组方位角，单位为弧度，顺时针为正，前x右y上z
+
     // 初始化相关常量
     // 当前速度X
     float Now_Velocity_X = 0.0f;
     // 当前速度Y
     float Now_Velocity_Y = 0.0f;
     // 当前角速度
-    float Now_Omega = 0.0f;	
+    float Now_Omega = 0.0f;
 
-
-    //速度X限制
+    // 速度X限制
     float Velocity_X_Max = 0.0f;
-    //速度Y限制
+    // 速度Y限制
     float Velocity_Y_Max = 0.0f;
-    //角速度限制
+    // 角速度限制
     float Omega_Max = 0.0f;
 
-	float Angle_Yaw = 0.0f;
-
-    
-
-
+    float Angle_Yaw = 0.0f;
 
     // 内部变量
 
@@ -162,9 +164,9 @@ protected:
                                                 3.0f};
     // 轮向电机动摩擦阻力电流值
     float Dynamic_Resistance_Wheel_Current[4] = {0.0f,
-                                                0.0f,
-                                                0.0f,
-                                                0.0f};
+                                                 0.0f,
+                                                 0.0f,
+                                                 0.0f};
     // 轮向电机输出电流值，小于这个电流则不进行输出，防止底盘静止时，高频注入发出噪声
     float Wheel_Current_Limit = 0.0f;
 
@@ -172,45 +174,42 @@ protected:
     float Wheel_Resistance_Omega_Threshold = 1.0f;
     // 防单轮超速系数
     float Wheel_Speed_Limit_Factor = 0.1f;
-    
+
     // 轮向电机电流目标值
     float Target_Wheel_Current[4];
     // 轮向电机角速度目标值
     float Target_Wheel_Omega[4];
 
-
     // 低电流前馈控制相关参数
-    
+
     // 低电流死区设置
-    //float Low_Current_Deadzone = 0.3f;
+    // float Low_Current_Deadzone = 0.3f;
     float Low_Current_Deadzone = 0.1f;
     // float Low_Current_Threshold = 1.9f;  // 低电流阈
-        float Low_Current_Threshold = 1.3f;  // 低电流阈
-    // float Low_Current_Feedforward[4] = {1.6f, 1.6f, 1.6f, 1.6f};  // 低电流前馈值
-        float Low_Current_Feedforward[4] = {1.3f, 1.3f, 1.3f,1.3f};  // 低电流前馈值
+    float Low_Current_Threshold = 1.3f;                          // 低电流阈
+                                                                 // float Low_Current_Feedforward[4] = {1.6f, 1.6f, 1.6f, 1.6f};  // 低电流前馈值
+    float Low_Current_Feedforward[4] = {1.3f, 1.3f, 1.3f, 1.3f}; // 低电流前馈值
     // 读变量
-
-    
 
     // 写变量
 
     // 读写变量
 
-
     // 舵向电机标定状态
     Enum_Chassis_Steer_Calibration_Type Steer_Calibration_Status[4] = {Chassis_Steer_Calibration_Type_UNCALIBRATED,
-                                                                        Chassis_Steer_Calibration_Type_UNCALIBRATED,
-                                                                        Chassis_Steer_Calibration_Type_UNCALIBRATED,
-                                                                        Chassis_Steer_Calibration_Type_UNCALIBRATED};
+                                                                       Chassis_Steer_Calibration_Type_UNCALIBRATED,
+                                                                       Chassis_Steer_Calibration_Type_UNCALIBRATED,
+                                                                       Chassis_Steer_Calibration_Type_UNCALIBRATED};
     // 舵向标定电机误差
 
-    float steer_offset_deg[4] = {//0.0f, 0.0f, 0.0f, 0.0f}; // 舵向电机标定误差，单位为度，顺时针为正，前x右y上z
-        307.33f, // [0] 编码器朝前 307.33°
-        90.55f, // [1] 编码器朝前 90.55°
-        45.75f, // [2] 编码器朝前 45.75°
-        324.14f, // [3] 编码器朝前 324.14°
-   };
-    
+    float steer_offset_deg[4] = {
+        // 0.0f, 0.0f, 0.0f, 0.0f}; // 舵向电机标定误差，单位为度，顺时针为正，前x右y上z
+        -51.1444702f, // [0] 编码器朝前 307.33°
+        90.5218811f,  // [1] 编码器朝前 90.55°
+        -136.11792f,  // [2] 编码器朝前 45.75°
+        -34.180542f,  // [3] 编码器朝前 324.14°
+    };
+
     // 目标速度X
     float Target_Velocity_X = 0.0f;
     // 目标速度Y
@@ -234,19 +233,16 @@ protected:
 
     void Output_To_Motor();
 };
-    
 
 // 常量
-	
-   
 
-//const float Steer_Azimuth[4] = {0.0f, 0.0f, 0.0f, 0.0f,};
-// 轮组半径(米)
+// const float Steer_Azimuth[4] = {0.0f, 0.0f, 0.0f, 0.0f,};
+//  轮组半径(米)
 const float Wheel_Radius = 0.0535f;
 // 轮距中心长度(米)
-const float Wheel_To_Core_Distance[4] = {1.0f,1.0f,1.0f,1.0f}; // m, 四轮到几何中心距离
+const float Wheel_To_Core_Distance[4] = {1.0f, 1.0f, 1.0f, 1.0f}; // m, 四轮到几何中心距离
 // 舵向电机减速比
-const float Steer_Motor_Reduction = 1.0f;                                      
+const float Steer_Motor_Reduction = 1.0f;
 // 轮向电机行星减速比
 const float Wheel_Motor_Reduction = 1.0f;
 
@@ -353,7 +349,6 @@ inline float Class_Chassis::Get_Target_Omega()
     return (Target_Omega);
 }
 
-
 /**
  * @brief 设定底盘控制方法
  *
@@ -396,14 +391,13 @@ inline void Class_Chassis::Set_Target_Omega(float __Target_Omega)
 
 /**
  * @brief 获取当前偏航角
- * 
+ *
  * @return float 当前偏航角（弧度）
  */
 inline float Class_Chassis::Get_Angle_Yaw()
 {
     return (Angle_Yaw);
 }
-
 
 /**
  * @brief 获取当前速度X

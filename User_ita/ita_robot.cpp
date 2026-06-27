@@ -35,9 +35,9 @@ void Class_Chariot::Init()
     CRSF.Init(&huart7);
 
     Chassis.Init();
-    // Lift.Init();
+    Lift.Init();
     // Weapon.Init();
-    KFS.Init();
+    // KFS.Init();
 }
 
 /**
@@ -46,22 +46,22 @@ void Class_Chariot::Init()
  */
 void Class_Chariot::TIM_100ms_Alive_PeriodElapsedCallback()
 {
-    // CRSF.TIM1msMod50_Alive_PeriodElapsedCallback();
-    // Chassis.TIM_100ms_Alive_PeriodElapsedCallback();
-    // Lift.TIM_100ms_Alive_PeriodElapsedCallback();
-    KFS.TIM_Alive_PeriodElapsedCallback();
+    CRSF.TIM1msMod50_Alive_PeriodElapsedCallback();
+    Chassis.TIM_100ms_Alive_PeriodElapsedCallback();
+    Lift.TIM_100ms_Alive_PeriodElapsedCallback();
+    // KFS.TIM_Alive_PeriodElapsedCallback();
 }
 
 void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
 {
-    // // Lift
-    // Lift.TIM_Calculate_PeriodElapsedCallback();
+    // Lift
+    Lift.TIM_Calculate_PeriodElapsedCallback();
 
-    // 底盘控制 (填充CAN3 0x200 Tx缓冲区，并发送CAN3)
-    // Chassis.TIM_2ms_Control_PeriodElapsedCallback();
+    // 底盘控制
+    Chassis.TIM_2ms_Control_PeriodElapsedCallback();
 
     // KFS
-    KFS.TIM_Control_PeriodElapsedCallback();
+    // KFS.TIM_Control_PeriodElapsedCallback();
 
     // // Weapon
     // Weapon.TIM_Weapon_PeriodElapsedCallback();
@@ -159,22 +159,21 @@ void Class_Chariot::Control_Chassis()
         }
 
         // SB开关控制Move序号
-        if(CRSF.Get_SB() == CRSF_SWITCH_LOW)
+        if (CRSF.Get_SB() == CRSF_SWITCH_LOW)
         {
             Weapon.Set_Move_Index(0);
         }
-        else if(CRSF.Get_SB() == CRSF_SWITCH_MIDDLE)
+        else if (CRSF.Get_SB() == CRSF_SWITCH_MIDDLE)
         {
             Weapon.Set_Move_Index(1);
         }
-        else if(CRSF.Get_SB() == CRSF_SWITCH_HIGH)
+        else if (CRSF.Get_SB() == CRSF_SWITCH_HIGH)
         {
             Weapon.Set_Move_Index(2);
         }
 
         // SC,SD开关控制武器状态机
         // TODO: SD开关控制武器状态机
-
     }
 }
 void Class_Chariot::TIM_Control_Callback()

@@ -7,14 +7,22 @@
 #include "dvc_motor_dji.h"
 #include "dvc_motor_dm.h"
 
+#define MAX_WEAPON_STATUS 10
+
 class Class_Weapon;
 
 enum Enum_Weapon_Status
 {
-    Weapon_Status_Init = 0, // 初始化
-    Weapon_Status_Grab,     // 抓取
-    Weapon_Status_Lift,     // 抬起
-    Weapon_Status_Rotate,   // 旋转
+    Weapon_Status_Init = 0,             // 初始化
+    Weapon_Status_Grab_Prepare,         // 抓取准备
+    Weapon_Status_Grab,                 // 抓取
+    Weapon_Status_Lift_1,               // 抬起
+    Weapon_Status_Pick,                 // 夹取
+    Weapon_Status_Lift_2,               // 抬起
+    Weapon_Status_Rotate_To_Connection, // 旋转到对接位置
+    Weapon_Status_Rotate_To_Storage,    // 旋转到存储位置
+    Weapon_Status_Attack_Postition_1,   // 第一个攻击位置
+    Weapon_Status_Attack_Postition_2,   // 第二个攻击位置
 };
 
 /**
@@ -58,12 +66,17 @@ public:
 
     inline void Set_Move_Index(uint8_t index);
 
+    inline void Status_Forward();
+
+    inline void Status_Backward();
+
     void TIM_Weapon_PeriodElapsedCallback();
 
     void TIM_Alive_PeriodElapsedCallback();
 
 private:
-    bool Pick_Yaw_Flag = false;
+    bool Forward_Yaw_Flag = false;
+    bool Backward_Yaw_Flag = false;
     bool Move_Yaw_Flag = false;
 
     // 夹取机构的几何参数
@@ -71,26 +84,31 @@ private:
     const float Forearm_Length = 0.3f; // 前臂长度 m
 
     // 机械臂参数
-    // 机械臂电机(M3508)参数
-    float Arm_Target_Position[4] = {0.0f, 0.0f, 0.0f, 0.0f}; // 机械臂目标位置
-
-    // 夹取舵机参数
-    float Pick_Servo_Target_Position[4] = {0.0f, 0.0f, 0.0f, 0.0f}; // 夹取舵机目标位置
-
-    // 抓取电机参数
-    float Grab_Servo_Target_Position[4] = {0.0f, 0.0f, 0.0f, 0.0f}; // 抓取舵机目标位置
-
-    // 旋转电机参数
-    float Rotate_Target_Position[4] = {0.0f, 0.0f, 0.0f, 0.0f}; // 旋转电机目标位置
-
-    // 俯仰电机目标位置
-    float Pitch_Target_Position[4] = {0.0f, 0.0f, 0.0f, 0.0f};
     Calibrate_Params Pitch_Calibrate_Params = {
         .motion_mode = CALIBRATE_MOTION_SPEED,
         .motion_value = 10.0f,
         .detect_mode = CALIBRATE_DETECT_SPEED,
         .detect_threshold = 0.05f,
         .debounce_us = 200000};
+
+    // 状态机配置表
+    struct Target
+    {
+        // 机械臂目标位置
+        float Arm_Target_Position[MAX_WEAPON_STATUS];
+
+        // 夹取舵机目标位置
+        float Pick_Servo_Target_Position[MAX_WEAPON_STATUS];
+
+        // 抓取舵机目标位置
+        float Grab_Servo_Target_Position[MAX_WEAPON_STATUS];
+
+        // 旋转电机目标位置
+        float Rotate_Target_Position[MAX_WEAPON_STATUS];
+
+        // 俯仰电机目标位置
+        float Pitch_Target_Position[MAX_WEAPON_STATUS];
+    } Target;
 
     // 位移电机(M3508)参数
     float Move_Target_Position[3] = {0.0f, 0.0f, 0.0f}; // 移动电机目标位置
@@ -123,6 +141,16 @@ inline void Class_Weapon::Set_Move_Index(uint8_t index)
     {
         Move_Index = index;
     }
+}
+
+inline void Class_Weapon::Status_Forward()
+{
+    Forward_Yaw_Flag = true;
+}
+
+inline void Class_Weapon::Status_Backward()
+{
+    Backward_Yaw_Flag = true;
 }
 
 #endif

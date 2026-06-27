@@ -22,6 +22,8 @@
 
 /* Private macros ------------------------------------------------------------*/
 
+// #define CHASSIS_SLOPE_ENABLE
+
 /* Private types -------------------------------------------------------------*/
 
 /* Private variables ---------------------------------------------------------*/
@@ -40,18 +42,24 @@ void Class_Chassis::Init(float __Velocity_X_Max, float __Velocity_Y_Max, float _
     Velocity_X_Max = __Velocity_X_Max;
     Velocity_Y_Max = __Velocity_Y_Max;
     Omega_Max = __Omega_Max;
+
+    // 斜坡初始化
+    Slope_Velocity_X.Init(0.1f, 0.1f, Slope_First_REAL);
+
+    Slope_Velocity_Y.Init(0.1f, 0.1f, Slope_First_REAL);
+
+    Slope_Omega.Init(0.1f, 0.1f, Slope_First_REAL);
+
     // PID初始化
 
     // 底盘速度xPID, 输出摩擦力
-    PID_Velocity_X.Init(10.0f, 0.0f, 0.0f, 0.0f, 0.18f, 30.0f, 0.002f);
+    PID_Velocity_X.Init(0.5f, 0.0f, 0.0f, 0.0f, 0.18f, 30.0f, 0.002f);
 
     // 底盘速度yPID, 输出摩擦力
-    PID_Velocity_Y.Init(10.0f, 0.0f, 0.0f, 0.0f, 0.18f, 30.0f, 0.002f);
+    PID_Velocity_Y.Init(0.5f, 0.0f, 0.0f, 0.0f, 0.18f, 30.0f, 0.002f);
 
     // 底盘角速度PID, 输出扭矩
-    PID_Omega.Init(10.0f, 0.0f, 0.0f, 0.0f, 0.01f, 10.0f, 0.002f);
-
-    // 舵向电机初始化   使用2006电机角度环 实际角度设为校准后的角度
+    PID_Omega.Init(0.5f, 0.0f, 0.0f, 0.0f, 0.01f, 10.0f, 0.002f);
 
     // 舵向电机
     for (uint8_t i = 0; i < 4; i++)
@@ -110,6 +118,20 @@ void Class_Chassis::TIM_100ms_Alive_PeriodElapsedCallback()
  */
 void Class_Chassis::TIM_2ms_Control_PeriodElapsedCallback()
 {
+    // 斜坡函数
+#ifdef CHASSIS_SLOPE_ENABLE
+    Slope_Velocity_X.Set_Target(Target_Velocity_X);
+    Slope_Velocity_X.Set_Now_Real(Now_Velocity_X);
+    Slope_Velocity_X.TIM_Calculate_PeriodElapsedCallback();
+
+    Slope_Velocity_Y.Set_Target(Target_Velocity_Y);
+    Slope_Velocity_Y.Set_Now_Real(Now_Velocity_Y);
+    Slope_Velocity_Y.TIM_Calculate_PeriodElapsedCallback();
+
+    Slope_Omega.Set_Target(Target_Omega);
+    Slope_Omega.Set_Now_Real(Now_Omega);
+    Slope_Omega.TIM_Calculate_PeriodElapsedCallback();
+#endif
 
     // 自身解算
     Self_Resolution();
@@ -187,8 +209,13 @@ void Class_Chassis::Kinematics_Inverse_Resolution()
         float tmp_velocity_x, tmp_velocity_y, tmp_velocity_modulus;
 
         // 解算到每个轮组的具体线速度
+#ifdef CHASSIS_SLOPE_ENABLE
+        tmp_velocity_x = Slope_Velocity_X.Get_Out() - Slope_Omega.Get_Out() * Wheel_To_Core_Distance[i] * arm_sin_f32(Steer_Azimuth[i]);
+        tmp_velocity_y = Slope_Velocity_Y.Get_Out() + Slope_Omega.Get_Out() * Wheel_To_Core_Distance[i] * arm_cos_f32(Steer_Azimuth[i]);
+#else
         tmp_velocity_x = Target_Velocity_X - Target_Omega * Wheel_To_Core_Distance[i] * arm_sin_f32(Steer_Azimuth[i]);
         tmp_velocity_y = Target_Velocity_Y + Target_Omega * Wheel_To_Core_Distance[i] * arm_cos_f32(Steer_Azimuth[i]);
+#endif
         arm_sqrt_f32(tmp_velocity_x * tmp_velocity_x + tmp_velocity_y * tmp_velocity_y, &tmp_velocity_modulus);
 
         // 根据线速度决定轮向电机角速度
@@ -261,15 +288,21 @@ void Class_Chassis::Output_To_Dynamics()
         case (Chassis_Control_Type_NORMAL):
         {
 
+#ifdef CHASSIS_SLOPE_ENABLE
+            PID_Velocity_X.Set_Target(Slope_Velocity_X.Get_Out());
+            PID_Velocity_Y.Set_Target(Slope_Velocity_Y.Get_Out());
+            PID_Omega.Set_Target(Slope_Omega.Get_Out());
+#else
             PID_Velocity_X.Set_Target(Target_Velocity_X);
+            PID_Velocity_Y.Set_Target(Target_Velocity_Y);
+            PID_Omega.Set_Target(Target_Omega);
+#endif
             PID_Velocity_X.Set_Now(Now_Velocity_X);
             PID_Velocity_X.TIM_Calculate_PeriodElapsedCallback();
 
-            PID_Velocity_Y.Set_Target(Target_Velocity_Y);
             PID_Velocity_Y.Set_Now(Now_Velocity_Y);
             PID_Velocity_Y.TIM_Calculate_PeriodElapsedCallback();
 
-            PID_Omega.Set_Target(Target_Omega);
             PID_Omega.Set_Now(Now_Omega);
             PID_Omega.TIM_Calculate_PeriodElapsedCallback();
 
@@ -408,7 +441,7 @@ void Class_Chassis::Output_To_Motor()
                 Motor_Steer[i].Set_Target_Position(Target_Steer_Angle[i]);
 
                 Motor_Steer[i].Set_Feedback_Position(Steer_Encoder[i].Get_Total_Angle() * DEG_TO_RAD);
-    
+
                 if (Math_Abs(Target_Wheel_Current[i]) >= Wheel_Current_Limit)
                 {
                     Motor_Wheel[i].Set_Control_Current(Target_Wheel_Current[i]);
