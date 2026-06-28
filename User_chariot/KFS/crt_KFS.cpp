@@ -41,8 +41,8 @@ void Class_KFS::Init()
                           .Out_Max = 5.0f,
                       },
                   },
-                  .Distance_Approach_Threshold = 0.01f, // 速度环位置环切换阈值
                   .Max_Velocity = 12.0f,                // 速度
+                  .Distance_Approach_Threshold = 0.01f, // 速度环位置环切换阈值
                   .Angle_To_Distance = 0.16f / (2.0f * PI),
                   .Direction_Sign = {1, -1}, // 右电机镜像安装，方向反向
                   .Calibrate = {CALIBRATE_MOTION_NONE},
@@ -172,7 +172,11 @@ void Class_KFS::TIM_Control_PeriodElapsedCallback()
     Motor_Wrist.TIM_Send_PeriodElapsedCallback();
 
     // 机械臂控制
-    Motor_Arm.Set_Feedforward_Torque(((float)Is_KFS_Picked * KFS_Gravity_Compensation_Ratio_Arm + Arm_Gravity_Compensation_Ratio) * arm_cos_f32(Processed_Arm_Angle_Rad));
+    Motor_Arm.Set_Feedforward_Torque(
+        Arm_Gravity_Compensation_Ratio * arm_cos_f32(Processed_Arm_Angle_Rad) +                                                            // m1g×d1 × cos(θ₁)
+        Wrist_Gravity_Compensation_Ratio * arm_cos_f32(Processed_Arm_Angle_Rad + Processed_Wrist_Angle_Rad) +                              // m2g×d2 × cos(θ₁+θ₂)
+        (float)Is_KFS_Picked * (KFS_Gravity_Compensation_Ratio_Arm * arm_cos_f32(Processed_Arm_Angle_Rad) +                                // m3g×d1 × cos(θ₁)
+                                KFS_Gravity_Compensation_Ratio_Wrist * arm_cos_f32(Processed_Arm_Angle_Rad + Processed_Wrist_Angle_Rad))); // m3g×d3 × cos(θ₁+θ₂)
     Motor_Arm.TIM_Calculate_PeriodElapsedCallback();
     Motor_Arm.TIM_Send_PeriodElapsedCallback();
 }
@@ -279,16 +283,11 @@ void Class_KFS::Check_Move_Task_Completion()
 }
 
 /**
- * @brief 抬升到位判定(路程环双电机平方和判据)
+ * @brief 抬升到位判定
  */
 void Class_KFS::Check_Lift_Task_Completion()
 {
-    float err0 = Lift.Get_Now_Distance(0) - Lift.Get_Target_Position();
-    float err1 = Lift.Get_Now_Distance(1) - Lift.Get_Target_Position();
-    float speed0 = Motor_Lift[0].Get_Now_Omega();
-    float speed1 = Motor_Lift[1].Get_Now_Omega();
-    if (err0 * err0 + err1 * err1 < Lift_Height_Approach_Threshold &&
-        speed0 * speed0 + speed1 * speed1 < Lift_Speed_Approach_Threshold)
+    if (Lift.Get_Is_Motion_Finished())
     {
         Lift_Task_Finished = true;
     }

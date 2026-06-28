@@ -41,10 +41,6 @@ public:
     void TIM_Calculate_PeriodElapsedCallback(); // 1ms控制回调
     void Init();
 
-    bool Is_Wait_R2_Finished_step();
-    bool Is_Lift_R2_Finished_step();
-    bool Is_Down_R2_Finished_step();
-
     void TIM_100ms_Alive_PeriodElapsedCallback();
 
     inline float Get_Now_Distance_L();
@@ -59,10 +55,7 @@ private:
     float Target_Distance_Down_R2 = 0.25f; // 底部(下降到位)
 
     float Empty_Gravity_Compensation[2] = {-0.2f, -0.2f}; // 空载重力补偿
-    float Load_Gravity_Compensation[2] = {0.0f, 0.0f};    // 负载重力补偿
-
-    float Distance_Error = 0.001f; // 到位判定误差(米) (1mm)
-    float Speed_Error = 0.005f;    // 到位判定误差(米/s) (5mm/s)
+    float Load_Gravity_Compensation[2] = {-2.2f, -2.2f};    // 负载重力补偿
 };
 
 inline float Class_Lift::Get_Now_Distance_L()

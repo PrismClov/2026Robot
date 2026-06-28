@@ -72,7 +72,7 @@ void Class_Chassis::Init(float __Velocity_X_Max, float __Velocity_Y_Max, float _
                                     .K_D = 0.0f,
                                     .K_F = 0.0f,
                                     .Out_Max = 10.0f,
-                                    .Dead_Zone = 0.5f,
+                                    .Dead_Zone = 0.0f,
                                 },
                                 .PID_Omega = PID_Parameters{
                                     .K_P = 10.0f,
@@ -110,6 +110,7 @@ void Class_Chassis::TIM_100ms_Alive_PeriodElapsedCallback()
     {
         Motor_Steer[i].TIM_100ms_Alive_PeriodElapsedCallback();
         Motor_Wheel[i].TIM_100ms_Alive_PeriodElapsedCallback();
+        Steer_Encoder[i].TIM_100ms_Alive_PeriodElapsedCallback();
     }
 }
 /**

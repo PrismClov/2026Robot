@@ -150,8 +150,8 @@ void Class_Chariot::Control_Chassis()
             // 底盘随动
             Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_NORMAL);
             Chassis.Set_Target_Velocity_X(chassis_velocity_x);
-            Chassis.Set_Target_Velocity_Y(chassis_velocity_y);
-            Chassis.Set_Target_Omega(chassis_omega);
+            // Chassis.Set_Target_Velocity_Y(chassis_velocity_y);
+            // Chassis.Set_Target_Omega(chassis_omega);
         }
         else if (CRSF.Get_SA() == CRSF_SWITCH_HIGH) // SA高档 禁用模式
         {

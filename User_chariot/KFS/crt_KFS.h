@@ -90,9 +90,9 @@ private:
 
     uint8_t Is_KFS_Picked = 0; // 0: 未抓取, 1: 已抓取 用于是否加入KFS重力补偿
 
-    float KFS_Gravity_Compensation_Ratio_Arm = 0.0f; // 夹取KFS后的机械臂的重力补偿
+    float KFS_Gravity_Compensation_Ratio_Arm = 0.0f; // m3g×d1, KFS在臂长段 × cos(θ₁)
 
-    float KFS_Gravity_Compensation_Ratio_Wrist = 0.0f; // 夹取KFS后的手腕的重力补偿
+    float KFS_Gravity_Compensation_Ratio_Wrist = 0.0f; // m3g×d3, KFS在腕偏置段 × cos(θ₁+θ₂)
 
     // 移动电机参数
     bool Move_Task_Finished = false;
@@ -135,7 +135,7 @@ private:
 
     const float Wrist_Max_Velocity = 2.0f;
 
-    const float Wrist_Gravity_Compensation_Ratio = 0.0f;
+    const float Wrist_Gravity_Compensation_Ratio = 0.0f; // m2g×d2, 腕自重偏置 × cos(θ₁+θ₂)
 
     const float Wrist_Parallel_With_Arm_Angle_Offset = 0.0f;
 
@@ -150,7 +150,7 @@ private:
 
     const float Arm_Max_Velocity = 5.0f;
 
-    const float Arm_Gravity_Compensation_Ratio = 0.0f;
+    const float Arm_Gravity_Compensation_Ratio = 0.0f; // m1g×d1, 腕电机在臂长段 × cos(θ₁)
 
     const float Arm_Horizontal_Offset = 0.0f;
 

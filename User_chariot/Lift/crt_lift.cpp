@@ -29,21 +29,22 @@ void Class_Lift::Init()
                                            .PID_Distance = {
                                                PID_Parameters{
                                                    // 左同步带
-                                                   .K_P = 1000.0f,
+                                                   .K_P = 1500.0f,
                                                    .K_I = 0.0f,
                                                    .K_D = 0.0f,
                                                    .Out_Max = 3.0f,
                                                },
                                                PID_Parameters{
                                                    // 右同步带
-                                                   .K_P = 1000.0f,
+                                                   .K_P = 1500.0f,
                                                    .K_I = 0.0f,
                                                    .K_D = 0.0f,
                                                    .Out_Max = 3.0f,
                                                },
                                            },
-                                           .Distance_Approach_Threshold = 0.01f,
                                            .Max_Velocity = 12.0f,
+                                           .Distance_Approach_Threshold = 0.01f,
+                                           .Speed_Approach_Threshold = 0.005f,
                                            .Angle_To_Distance = 1.0f * 34.0f * 0.005f / (2.0f * PI),
                                            .Direction_Sign = {1, 1},
                                            .Calibrate = {
@@ -58,32 +59,8 @@ void Class_Lift::Init()
     FSM_Lift.Init(3, Lift_Status_Wait_R2); // 3个状态, 初始为Wait
 }
 
-bool Class_Lift::Is_Wait_R2_Finished_step()
-{
-    return (Math_Abs(Now_Distance[0] - Target_Distance_Wait_R2) <= Distance_Error) &&
-           (Math_Abs(Now_Distance[1] - Target_Distance_Wait_R2) <= Distance_Error) &&
-           (Math_Abs(Motor_Lift_L.Get_Now_Omega()) <= Speed_Error) &&
-           (Math_Abs(Motor_Lift_R.Get_Now_Omega()) <= Speed_Error);
-}
-
-bool Class_Lift::Is_Lift_R2_Finished_step()
-{
-    return (Math_Abs(Now_Distance[0] - Target_Distance_Lift_R2) <= Distance_Error) &&
-           (Math_Abs(Now_Distance[1] - Target_Distance_Lift_R2) <= Distance_Error) &&
-           (Math_Abs(Motor_Lift_L.Get_Now_Omega()) <= Speed_Error) &&
-           (Math_Abs(Motor_Lift_R.Get_Now_Omega()) <= Speed_Error);
-}
-
-bool Class_Lift::Is_Down_R2_Finished_step()
-{
-    return (Math_Abs(Now_Distance[0] - Target_Distance_Down_R2) <= Distance_Error) &&
-           (Math_Abs(Now_Distance[1] - Target_Distance_Down_R2) <= Distance_Error) &&
-           (Math_Abs(Motor_Lift_L.Get_Now_Omega()) <= Speed_Error) &&
-           (Math_Abs(Motor_Lift_R.Get_Now_Omega()) <= Speed_Error);
-}
-
-float kp = 0.0f;
-float dist = 0.0f;
+// float kp = 1000.0f;
+// float dist = 0.0f;
 void Class_Lift::TIM_Calculate_PeriodElapsedCallback()
 {
     // 1. 校准(未完成则执行校准并跳过控制)
@@ -97,17 +74,17 @@ void Class_Lift::TIM_Calculate_PeriodElapsedCallback()
     Distance_Update();
 
     // 3. 状态机更新
-    // FSM_Lift.Lift_TIM_Status_PeriodElapsedCallback();
-    Set_Target_Position(dist);
+    FSM_Lift.Lift_TIM_Status_PeriodElapsedCallback();
+    // Set_Target_Position(dist);
 
     // 4. 执行运动控制
     Move_To_Position();
 
-    Motor_Lift_L.Set_Feedforward_Current(Empty_Gravity_Compensation[0]);
-    Motor_Lift_R.Set_Feedforward_Current(Empty_Gravity_Compensation[1]);
+    // Motor_Lift_L.Set_Feedforward_Current(Load_Gravity_Compensation[0]);
+    // Motor_Lift_R.Set_Feedforward_Current(Load_Gravity_Compensation[1]);
 
-    Distance_PID[0].Set_K_P(kp);
-    Distance_PID[1].Set_K_P(kp);
+    // Distance_PID[0].Set_K_P(kp);
+    // Distance_PID[1].Set_K_P(kp);
 
     // 5. 电机计算(速度PID → 电流输出)
     Motor_Lift_L.Calculate();
@@ -131,20 +108,12 @@ void Class_FSM_Lift::Lift_TIM_Status_PeriodElapsedCallback()
             Lift->Motor_Lift_L.Set_Feedforward_Current(Lift->Empty_Gravity_Compensation[0]);
             Lift->Motor_Lift_R.Set_Feedforward_Current(Lift->Empty_Gravity_Compensation[1]);
 
-            if (!Lift->Is_Wait_R2_Finished_step())
-            {
-                // 未到位 → 持续向目标运动
-                Lift->Set_Target_Position(Lift->Target_Distance_Wait_R2);
-            }
-            else if (Lift->Is_Wait_R2_Finished_step())
-            {
+            Lift->Set_Target_Position(Lift->Target_Distance_Wait_R2);
 
-                // 等待Yaw到位信号到来后才切换
-                if (Lift->Yaw_Flag)
-                {
-                    Status[Now_Status_Serial].Count_Time = 0;
-                    Set_Status(Lift_Status_Lift_R2);
-                }
+            if (Lift->Get_Is_Motion_Finished() && Lift->Yaw_Flag)
+            {
+                Status[Now_Status_Serial].Count_Time = 0;
+                Set_Status(Lift_Status_Lift_R2);
             }
             break;
         }
@@ -154,18 +123,12 @@ void Class_FSM_Lift::Lift_TIM_Status_PeriodElapsedCallback()
             Lift->Motor_Lift_L.Set_Feedforward_Current(Lift->Load_Gravity_Compensation[0]);
             Lift->Motor_Lift_R.Set_Feedforward_Current(Lift->Load_Gravity_Compensation[1]);
 
-            if (!Lift->Is_Lift_R2_Finished_step())
-            {
-                Lift->Set_Target_Position(Lift->Target_Distance_Lift_R2);
-            }
-            else if (Lift->Is_Lift_R2_Finished_step())
-            {
+            Lift->Set_Target_Position(Lift->Target_Distance_Lift_R2);
 
-                if (Lift->Yaw_Flag)
-                {
-                    Status[Now_Status_Serial].Count_Time = 0;
-                    Set_Status(Lift_Status_Down_R2);
-                }
+            if (Lift->Get_Is_Motion_Finished() && Lift->Yaw_Flag)
+            {
+                Status[Now_Status_Serial].Count_Time = 0;
+                Set_Status(Lift_Status_Down_R2);
             }
             break;
         }
@@ -175,18 +138,12 @@ void Class_FSM_Lift::Lift_TIM_Status_PeriodElapsedCallback()
             Lift->Motor_Lift_L.Set_Feedforward_Current(Lift->Load_Gravity_Compensation[0]);
             Lift->Motor_Lift_R.Set_Feedforward_Current(Lift->Load_Gravity_Compensation[1]);
 
-            if (!Lift->Is_Down_R2_Finished_step())
-            {
-                Lift->Set_Target_Position(Lift->Target_Distance_Down_R2);
-            }
-            else if (Lift->Is_Down_R2_Finished_step())
-            {
+            Lift->Set_Target_Position(Lift->Target_Distance_Down_R2);
 
-                if (Lift->Yaw_Flag)
-                {
-                    Status[Now_Status_Serial].Count_Time = 0;
-                    Set_Status(Lift_Status_Wait_R2);
-                }
+            if (Lift->Get_Is_Motion_Finished() && Lift->Yaw_Flag)
+            {
+                Status[Now_Status_Serial].Count_Time = 0;
+                Set_Status(Lift_Status_Wait_R2);
             }
             break;
         }

@@ -15,15 +15,24 @@
 template <uint8_t motor_num>
 class Class_MultiMotorSync_Base
 {
+    static_assert(motor_num > 0, "motor_num must be > 0");
+
 public:
     struct Parameters
     {
-        PID_Parameters PID_Distance[motor_num];    // 路程环PID参数
-        float Distance_Approach_Threshold = 0.01f; // 开环→闭环切换阈值, 行程单位
-        float Max_Velocity = 5.0f;                 // 开环速度, 行程单位/s
-        float Angle_To_Distance = 1.0f;            // 电机 rad → 行程 转换系数
-        int8_t Direction_Sign[motor_num] = {};     // ±1, -1=电机转向反向(镜像安装)
-        Calibrate_Params Calibrate;                // 堵转校准参数
+        // 路程环PID
+        PID_Parameters PID_Distance[motor_num];
+
+        // 运动控制
+        float Max_Velocity = 5.0f;                 // 开环趋近速度, 行程单位/s
+        float Distance_Approach_Threshold = 0.01f; // 开环→闭环切换 & 到位位置阈值, 行程单位
+        float Speed_Approach_Threshold = 0.1f;     // 到位判定速度阈值, 行程单位/s
+
+        // 机构参数
+        float Angle_To_Distance = 1.0f;        // 电机 rad → 行程 转换系数
+        int8_t Direction_Sign[motor_num] = {}; // ±1, -1=电机转向反向(镜像安装)
+        // 校准
+        Calibrate_Params Calibrate; // 堵转校准参数
     };
 
     Class_PID Distance_PID[motor_num];
@@ -31,27 +40,30 @@ public:
 
     void Init(std::array<Class_Motor_Base *, motor_num> motors, const Parameters &parameters);
 
-    void Set_Target_Position(float target_position);          // 所有电机设同一目标
+    void Set_Target_Position(float target_position); // 所有电机设同一目标
     float Get_Target_Position() const;
     float Get_Now_Distance(uint8_t i) const;
     bool Get_Is_Calibrated() const;
+    bool Get_Is_Motion_Finished() const;
+    void Reset_Calibration();
 
-    bool Calibrate_Update();                                  // 堵转校准，完成后自动计算Offset
-    void Distance_Update();                                   // 更新 Now_Distance 并喂给路程PID
-    void Move_To_Position();                                  // 核心控制: 开环/闭环切换 
+    bool Calibrate_Update(); // 堵转校准，完成后自动计算Offset
+    void Distance_Update();  // 更新 Now_Distance 并喂给路程PID
+    void Move_To_Position(); // 核心控制: 开环/闭环切换
 
 protected:
     Parameters Param = {};
 
-    float Now_Distance[motor_num] = {0.0f};                   // 当前行程, = (电机角度 - Offset) * Angle_To_Distance
-    float Offset[motor_num] = {0.0f};                         // 机械零点补偿(弧度), 由校准或Set_Offset设定
-    float Target_Distance[motor_num] = {0.0f};                // 目标行程
+    float Now_Distance[motor_num] = {0.0f};    // 当前行程, = (电机角度 - Offset) * Angle_To_Distance
+    float Offset[motor_num] = {0.0f};          // 机械零点补偿(弧度), 由校准或Set_Offset设定
+    float Target_Distance[motor_num] = {0.0f}; // 目标行程
     bool Is_Calibrated = false;
-    bool Calibrated_Motor[motor_num] = {};                    // 单电机校准完成标记
+    bool Calibrated_Motor[motor_num] = {}; // 单电机校准完成标记
+    bool Motion_Finished = false;          // 到位标记
 };
 
 template <uint8_t motor_num>
-void Class_MultiMotorSync_Base<motor_num>::Init(std::array<Class_Motor_Base *, motor_num> motors,const Parameters &parameters)
+void Class_MultiMotorSync_Base<motor_num>::Init(std::array<Class_Motor_Base *, motor_num> motors, const Parameters &parameters)
 {
     Param = parameters;
     for (uint8_t i = 0; i < motor_num; i++)
@@ -82,13 +94,16 @@ template <uint8_t motor_num>
 void Class_MultiMotorSync_Base<motor_num>::Set_Target_Position(float target_position)
 {
     for (uint8_t i = 0; i < motor_num; i++)
+    {
+        Motion_Finished &= target_position == Target_Distance[i];
         Target_Distance[i] = target_position;
+    }
 }
 
 template <uint8_t motor_num>
 float Class_MultiMotorSync_Base<motor_num>::Get_Target_Position() const
 {
-    return motor_num > 0 ? Target_Distance[0] : 0.0f;
+    return Target_Distance[0];
 }
 
 template <uint8_t motor_num>
@@ -104,10 +119,28 @@ bool Class_MultiMotorSync_Base<motor_num>::Get_Is_Calibrated() const
 }
 
 template <uint8_t motor_num>
+bool Class_MultiMotorSync_Base<motor_num>::Get_Is_Motion_Finished() const
+{
+    return Motion_Finished;
+}
+
+template <uint8_t motor_num>
+void Class_MultiMotorSync_Base<motor_num>::Reset_Calibration()
+{
+    Is_Calibrated = false;
+    for (uint8_t i = 0; i < motor_num; i++)
+    {
+        Calibrated_Motor[i] = false;
+    }
+}
+
+template <uint8_t motor_num>
 bool Class_MultiMotorSync_Base<motor_num>::Calibrate_Update()
 {
     if (Is_Calibrated)
+    {
         return true;
+    }
 
     bool all_done = true;
     for (uint8_t i = 0; i < motor_num; i++)
@@ -182,6 +215,20 @@ void Class_MultiMotorSync_Base<motor_num>::Move_To_Position()
         }
     }
     // Calculate() 由外部 TIM 回调统一调用，此处不调用
+
+    // 到位判定
+    if (!Motion_Finished)
+    {
+        Motion_Finished = true;
+        for (uint8_t i = 0; i < motor_num; i++)
+        {
+            if (Math_Abs(Target_Distance[i] - Now_Distance[i]) > Param.Distance_Approach_Threshold || Math_Abs(Motor[i]->Get_Speed()) * Math_Abs(Param.Angle_To_Distance) > Param.Speed_Approach_Threshold)
+            {
+                Motion_Finished = false;
+                break;
+            }
+        }
+    }
 }
 
 // 显式实例化，确保代码生成
