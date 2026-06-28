@@ -71,16 +71,16 @@ void Class_KFS::Init()
 
     // 机械臂电机初始化
     Motor_Arm.Init(&hfdcan1, 0x00, 0x01, Motor_DM_PID_Mode_ANGLE);
-    Motor_Arm.PID_Omega.Init(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 10.0f, 0.002f, 0.0f);
-    Motor_Arm.PID_Angle.Init(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 8.0f, 0.002f, 0.0f);
-
-    // 主动使能电机
-    Motor_Arm.CAN_Send_Enter();
-
+    Motor_Arm.PID_Omega.Init(0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 10.0f, 0.002f, 0.0f);
+    Motor_Arm.PID_Angle.Init(125.0f, 0.0f, 0.0f, 0.0f, 0.0f, 5.0f, 0.002f, 0.0f);
+    // Motor_Arm.PID_Omega.Init(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 10.0f, 0.002f, 0.0f);
+    // Motor_Arm.PID_Angle.Init(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 5.0f, 0.002f, 0.0f);
     // 手腕电机初始化
     Motor_Wrist.Init(&hfdcan1, 0xF0, 0x70, Motor_RS_PID_Mode_ANGLE);
-    Motor_Wrist.PID_Omega.Init(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 10.0f, 0.002f, 0.0f);
-    Motor_Wrist.PID_Angle.Init(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 8.0f, 0.002f, 0.0f);
+    Motor_Wrist.PID_Omega.Init(1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 5.0f, 0.002f, 0.0f);
+    Motor_Wrist.PID_Angle.Init(20.0f, 0.0f, 0.0f, 0.0f, 0.0f, 15.0f, 0.002f, 0.0f);
+    // Motor_Wrist.PID_Omega.Init(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 5.0f, 0.002f, 0.0f);
+    // Motor_Wrist.PID_Angle.Init(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 15.0f, 0.002f, 0.0f);
 
     // // 气泵初始化
     // Air_Pump.Init(GPIOC, GPIO_PIN_13);
@@ -111,22 +111,28 @@ void Class_KFS::Lift_To_Height(float height)
 void Class_KFS::Wrist_To_Angle(float angle)
 {
     float wrist_error = angle - Processed_Wrist_Angle_Rad;
-    if (fabsf(wrist_error) > Wrist_Distance_Approach_Threshold)
+    float motor_target = -angle + Wrist_Parallel_With_Arm_Angle_Offset;
+
+    if (fabsf(wrist_error) > Wrist_Distance_Approach_Threshold &&
+        fabsf(Motor_Wrist.Get_Target_Angle() - motor_target) > 0.01f)
     {
         Motor_Wrist.Set_PID_Mode(Motor_RS_PID_Mode_OMEGA);
-        Motor_Wrist.Set_Target_Omega((wrist_error > 0.0f ? 1.0f : -1.0f) * Wrist_Max_Velocity);
+        Motor_Wrist.Set_Target_Omega((wrist_error > 0.0f ? -1.0f : 1.0f) * Wrist_Max_Velocity);
     }
     else
     {
         Motor_Wrist.Set_PID_Mode(Motor_RS_PID_Mode_ANGLE);
-        Motor_Wrist.Set_Target_Angle(angle + Wrist_Parallel_With_Arm_Angle_Offset);
+        Motor_Wrist.Set_Target_Angle(motor_target);
     }
 }
 
 void Class_KFS::Arm_To_Angle(float angle)
 {
     float arm_error = angle - Processed_Arm_Angle_Rad;
-    if (fabsf(arm_error) > Arm_Distance_Approach_Threshold)
+    float motor_target = angle + Arm_Horizontal_Offset;
+
+    if (fabsf(arm_error) > Arm_Distance_Approach_Threshold &&
+        fabsf(Motor_Arm.Get_Target_Angle() - motor_target) > 0.01f)
     {
         Motor_Arm.Set_PID_Mode(Motor_DM_PID_Mode_OMEGA);
         Motor_Arm.Set_Target_Omega((arm_error > 0.0f ? 1.0f : -1.0f) * Arm_Max_Velocity);
@@ -134,30 +140,28 @@ void Class_KFS::Arm_To_Angle(float angle)
     else
     {
         Motor_Arm.Set_PID_Mode(Motor_DM_PID_Mode_ANGLE);
-        Motor_Arm.Set_Target_Angle(angle + Arm_Horizontal_Offset);
+        Motor_Arm.Set_Target_Angle(motor_target);
     }
 }
 
+float wrist_angle = 0.0f;
+float arm_angle = 0.0f;
+float lift_height = 0.0f;
+
 void Class_KFS::TIM_Control_PeriodElapsedCallback()
 {
-    // 抬升校准（未完成则执行校准并跳过控制）
-    if (!Lift.Get_Is_Calibrated())
-    {
-        Lift.Calibrate_Update();
-        return;
-    }
-
-    // 状态机驱动（设置各子系统目标）
-    FSM_KFS.KFS_TIM_Status_PeriodElapsedCallback();
+    // // 状态机驱动（设置各子系统目标）
+    // FSM_KFS.KFS_TIM_Status_PeriodElapsedCallback();
 
     // 更新处理后的角度
     Update_Processed_Arm_Angle_Rad();
     Update_Processed_Wrist_Angle_Rad();
 
-    Motor_Move.Update_Feedback();
-    Motor_Move.Calculate();
+    // Motor_Move.Update_Feedback();
+    // Motor_Move.Calculate();
 
     // 抬升控制
+    Lift.Set_Target_Position(lift_height);
     Lift.Distance_Update();
     Lift.Move_To_Position();
     for (int i = 0; i < 2; i++)
@@ -166,17 +170,17 @@ void Class_KFS::TIM_Control_PeriodElapsedCallback()
         Motor_Lift[i].Calculate();
     }
 
+    Wrist_To_Angle(wrist_angle);
+    Arm_To_Angle(arm_angle);
+
     // 手腕控制
     Motor_Wrist.Set_Feedforward_Torque(((float)Is_KFS_Picked * KFS_Gravity_Compensation_Ratio_Wrist + Wrist_Gravity_Compensation_Ratio) * arm_cos_f32(Processed_Arm_Angle_Rad + Processed_Wrist_Angle_Rad));
     Motor_Wrist.TIM_Calculate_PeriodElapsedCallback();
     Motor_Wrist.TIM_Send_PeriodElapsedCallback();
 
     // 机械臂控制
-    Motor_Arm.Set_Feedforward_Torque(
-        Arm_Gravity_Compensation_Ratio * arm_cos_f32(Processed_Arm_Angle_Rad) +                                                            // m1g×d1 × cos(θ₁)
-        Wrist_Gravity_Compensation_Ratio * arm_cos_f32(Processed_Arm_Angle_Rad + Processed_Wrist_Angle_Rad) +                              // m2g×d2 × cos(θ₁+θ₂)
-        (float)Is_KFS_Picked * (KFS_Gravity_Compensation_Ratio_Arm * arm_cos_f32(Processed_Arm_Angle_Rad) +                                // m3g×d1 × cos(θ₁)
-                                KFS_Gravity_Compensation_Ratio_Wrist * arm_cos_f32(Processed_Arm_Angle_Rad + Processed_Wrist_Angle_Rad))); // m3g×d3 × cos(θ₁+θ₂)
+    Motor_Arm.Set_Feedforward_Torque(Arm_Gravity_Compensation_Ratio * arm_cos_f32(Processed_Arm_Angle_Rad)); // m1g×d1 × cos(θ₁)
+
     Motor_Arm.TIM_Calculate_PeriodElapsedCallback();
     Motor_Arm.TIM_Send_PeriodElapsedCallback();
 }
@@ -202,7 +206,7 @@ void Class_KFS::TIM_Alive_PeriodElapsedCallback()
  */
 void Class_KFS::Update_Processed_Wrist_Angle_Rad()
 {
-    Processed_Wrist_Angle_Rad = Motor_Wrist.Get_Now_Angle() - Wrist_Parallel_With_Arm_Angle_Offset;
+    Processed_Wrist_Angle_Rad = -(Motor_Wrist.Get_Now_Angle() - Wrist_Parallel_With_Arm_Angle_Offset);
 }
 
 /**

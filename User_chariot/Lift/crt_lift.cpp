@@ -51,7 +51,7 @@ void Class_Lift::Init()
                                                .motion_mode = CALIBRATE_MOTION_SPEED,
                                                .motion_value = -5.0f,
                                                .detect_mode = CALIBRATE_DETECT_SPEED,
-                                               .detect_threshold = 0.05f,
+                                               .detect_threshold = 0.005f,
                                                .debounce_us = 200000,
                                            }});
 

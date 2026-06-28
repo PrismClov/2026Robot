@@ -92,7 +92,7 @@ private:
 
     float KFS_Gravity_Compensation_Ratio_Arm = 0.0f; // m3g×d1, KFS在臂长段 × cos(θ₁)
 
-    float KFS_Gravity_Compensation_Ratio_Wrist = 0.0f; // m3g×d3, KFS在腕偏置段 × cos(θ₁+θ₂)
+    float KFS_Gravity_Compensation_Ratio_Wrist = 2.3f; // m3g×d3, KFS在腕偏置段 × cos(θ₁+θ₂)
 
     // 移动电机参数
     bool Move_Task_Finished = false;
@@ -129,30 +129,30 @@ private:
 
     float Processed_Wrist_Angle_Rad = 0.0f;
 
-    const float Wrist_Distance_Approach_Threshold = 0.1f;
+    const float Wrist_Distance_Approach_Threshold = 0.02f;
 
     const float Wrist_Speed_Approach_Threshold = 0.1f;
 
-    const float Wrist_Max_Velocity = 2.0f;
+    const float Wrist_Max_Velocity = 4.0f;
 
-    const float Wrist_Gravity_Compensation_Ratio = 0.0f; // m2g×d2, 腕自重偏置 × cos(θ₁+θ₂)
+    const float Wrist_Gravity_Compensation_Ratio = 0.88f; // m2g×d2, 腕自重偏置 × cos(θ₁+θ₂)
 
-    const float Wrist_Parallel_With_Arm_Angle_Offset = 0.0f;
+    const float Wrist_Parallel_With_Arm_Angle_Offset = 2.97663522f;
 
     // 机械臂电机参数
     bool Arm_Task_Finished = false;
 
     float Processed_Arm_Angle_Rad = 0.0f;
 
-    const float Arm_Distance_Approach_Threshold = 0.1f;
+    const float Arm_Distance_Approach_Threshold = 0.05f;
 
     const float Arm_Speed_Approach_Threshold = 0.1f;
 
-    const float Arm_Max_Velocity = 5.0f;
+    const float Arm_Max_Velocity = 10.0f;
 
-    const float Arm_Gravity_Compensation_Ratio = 0.0f; // m1g×d1, 腕电机在臂长段 × cos(θ₁)
+    const float Arm_Gravity_Compensation_Ratio = -1.7f; // m1g×d1, 腕电机在臂长段 × cos(θ₁)
 
-    const float Arm_Horizontal_Offset = 0.0f;
+    const float Arm_Horizontal_Offset = 2.55f;
 
     // 气泵参数
     bool Pump_Task_Finished = false;

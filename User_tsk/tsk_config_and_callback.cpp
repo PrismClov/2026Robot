@@ -274,8 +274,8 @@ void Task1ms_TIM5_Callback()
     if (mod2 >= 10)
     {
         chariot.TIM_Calculate_PeriodElapsedCallback();
-        // Motor::DJI_TIM_Send_Group(&hfdcan1, Motor::CAN_Tx_ID_0x200_Only);
-        Motor::DJI_TIM_Send_Group(&hfdcan3, Motor::CAN_Tx_ID_Both);
+        Motor::DJI_TIM_Send_Group(&hfdcan1, Motor::CAN_Tx_ID_0x200_Only);
+        // Motor::DJI_TIM_Send_Group(&hfdcan3, Motor::CAN_Tx_ID_Both);
         mod2 = 0;
     }
 

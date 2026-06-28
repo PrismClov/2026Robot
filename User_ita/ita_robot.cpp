@@ -32,12 +32,12 @@
  */
 void Class_Chariot::Init()
 {
-    CRSF.Init(&huart7);
+    // CRSF.Init(&huart7);
 
-    Chassis.Init();
-    Lift.Init();
+    // Chassis.Init();
+    // Lift.Init();
     // Weapon.Init();
-    // KFS.Init();
+    KFS.Init();
 }
 
 /**
@@ -46,22 +46,23 @@ void Class_Chariot::Init()
  */
 void Class_Chariot::TIM_100ms_Alive_PeriodElapsedCallback()
 {
-    CRSF.TIM1msMod50_Alive_PeriodElapsedCallback();
-    Chassis.TIM_100ms_Alive_PeriodElapsedCallback();
-    Lift.TIM_100ms_Alive_PeriodElapsedCallback();
-    // KFS.TIM_Alive_PeriodElapsedCallback();
+    // CRSF.TIM1msMod50_Alive_PeriodElapsedCallback();
+    // Chassis.TIM_100ms_Alive_PeriodElapsedCallback();
+    // Lift.TIM_100ms_Alive_PeriodElapsedCallback();
+    KFS.TIM_Alive_PeriodElapsedCallback();
+    // Weapon.TIM_Alive_PeriodElapsedCallback();
 }
 
 void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
 {
-    // Lift
-    Lift.TIM_Calculate_PeriodElapsedCallback();
+    // // Lift
+    // Lift.TIM_Calculate_PeriodElapsedCallback();
 
-    // 底盘控制
-    Chassis.TIM_2ms_Control_PeriodElapsedCallback();
+    // // 底盘控制
+    // Chassis.TIM_2ms_Control_PeriodElapsedCallback();
 
     // KFS
-    // KFS.TIM_Control_PeriodElapsedCallback();
+    KFS.TIM_Control_PeriodElapsedCallback();
 
     // // Weapon
     // Weapon.TIM_Weapon_PeriodElapsedCallback();
