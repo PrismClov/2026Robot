@@ -80,6 +80,11 @@ protected:
 
 };
 
+inline Enum_Motor_RS_PID_Mode Class_Motor_RS_PID::Get_PID_Mode()
+{
+    return Motor_RS_PID_Mode;
+}
+
 inline float Class_Motor_RS_PID::Get_Target_Angle()
 {
     return Target_Angle;

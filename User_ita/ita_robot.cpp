@@ -95,7 +95,9 @@ void Class_Chariot::Judge_CRSF_Control_Type()
     else
     {
         if (CRSF.Get_Status() == CRSF_Status_DISABLE)
+        {
             CRSF_Control_Type = CRSF_Control_Type_NONE;
+        }
     }
 }
 /**
@@ -145,36 +147,78 @@ void Class_Chariot::Control_Chassis()
         chassis_omega = crsf_l_x * Chassis.Get_Omega_Max();
 
         // 遥控器开关操作逻辑
-        // SA开关控制底盘模式
-        if (CRSF.Get_SA() == CRSF_SWITCH_LOW) // SA低档，底盘随动
+        // SA开关控制使能情况
+        if (CRSF.Get_SA() == CRSF_SWITCH_HIGH) // SA高档，底盘随动
         {
             // 底盘随动
             Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_NORMAL);
             Chassis.Set_Target_Velocity_X(chassis_velocity_x);
-            // Chassis.Set_Target_Velocity_Y(chassis_velocity_y);
-            // Chassis.Set_Target_Omega(chassis_omega);
+            Chassis.Set_Target_Velocity_Y(chassis_velocity_y);
+            Chassis.Set_Target_Omega(chassis_omega);
         }
-        else if (CRSF.Get_SA() == CRSF_SWITCH_HIGH) // SA高档 禁用模式
+        else if (CRSF.Get_SA() == CRSF_SWITCH_LOW) // SA低档 禁用模式
         {
             Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
         }
 
-        // SB开关控制Move序号
+        // SB开关控制控制区域
         if (CRSF.Get_SB() == CRSF_SWITCH_LOW)
         {
-            Weapon.Set_Move_Index(0);
+            Robot_Mode = Robot_Mode_Weapon;
         }
         else if (CRSF.Get_SB() == CRSF_SWITCH_MIDDLE)
         {
-            Weapon.Set_Move_Index(1);
+            Robot_Mode = Robot_Mode_KFS;
         }
         else if (CRSF.Get_SB() == CRSF_SWITCH_HIGH)
         {
-            Weapon.Set_Move_Index(2);
+            Robot_Mode = Robot_Mode_Lift;
         }
 
-        // SC,SD开关控制武器状态机
-        // TODO: SD开关控制武器状态机
+        switch (Robot_Mode)
+        {
+            case Robot_Mode_KFS:
+            {
+                if (CRSF.Get_SE() == CRSF_SWITCH_LOW && Previous_SE_Pos == CRSF_SWITCH_HIGH)
+                {
+                    if (CRSF.Get_SD() == CRSF_SWITCH_LOW)
+                    {
+                        KFS.Status_Forward();
+                    }
+                    else if (CRSF.Get_SD() == CRSF_SWITCH_HIGH)
+                    {
+                        KFS.Status_Backward();
+                    }
+                }
+                KFS.Set_Lift_Height_Index(CRSF.Get_SC() % 2);
+                break;
+            }
+            case Robot_Mode_Weapon:
+            {
+                if (CRSF.Get_SE() == CRSF_SWITCH_LOW && Previous_SE_Pos == CRSF_SWITCH_HIGH)
+                {
+                    if (CRSF.Get_SD() == CRSF_SWITCH_LOW)
+                    {
+                        Weapon.Status_Forward();
+                    }
+                    else if (CRSF.Get_SD() == CRSF_SWITCH_HIGH)
+                    {
+                        Weapon.Status_Backward();
+                    }
+                }
+                Weapon.Set_Move_Index(CRSF.Get_SC());
+                break;
+            }
+            case Robot_Mode_Lift:
+            {
+                if (CRSF.Get_SE() == CRSF_SWITCH_LOW && Previous_SE_Pos == CRSF_SWITCH_HIGH)
+                {
+                    Lift.Yaw_Flag_True();
+                }
+                break;
+            }
+        }
+        Previous_SE_Pos = CRSF.Get_SE();
     }
 }
 void Class_Chariot::TIM_Control_Callback()

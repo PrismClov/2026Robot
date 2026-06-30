@@ -88,11 +88,11 @@ private:
 
     bool Backward_Yaw_Flag = false;
 
-    uint8_t Is_KFS_Picked = 0; // 0: 未抓取, 1: 已抓取 用于是否加入KFS重力补偿
+    uint8_t Is_KFS_Picked = 1; // 0: 未抓取, 1: 已抓取 用于是否加入KFS重力补偿
 
-    float KFS_Gravity_Compensation_Ratio_Arm = 0.0f; // m3g×d1, KFS在臂长段 × cos(θ₁)
+    float KFS_Gravity_Compensation_Ratio_Arm = -0.3f;
 
-    float KFS_Gravity_Compensation_Ratio_Wrist = 2.3f; // m3g×d3, KFS在腕偏置段 × cos(θ₁+θ₂)
+    float KFS_Gravity_Compensation_Ratio_Wrist = 2.3f;
 
     // 移动电机参数
     bool Move_Task_Finished = false;
@@ -129,13 +129,17 @@ private:
 
     float Processed_Wrist_Angle_Rad = 0.0f;
 
-    const float Wrist_Distance_Approach_Threshold = 0.02f;
+    const float Wrist_Distance_Brake_Threshold = 0.7f;
+
+    const float Wrist_Distance_Lock_Threshold = 0.01f;
+
+    const float Wrist_Distance_Approach_Threshold = 0.01f;
 
     const float Wrist_Speed_Approach_Threshold = 0.1f;
 
-    const float Wrist_Max_Velocity = 4.0f;
+    const float Wrist_Max_Velocity = 10.0f;
 
-    const float Wrist_Gravity_Compensation_Ratio = 0.88f; // m2g×d2, 腕自重偏置 × cos(θ₁+θ₂)
+    const float Wrist_Gravity_Compensation_Ratio = 0.88f;
 
     const float Wrist_Parallel_With_Arm_Angle_Offset = 2.97663522f;
 
@@ -144,15 +148,19 @@ private:
 
     float Processed_Arm_Angle_Rad = 0.0f;
 
-    const float Arm_Distance_Approach_Threshold = 0.05f;
+    const float Arm_Distance_Brake_Threshold = 0.6f; // 刹车平滑阈值
+
+    const float Arm_Distance_Lock_Threshold = 0.02f;
+
+    const float Arm_Distance_Approach_Threshold = 0.02f;
 
     const float Arm_Speed_Approach_Threshold = 0.1f;
 
-    const float Arm_Max_Velocity = 10.0f;
+    const float Arm_Max_Velocity = 11.0f;
 
-    const float Arm_Gravity_Compensation_Ratio = -1.7f; // m1g×d1, 腕电机在臂长段 × cos(θ₁)
+    const float Arm_Gravity_Compensation_Ratio = -1.7f;
 
-    const float Arm_Horizontal_Offset = 2.55f;
+    const float Arm_Horizontal_Offset = 2.55f - 2 * PI;
 
     // 气泵参数
     bool Pump_Task_Finished = false;

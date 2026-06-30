@@ -71,16 +71,16 @@ void Class_KFS::Init()
 
     // 机械臂电机初始化
     Motor_Arm.Init(&hfdcan1, 0x00, 0x01, Motor_DM_PID_Mode_ANGLE);
-    Motor_Arm.PID_Omega.Init(0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 10.0f, 0.002f, 0.0f);
-    Motor_Arm.PID_Angle.Init(125.0f, 0.0f, 0.0f, 0.0f, 0.0f, 5.0f, 0.002f, 0.0f);
+    Motor_Arm.PID_Omega.Init(0.6f, 0.0f, 0.0f, 0.0f, 0.0f, 10.0f, 0.002f, 0.0f);
+    // Motor_Arm.PID_Angle.Init(125.0f, 0.0f, 0.0f, 0.0f, 0.0f, 5.0f, 0.002f, 0.0f);
     // Motor_Arm.PID_Omega.Init(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 10.0f, 0.002f, 0.0f);
-    // Motor_Arm.PID_Angle.Init(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 5.0f, 0.002f, 0.0f);
+    Motor_Arm.PID_Angle.Init(125.0f, 0.0f, 0.0f, 0.0f, 0.0f, 5.0f, 0.002f, 0.0f);
     // 手腕电机初始化
     Motor_Wrist.Init(&hfdcan1, 0xF0, 0x70, Motor_RS_PID_Mode_ANGLE);
     Motor_Wrist.PID_Omega.Init(1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 5.0f, 0.002f, 0.0f);
-    Motor_Wrist.PID_Angle.Init(20.0f, 0.0f, 0.0f, 0.0f, 0.0f, 15.0f, 0.002f, 0.0f);
+    Motor_Wrist.PID_Angle.Init(30.0f, 0.0f, 0.0f, 0.0f, 0.0f, 15.0f, 0.002f, 0.0f);
     // Motor_Wrist.PID_Omega.Init(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 5.0f, 0.002f, 0.0f);
-    // Motor_Wrist.PID_Angle.Init(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 15.0f, 0.002f, 0.0f);
+    // Motor_Wrist.PID_Angle.Init(70.0f, 0.0f, 0.0f, 0.0f, 0.0f, 15.0f, 0.002f, 0.0f);
 
     // // 气泵初始化
     // Air_Pump.Init(GPIOC, GPIO_PIN_13);
@@ -110,14 +110,23 @@ void Class_KFS::Lift_To_Height(float height)
 
 void Class_KFS::Wrist_To_Angle(float angle)
 {
-    float wrist_error = angle - Processed_Wrist_Angle_Rad;
+    float wrist_error = angle - Processed_Wrist_Angle_Rad; 
     float motor_target = -angle + Wrist_Parallel_With_Arm_Angle_Offset;
 
-    if (fabsf(wrist_error) > Wrist_Distance_Approach_Threshold &&
-        fabsf(Motor_Wrist.Get_Target_Angle() - motor_target) > 0.01f)
+    if (Math_Abs(wrist_error) > Wrist_Distance_Lock_Threshold &&
+        (Math_Abs(Motor_Wrist.Get_Target_Angle() - motor_target) > 0.001f || Motor_Wrist.Get_PID_Mode() != Motor_RS_PID_Mode_ANGLE))
     {
-        Motor_Wrist.Set_PID_Mode(Motor_RS_PID_Mode_OMEGA);
-        Motor_Wrist.Set_Target_Omega((wrist_error > 0.0f ? -1.0f : 1.0f) * Wrist_Max_Velocity);
+        if (Math_Abs(wrist_error) < Wrist_Distance_Brake_Threshold)
+        {
+            Motor_Wrist.Set_PID_Mode(Motor_RS_PID_Mode_OMEGA);
+            float sloped_speed = Wrist_Max_Velocity * 0.5f * (1.0f + arm_cos_f32(PI * (Math_Abs(wrist_error) - Wrist_Distance_Brake_Threshold) / (Wrist_Distance_Brake_Threshold - Wrist_Distance_Lock_Threshold)));
+            Motor_Wrist.Set_Target_Omega(wrist_error > 0.0f ? -sloped_speed : sloped_speed);
+        }
+        else
+        {
+            Motor_Wrist.Set_PID_Mode(Motor_RS_PID_Mode_OMEGA);
+            Motor_Wrist.Set_Target_Omega((wrist_error > 0.0f ? -1.0f : 1.0f) * Wrist_Max_Velocity);
+        }
     }
     else
     {
@@ -129,14 +138,24 @@ void Class_KFS::Wrist_To_Angle(float angle)
 void Class_KFS::Arm_To_Angle(float angle)
 {
     float arm_error = angle - Processed_Arm_Angle_Rad;
-    float motor_target = angle + Arm_Horizontal_Offset;
 
-    if (fabsf(arm_error) > Arm_Distance_Approach_Threshold &&
-        fabsf(Motor_Arm.Get_Target_Angle() - motor_target) > 0.01f)
+    float motor_target = Motor_Arm.Get_Now_Angle() + arm_error;
+
+    if (Math_Abs(arm_error) > Arm_Distance_Lock_Threshold && (Math_Abs(Motor_Arm.Get_Target_Angle() - motor_target) > 0.001f || Motor_Arm.Get_PID_Mode() != Motor_DM_PID_Mode_ANGLE))
     {
-        Motor_Arm.Set_PID_Mode(Motor_DM_PID_Mode_OMEGA);
-        Motor_Arm.Set_Target_Omega((arm_error > 0.0f ? 1.0f : -1.0f) * Arm_Max_Velocity);
+        if (Math_Abs(arm_error) < Arm_Distance_Brake_Threshold)
+        {
+            Motor_Arm.Set_PID_Mode(Motor_DM_PID_Mode_OMEGA);
+            float sloped_speed = Arm_Max_Velocity * 0.5f * (1.0f + arm_cos_f32(PI * (Math_Abs(arm_error) - Arm_Distance_Brake_Threshold) / (Arm_Distance_Brake_Threshold - Arm_Distance_Lock_Threshold)));
+            Motor_Arm.Set_Target_Omega(arm_error > 0.0f ? sloped_speed : -sloped_speed);
+        }
+        else
+        {
+            Motor_Arm.Set_PID_Mode(Motor_DM_PID_Mode_OMEGA);
+            Motor_Arm.Set_Target_Omega((arm_error > 0.0f ? 1.0f : -1.0f) * Arm_Max_Velocity);
+        }
     }
+
     else
     {
         Motor_Arm.Set_PID_Mode(Motor_DM_PID_Mode_ANGLE);
@@ -179,7 +198,9 @@ void Class_KFS::TIM_Control_PeriodElapsedCallback()
     Motor_Wrist.TIM_Send_PeriodElapsedCallback();
 
     // 机械臂控制
-    Motor_Arm.Set_Feedforward_Torque(Arm_Gravity_Compensation_Ratio * arm_cos_f32(Processed_Arm_Angle_Rad)); // m1g×d1 × cos(θ₁)
+    Motor_Arm.Set_Feedforward_Torque(Arm_Gravity_Compensation_Ratio * arm_cos_f32(Processed_Arm_Angle_Rad) -
+                                     (float)Is_KFS_Picked * KFS_Gravity_Compensation_Ratio_Wrist * arm_cos_f32(Processed_Arm_Angle_Rad + Processed_Wrist_Angle_Rad) +
+                                     (float)Is_KFS_Picked * KFS_Gravity_Compensation_Ratio_Arm * arm_cos_f32(Processed_Arm_Angle_Rad));
 
     Motor_Arm.TIM_Calculate_PeriodElapsedCallback();
     Motor_Arm.TIM_Send_PeriodElapsedCallback();

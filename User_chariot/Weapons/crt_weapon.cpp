@@ -65,7 +65,7 @@ void Class_Weapon::Init()
 
     FSM_Weapon.Weapon = this;
 
-    FSM_Weapon.Init(10, Weapon_Status_Init);
+    FSM_Weapon.Init(MAX_WEAPON_STATUS, Weapon_Status_Init);
 }
 
 void Class_Weapon::Move_To_Position(float x)
