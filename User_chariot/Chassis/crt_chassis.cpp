@@ -223,10 +223,11 @@ void Class_Chassis::Kinematics_Inverse_Resolution()
         Target_Wheel_Omega[i] = tmp_velocity_modulus / Wheel_Radius;
 
         // 根据速度的xy分量分别决定舵向电机角度
-        if (tmp_velocity_modulus == 0.0f)
+        if (tmp_velocity_modulus <= 0.01f)
         {
             // 排除除零问题
             Target_Steer_Angle[i] = Now_Steer_Angle[i];
+            Target_Wheel_Omega[i] = 0.0f;
         }
         else
         {
@@ -408,6 +409,20 @@ void Class_Chassis::Output_To_Motor()
 
             break;
         }
+        case (Chassis_Control_Type_SELF_LOCK):
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                Motor_Steer[i].Set_Control_Method(MOTOR_CONTROL_METHOD_POSITION);
+                Motor_Steer[i].Set_Target_Position(Steer_Azimuth[i]);
+                Motor_Steer[i].Set_Feedback_Position(Steer_Encoder[i].Get_Total_Angle() * DEG_TO_RAD);
+
+                Motor_Wheel[i].Set_Control_Method(MOTOR_CONTROL_METHOD_CURRENT);
+                Motor_Wheel[i].Set_Control_Current(0.0f);
+            }
+            break;
+        }
+
         case (Chassis_Control_Type_NORMAL):
         {
             // 舵轮模型

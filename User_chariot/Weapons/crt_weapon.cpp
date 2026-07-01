@@ -354,7 +354,7 @@ void Class_FSM_Weapon::Weapon_TIM_Status_PeriodElapsedCallback()
                 {
                     Weapon->Backward_Yaw_Flag = false;
                     Status[Now_Status_Serial].Count_Time = 0;
-                    Set_Status(Weapon_Status_Rotate_To_Connection);
+                    Set_Status(Weapon_Status_Servo_Action);
                 }
             }
             break;
@@ -392,13 +392,35 @@ void Class_FSM_Weapon::Weapon_TIM_Status_PeriodElapsedCallback()
                 {
                     Weapon->Forward_Yaw_Flag = false;
                     Status[Now_Status_Serial].Count_Time = 0;
-                    Set_Status(Weapon_Status_Init);
+                    Set_Status(Weapon_Status_Attack_Postition_1);
                 }
                 if (Weapon->Backward_Yaw_Flag)
                 {
                     Weapon->Backward_Yaw_Flag = false;
                     Status[Now_Status_Serial].Count_Time = 0;
-                    Set_Status(Weapon_Status_Attack_Postition_1);
+                    Set_Status(Weapon_Status_Rotate_To_Storage);
+                }
+            }
+            break;
+        }
+
+        case Weapon_Status_Servo_Action:
+        {
+            Weapon->Weapon_Grab_Status_Task();
+
+            if (Weapon->Is_Action_Finished())
+            {
+                if (Weapon->Forward_Yaw_Flag)
+                {
+                    Weapon->Forward_Yaw_Flag = false;
+                    Status[Now_Status_Serial].Count_Time = 0;
+                    Set_Status(Weapon_Status_Rotate_To_Storage);
+                }
+                if (Weapon->Backward_Yaw_Flag)
+                {
+                    Weapon->Backward_Yaw_Flag = false;
+                    Status[Now_Status_Serial].Count_Time = 0;
+                    Set_Status(Weapon_Status_Lift_1);
                 }
             }
             break;

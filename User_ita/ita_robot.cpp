@@ -58,6 +58,11 @@ void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
     // // Lift
     // Lift.TIM_Calculate_PeriodElapsedCallback();
 
+    // if(Lift.FSM_Lift.Lift_Status == Lift_Status_Wait_R2)
+    // {
+    //     Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_SELF_LOCK);
+    // }
+
     // 底盘控制
     Chassis.TIM_2ms_Control_PeriodElapsedCallback();
 
@@ -148,19 +153,21 @@ void Class_Chariot::Control_Chassis()
 
         // 遥控器开关操作逻辑
         // SA开关控制使能情况
-        if (CRSF.Get_SA() == CRSF_SWITCH_HIGH) // SA高档，底盘随动
+        if (Chassis.Get_Chassis_Control_Type() != Chassis_Control_Type_SELF_LOCK)
         {
-            // 底盘随动
-            Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_NORMAL);
-            Chassis.Set_Target_Velocity_X(chassis_velocity_x);
-            Chassis.Set_Target_Velocity_Y(-chassis_velocity_y);
-            Chassis.Set_Target_Omega(chassis_omega);
+            if (CRSF.Get_SA() == CRSF_SWITCH_HIGH) // SA高档，底盘随动
+            {
+                // 底盘随动
+                Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_NORMAL);
+                Chassis.Set_Target_Velocity_X(-chassis_velocity_x);
+                Chassis.Set_Target_Velocity_Y(chassis_velocity_y);
+                Chassis.Set_Target_Omega(chassis_omega);
+            }
+            else if (CRSF.Get_SA() == CRSF_SWITCH_LOW) // SA低档 禁用模式
+            {
+                Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
+            }
         }
-        else if (CRSF.Get_SA() == CRSF_SWITCH_LOW) // SA低档 禁用模式
-        {
-            Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
-        }
-
         // SB开关控制控制区域
         if (CRSF.Get_SB() == CRSF_SWITCH_LOW)
         {

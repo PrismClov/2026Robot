@@ -39,7 +39,7 @@ enum Enum_Chassis_Control_Type
 {
     Chassis_Control_Type_DISABLE,
     Chassis_Control_Type_NORMAL,
-    Chassis_Control_Type_LOW_CURRENT_FEEDFORWARD,
+    Chassis_Control_Type_SELF_LOCK,
 };
 
 /**
@@ -108,8 +108,6 @@ public:
     inline void Set_Target_Omega(float __Target_Omega);
 
     inline float Get_Angle_Yaw();
-
-    void Steer_Angle_Set(uint8_t __Steer_Motor_ID);
 
     void TIM_100ms_Alive_PeriodElapsedCallback();
 
@@ -188,7 +186,7 @@ protected:
 
     float steer_offset_deg[4] = {
         129.67955003f,  // [0] 编码器朝前 129.67955003°
-        164.541274806f, // [1] 编码器朝前 164.541274806°
+        -86.3248444f, // [1] 编码器朝前 164.541274806°
         43.01409946f,   // [2] 编码器朝前 43.01409946°
         146.40174902f,  // [3] 编码器朝前 146.40174902°
     };

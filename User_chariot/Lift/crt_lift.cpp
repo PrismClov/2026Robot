@@ -56,11 +56,9 @@ void Class_Lift::Init()
                                            }});
 
     FSM_Lift.Lift = this;
-    FSM_Lift.Init(3, Lift_Status_Wait_R2); // 3个状态, 初始为Wait
+    FSM_Lift.Init(3, Lift_Status_Init);
 }
 
-// float kp = 1000.0f;
-// float dist = 0.0f;
 void Class_Lift::TIM_Calculate_PeriodElapsedCallback()
 {
     // 1. 校准(未完成则执行校准并跳过控制)
@@ -75,16 +73,9 @@ void Class_Lift::TIM_Calculate_PeriodElapsedCallback()
 
     // 3. 状态机更新
     FSM_Lift.Lift_TIM_Status_PeriodElapsedCallback();
-    // Set_Target_Position(dist);
 
     // 4. 执行运动控制
     Move_To_Position();
-
-    // Motor_Lift_L.Set_Feedforward_Current(Load_Gravity_Compensation[0]);
-    // Motor_Lift_R.Set_Feedforward_Current(Load_Gravity_Compensation[1]);
-
-    // Distance_PID[0].Set_K_P(kp);
-    // Distance_PID[1].Set_K_P(kp);
 
     // 5. 电机计算(速度PID → 电流输出)
     Motor_Lift_L.Calculate();
@@ -103,6 +94,20 @@ void Class_FSM_Lift::Lift_TIM_Status_PeriodElapsedCallback()
 
     switch (Now_Status_Serial)
     {
+        case Lift_Status_Init:
+        {
+            Lift->Motor_Lift_L.Set_Feedforward_Current(Lift->Empty_Gravity_Compensation[0]);
+            Lift->Motor_Lift_R.Set_Feedforward_Current(Lift->Empty_Gravity_Compensation[1]);
+
+            Lift->Set_Target_Position(Lift->Target_Distance_Init);
+
+            if (Lift->Get_Is_Motion_Finished() && Lift->Yaw_Flag)
+            {
+                Status[Now_Status_Serial].Count_Time = 0;
+                Set_Status(Lift_Status_Wait_R2);
+            }
+            break;
+        }
         case Lift_Status_Wait_R2:
         {
             Lift->Motor_Lift_L.Set_Feedforward_Current(Lift->Empty_Gravity_Compensation[0]);

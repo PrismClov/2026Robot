@@ -7,7 +7,7 @@
 #include "dvc_motor_dji.h"
 #include "dvc_motor_dm.h"
 
-#define MAX_WEAPON_STATUS 10
+#define MAX_WEAPON_STATUS 11
 
 class Class_Weapon;
 
@@ -23,6 +23,7 @@ enum Enum_Weapon_Status
     Weapon_Status_Rotate_To_Storage,    // 旋转到存储位置
     Weapon_Status_Attack_Postition_1,   // 第一个攻击位置
     Weapon_Status_Attack_Postition_2,   // 第二个攻击位置
+    Weapon_Status_Servo_Action,         // 舵机动作
 };
 
 /**
