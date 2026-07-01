@@ -32,9 +32,9 @@
  */
 void Class_Chariot::Init()
 {
-    // CRSF.Init(&huart7);
+    CRSF.Init(&huart7);
 
-    // Chassis.Init();
+    Chassis.Init();
     // Lift.Init();
     // Weapon.Init();
     KFS.Init();
@@ -46,8 +46,8 @@ void Class_Chariot::Init()
  */
 void Class_Chariot::TIM_100ms_Alive_PeriodElapsedCallback()
 {
-    // CRSF.TIM1msMod50_Alive_PeriodElapsedCallback();
-    // Chassis.TIM_100ms_Alive_PeriodElapsedCallback();
+    CRSF.TIM1msMod50_Alive_PeriodElapsedCallback();
+    Chassis.TIM_100ms_Alive_PeriodElapsedCallback();
     // Lift.TIM_100ms_Alive_PeriodElapsedCallback();
     KFS.TIM_Alive_PeriodElapsedCallback();
     // Weapon.TIM_Alive_PeriodElapsedCallback();
@@ -58,8 +58,8 @@ void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
     // // Lift
     // Lift.TIM_Calculate_PeriodElapsedCallback();
 
-    // // 底盘控制
-    // Chassis.TIM_2ms_Control_PeriodElapsedCallback();
+    // 底盘控制
+    Chassis.TIM_2ms_Control_PeriodElapsedCallback();
 
     // KFS
     KFS.TIM_Control_PeriodElapsedCallback();
@@ -153,7 +153,7 @@ void Class_Chariot::Control_Chassis()
             // 底盘随动
             Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_NORMAL);
             Chassis.Set_Target_Velocity_X(chassis_velocity_x);
-            Chassis.Set_Target_Velocity_Y(chassis_velocity_y);
+            Chassis.Set_Target_Velocity_Y(-chassis_velocity_y);
             Chassis.Set_Target_Omega(chassis_omega);
         }
         else if (CRSF.Get_SA() == CRSF_SWITCH_LOW) // SA低档 禁用模式

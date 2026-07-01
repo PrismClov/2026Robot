@@ -391,24 +391,6 @@ void Class_Chassis::Output_To_Motor()
 {
     switch (Chassis_Control_Type)
     {
-        case (Chassis_Control_Type_UNCALIBRATED):
-        {
-            for (int i = 0; i < 4; i++)
-            {
-                // 对舵向电机单独校准
-                if (!Steer_Calibration_Status[i])
-                {
-                    Motor_Steer[i].Set_Control_Method(MOTOR_CONTROL_METHOD_SPEED);
-                    Motor_Steer[i].Set_Target_Speed(7.5f);
-                }
-                else
-                {
-                    Motor_Steer[i].Set_Target_Speed(0.0f);
-                }
-            }
-
-            break;
-        }
         case (Chassis_Control_Type_DISABLE):
         {
             // 底盘失能

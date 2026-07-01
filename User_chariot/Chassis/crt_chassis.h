@@ -37,20 +37,9 @@
  */
 enum Enum_Chassis_Control_Type
 {
-    Chassis_Control_Type_UNCALIBRATED = 0,
     Chassis_Control_Type_DISABLE,
     Chassis_Control_Type_NORMAL,
     Chassis_Control_Type_LOW_CURRENT_FEEDFORWARD,
-};
-
-/**
- * @brief 底盘舵向角度标定枚举
- *
- */
-enum Enum_Chassis_Steer_Calibration_Type
-{
-    Chassis_Steer_Calibration_Type_UNCALIBRATED = 0, // 未标定
-    Chassis_Steer_Calibration_Type_CALIBRATED,       // 标定完成
 };
 
 /**
@@ -128,7 +117,7 @@ public:
 
 protected:
     // 底盘控制方法
-    Enum_Chassis_Control_Type Chassis_Control_Type = Chassis_Control_Type_UNCALIBRATED;
+    Enum_Chassis_Control_Type Chassis_Control_Type = Chassis_Control_Type_DISABLE;
 
     // 舵向电机角度目标值
     float Target_Steer_Angle[4];
@@ -195,19 +184,13 @@ protected:
 
     // 读写变量
 
-    // 舵向电机标定状态
-    Enum_Chassis_Steer_Calibration_Type Steer_Calibration_Status[4] = {Chassis_Steer_Calibration_Type_UNCALIBRATED,
-                                                                       Chassis_Steer_Calibration_Type_UNCALIBRATED,
-                                                                       Chassis_Steer_Calibration_Type_UNCALIBRATED,
-                                                                       Chassis_Steer_Calibration_Type_UNCALIBRATED};
     // 舵向标定电机误差
 
     float steer_offset_deg[4] = {
-        // 0.0f, 0.0f, 0.0f, 0.0f}; // 舵向电机标定误差，单位为度，顺时针为正，前x右y上z
-        -53.105652f,   // [0] 编码器朝前 307.33°
-        90.252700806f, // [1] 编码器朝前 90.55°
-        -138.162598f,  // [2] 编码器朝前 45.75°
-        -28.231094f,   // [3] 编码器朝前 324.14°
+        129.67955003f,  // [0] 编码器朝前 129.67955003°
+        164.541274806f, // [1] 编码器朝前 164.541274806°
+        43.01409946f,   // [2] 编码器朝前 43.01409946°
+        146.40174902f,  // [3] 编码器朝前 146.40174902°
     };
 
     // 目标速度X
