@@ -242,26 +242,59 @@ void Class_Chassis::Kinematics_Inverse_Resolution()
 /**
  * @brief 舵向电机依照轮向电机目标角速度就近转位
  *
+ * @note 使用施密特触发器延迟翻转：角度差在±PI/2附近抖动时，
+ *       不会反复触发翻转，避免输出劣弧/优弧震荡
  */
 void Class_Chassis::_Steer_Motor_Kinematics_Nearest_Transposition()
 {
+    constexpr float hysteresis = 0.0995f; // 约5.7°，迟滞阈值
+    constexpr float half_pi = PI / 2.0f;
+
     for (int i = 0; i < 4; i++)
     {
         float tmp_delta_angle = Target_Steer_Angle[i] - Now_Steer_Angle[i];
         tmp_delta_angle = fmod(tmp_delta_angle, 2.0f * PI);
         tmp_delta_angle = Math_Modulus_Normalization(tmp_delta_angle, 2.0f * PI);
 
-        // 根据转动角度范围决定是否需要就近转位
-        if (-PI / 2.0f <= tmp_delta_angle && tmp_delta_angle <= PI / 2.0f)
+        if (!Steer_Flip_State[i])
         {
-            // ±PI / 2之间无需反向就近转位
-            Target_Steer_Angle[i] = tmp_delta_angle + Now_Steer_Angle[i];
+            // 当前未翻转：需超过 +PI/2 + hysteresis 才翻
+            if (tmp_delta_angle > half_pi + hysteresis)
+            {
+                Steer_Flip_State[i] = true;
+                Target_Steer_Angle[i] = Math_Modulus_Normalization(tmp_delta_angle + PI, 2.0f * PI) + Now_Steer_Angle[i];
+                Target_Wheel_Omega[i] *= -1.0f;
+            }
+            else if (tmp_delta_angle < half_pi - hysteresis)
+            {
+                // 低于下阈值，保持未翻
+                Target_Steer_Angle[i] = tmp_delta_angle + Now_Steer_Angle[i];
+            }
+            else
+            {
+                // 在迟滞区间内，保持上一拍状态
+                Target_Steer_Angle[i] = tmp_delta_angle + Now_Steer_Angle[i];
+            }
         }
         else
         {
-            // 需要反转扣圈情况
-            Target_Steer_Angle[i] = Math_Modulus_Normalization(tmp_delta_angle + PI, 2.0f * PI) + Now_Steer_Angle[i];
-            Target_Wheel_Omega[i] *= -1.0f;
+            // 当前已翻转：需低于 -PI/2 - hysteresis 才取消翻转
+            if (tmp_delta_angle < -half_pi - hysteresis)
+            {
+                Steer_Flip_State[i] = false;
+                Target_Steer_Angle[i] = tmp_delta_angle + Now_Steer_Angle[i];
+                Target_Wheel_Omega[i] *= -1.0f;
+            }
+            else if (tmp_delta_angle > -half_pi + hysteresis)
+            {
+                // 高于上阈值，保持翻转
+                Target_Steer_Angle[i] = Math_Modulus_Normalization(tmp_delta_angle + PI, 2.0f * PI) + Now_Steer_Angle[i];
+            }
+            else
+            {
+                // 在迟滞区间内，保持上一拍状态
+                Target_Steer_Angle[i] = Math_Modulus_Normalization(tmp_delta_angle + PI, 2.0f * PI) + Now_Steer_Angle[i];
+            }
         }
     }
 }

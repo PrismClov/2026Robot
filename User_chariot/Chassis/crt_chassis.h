@@ -167,6 +167,9 @@ protected:
     // 轮向电机角速度目标值
     float Target_Wheel_Omega[4];
 
+    // 施密特触发器：轮子是否走优弧（true=已翻转，走长弧）
+    bool Steer_Flip_State[4] = {false, false, false, false};
+
     // 低电流前馈控制相关参数
 
     // 低电流死区设置
