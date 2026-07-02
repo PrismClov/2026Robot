@@ -2,104 +2,82 @@
 
 void Class_Lift::Init()
 {
-    // Lift抬升电机 (CAN2, ID 0x204-0x205)
-    Motor_Lift_L.Init(&hfdcan2, Motor::Motor_DJI_ID_0x204,
+    // Lift抬升电机 (CAN3, ID 0x207-0x208)
+    Motor_Lift_L.Init(&hfdcan3, Motor::Motor_DJI_ID_0x207,
                       Motor::Class_Motor_DJI_C620::Parameters{
                           .PID_Omega = PID_Parameters{
-                              .K_P = 6.0f,
-                              .K_I = 0.1f,
+                              .K_P = 1.8f,
+                              .K_I = 0.0f,
                               .K_D = 0.0f,
                               .Out_Max = 20.0f,
                           },
-                      });
-    Motor_Lift_R.Init(&hfdcan2, Motor::Motor_DJI_ID_0x205,
+                      },
+                      3591.0f / 187.0f * 50.0f / 20.0f);
+    Motor_Lift_R.Init(&hfdcan3, Motor::Motor_DJI_ID_0x208,
                       Motor::Class_Motor_DJI_C620::Parameters{
                           .PID_Omega = PID_Parameters{
-                              .K_P = 6.0f,
-                              .K_I = 0.1f,
+                              .K_P = 1.8f,
+                              .K_I = 0.0f,
                               .K_D = 0.0f,
                               .Out_Max = 20.0f,
                           },
-                      });
+                      },
+                      3591.0f / 187.0f * 50.0f / 20.0f);
 
-    Motor_Lift_L.Set_Feedforward_Omega(0.6f);
-    Motor_Lift_R.Set_Feedforward_Omega(0.6f);
-
-    // 电机 rad → 抬升行程(米) 转换:
-    // 减速比 2.5:1, 34齿同步轮, 5mm齿距, 电机转一圈行程 = 34*0.005 / (2*PI*gear) m/rad
-    float gear = 2.50f / 1.0f;
-    float angle_to_dist = -1.0f * 34.0f * 0.005f / (2.0f * PI * gear);
-
-    Class_MultiMotorSync_Base::Init({&Motor_Lift_L, &Motor_Lift_R},
-                          Class_MultiMotorSync_Base::Parameters{
-                              .PID_Distance = {
-                                  PID_Parameters{
-                                      // 左同步带
-                                      .K_P = -60.0f,
-                                      .K_I = 0.07f,
-                                      .K_D = 0.02f,
-                                      .Out_Max = 3.0f,
-                                  },
-                                  PID_Parameters{
-                                      // 右同步带
-                                      .K_P = -60.0f,
-                                      .K_I = 0.07f,
-                                      .K_D = 0.02f,
-                                      .Out_Max = 3.0f,
-                                  },
-                              },
-                              .Distance_Approach_Threshold = 0.01f,
-                              .Max_Velocity = 5.0f,
-                              .Angle_To_Distance = angle_to_dist,
-                              .Calibrate = {.motion_mode = CALIBRATE_MOTION_NONE},
-                          });
+    Class_MultiMotorSync_Base<2>::Init({&Motor_Lift_L, &Motor_Lift_R},
+                                       Class_MultiMotorSync_Base::Parameters{
+                                           .PID_Distance = {
+                                               PID_Parameters{
+                                                   // 左同步带
+                                                   .K_P = 1500.0f,
+                                                   .K_I = 0.0f,
+                                                   .K_D = 0.0f,
+                                                   .Out_Max = 3.0f,
+                                               },
+                                               PID_Parameters{
+                                                   // 右同步带
+                                                   .K_P = 1500.0f,
+                                                   .K_I = 0.0f,
+                                                   .K_D = 0.0f,
+                                                   .Out_Max = 3.0f,
+                                               },
+                                           },
+                                           .Max_Velocity = 12.0f,
+                                           .Distance_Approach_Threshold = 0.01f,
+                                           .Speed_Approach_Threshold = 0.005f,
+                                           .Angle_To_Distance = 1.0f * 34.0f * 0.005f / (2.0f * PI),
+                                           .Direction_Sign = {1, 1},
+                                           .Calibrate = {
+                                               .motion_mode = CALIBRATE_MOTION_SPEED,
+                                               .motion_value = -5.0f,
+                                               .detect_mode = CALIBRATE_DETECT_SPEED,
+                                               .detect_threshold = 0.005f,
+                                               .debounce_us = 200000,
+                                           }});
 
     FSM_Lift.Lift = this;
-    FSM_Lift.Init(3, Lift_Status_Wait_R2); // 3个状态, 初始为Wait
-}
-
-bool Class_Lift::Is_Wait_R2_Finished_step()
-{
-    return (Math_Abs(Now_Distance[0] - Target_Distance_Wait_R2[0]) <= Distance_Error) &&
-           (Math_Abs(Now_Distance[1] - Target_Distance_Wait_R2[1]) <= Distance_Error) &&
-           (Motor_Lift_L.Get_Now_Omega() <= 0.05f) &&
-           (Motor_Lift_R.Get_Now_Omega() <= 0.05f);
-}
-
-bool Class_Lift::Is_Lift_R2_Finished_step()
-{
-    return (Math_Abs(Now_Distance[0] - Target_Distance_Lift_R2[0]) <= Distance_Error) &&
-           (Math_Abs(Now_Distance[1] - Target_Distance_Lift_R2[1]) <= Distance_Error) &&
-           (Motor_Lift_L.Get_Now_Omega() <= 0.05f) &&
-           (Motor_Lift_R.Get_Now_Omega() <= 0.05f);
-}
-
-bool Class_Lift::Is_Down_R2_Finished_step()
-{
-    return (Math_Abs(Now_Distance[0] - Target_Distance_Down_R2[0]) <= Distance_Error) &&
-           (Math_Abs(Now_Distance[1] - Target_Distance_Down_R2[1]) <= Distance_Error) &&
-           (Motor_Lift_L.Get_Now_Omega() <= 0.05f) &&
-           (Motor_Lift_R.Get_Now_Omega() <= 0.05f);
-}
-
-void Class_Lift::UP_Cancel()
-{
-    Motor_Lift_L.Set_Target_Speed(0.0f);
-    Motor_Lift_R.Set_Target_Speed(0.0f);
+    FSM_Lift.Init(3, Lift_Status_Init);
 }
 
 void Class_Lift::TIM_Calculate_PeriodElapsedCallback()
 {
-    // 更新行程
+    // 1. 校准(未完成则执行校准并跳过控制)
+    if (!Get_Is_Calibrated())
+    {
+        Calibrate_Update();
+        return;
+    }
+
+    // 2. 更新行程
     Distance_Update();
 
-    // 状态机更新
+    // 3. 状态机更新
     FSM_Lift.Lift_TIM_Status_PeriodElapsedCallback();
 
-    // 3. 执行运动控制(开环/闭环切换 + 单步限幅)
+    // 4. 执行运动控制
     Move_To_Position();
 
-    // 4. 电机计算(速度PID → 电流输出)
+    // 5. 电机计算(速度PID → 电流输出)
     Motor_Lift_L.Calculate();
     Motor_Lift_R.Calculate();
 }
@@ -116,61 +94,61 @@ void Class_FSM_Lift::Lift_TIM_Status_PeriodElapsedCallback()
 
     switch (Now_Status_Serial)
     {
+        case Lift_Status_Init:
+        {
+            Lift->Motor_Lift_L.Set_Feedforward_Current(Lift->Empty_Gravity_Compensation[0]);
+            Lift->Motor_Lift_R.Set_Feedforward_Current(Lift->Empty_Gravity_Compensation[1]);
+
+            Lift->Set_Target_Position(Lift->Target_Distance_Init);
+
+            if (Lift->Get_Is_Motion_Finished() && Lift->Yaw_Flag)
+            {
+                Status[Now_Status_Serial].Count_Time = 0;
+                Set_Status(Lift_Status_Wait_R2);
+            }
+            break;
+        }
         case Lift_Status_Wait_R2:
         {
-            if (!Lift->Is_Wait_R2_Finished_step())
-            {
-                // 未到位 → 持续向目标运动
-                Lift->Move_To(Lift->Target_Distance_Wait_R2[0], Lift->Target_Distance_Wait_R2[1]);
-            }
-            else if (Lift->Is_Wait_R2_Finished_step())
-            {
-                Lift->UP_Cancel();
+            Lift->Motor_Lift_L.Set_Feedforward_Current(Lift->Empty_Gravity_Compensation[0]);
+            Lift->Motor_Lift_R.Set_Feedforward_Current(Lift->Empty_Gravity_Compensation[1]);
 
-                // 等待Yaw到位信号到来后才切换
-                if (Lift->Yaw_Flag)
-                {
-                    Status[Now_Status_Serial].Count_Time = 0;
-                    Set_Status(Lift_Status_Lift_R2);
-                }
+            Lift->Set_Target_Position(Lift->Target_Distance_Wait_R2);
+
+            if (Lift->Get_Is_Motion_Finished() && Lift->Yaw_Flag)
+            {
+                Status[Now_Status_Serial].Count_Time = 0;
+                Set_Status(Lift_Status_Lift_R2);
             }
             break;
         }
 
         case Lift_Status_Lift_R2:
         {
-            if (!Lift->Is_Lift_R2_Finished_step())
-            {
-                Lift->Move_To(Lift->Target_Distance_Lift_R2[0], Lift->Target_Distance_Lift_R2[1]);
-            }
-            else if (Lift->Is_Lift_R2_Finished_step())
-            {
-                Lift->UP_Cancel();
+            Lift->Motor_Lift_L.Set_Feedforward_Current(Lift->Load_Gravity_Compensation[0]);
+            Lift->Motor_Lift_R.Set_Feedforward_Current(Lift->Load_Gravity_Compensation[1]);
 
-                if (Lift->Yaw_Flag)
-                {
-                    Status[Now_Status_Serial].Count_Time = 0;
-                    Set_Status(Lift_Status_Down_R2);
-                }
+            Lift->Set_Target_Position(Lift->Target_Distance_Lift_R2);
+
+            if (Lift->Get_Is_Motion_Finished() && Lift->Yaw_Flag)
+            {
+                Status[Now_Status_Serial].Count_Time = 0;
+                Set_Status(Lift_Status_Down_R2);
             }
             break;
         }
 
         case Lift_Status_Down_R2:
         {
-            if (!Lift->Is_Down_R2_Finished_step())
-            {
-                Lift->Move_To(Lift->Target_Distance_Down_R2[0], Lift->Target_Distance_Down_R2[1]);
-            }
-            else if (Lift->Is_Down_R2_Finished_step())
-            {
-                Lift->UP_Cancel();
+            Lift->Motor_Lift_L.Set_Feedforward_Current(Lift->Load_Gravity_Compensation[0]);
+            Lift->Motor_Lift_R.Set_Feedforward_Current(Lift->Load_Gravity_Compensation[1]);
 
-                if (Lift->Yaw_Flag)
-                {
-                    Status[Now_Status_Serial].Count_Time = 0;
-                    Set_Status(Lift_Status_Wait_R2);
-                }
+            Lift->Set_Target_Position(Lift->Target_Distance_Down_R2);
+
+            if (Lift->Get_Is_Motion_Finished() && Lift->Yaw_Flag)
+            {
+                Status[Now_Status_Serial].Count_Time = 0;
+                Set_Status(Lift_Status_Wait_R2);
             }
             break;
         }

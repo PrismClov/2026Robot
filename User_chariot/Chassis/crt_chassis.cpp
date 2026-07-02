@@ -22,6 +22,8 @@
 
 /* Private macros ------------------------------------------------------------*/
 
+// #define CHASSIS_SLOPE_ENABLE
+
 /* Private types -------------------------------------------------------------*/
 
 /* Private variables ---------------------------------------------------------*/
@@ -40,18 +42,24 @@ void Class_Chassis::Init(float __Velocity_X_Max, float __Velocity_Y_Max, float _
     Velocity_X_Max = __Velocity_X_Max;
     Velocity_Y_Max = __Velocity_Y_Max;
     Omega_Max = __Omega_Max;
+
+    // 斜坡初始化
+    Slope_Velocity_X.Init(0.1f, 0.1f, Slope_First_REAL);
+
+    Slope_Velocity_Y.Init(0.1f, 0.1f, Slope_First_REAL);
+
+    Slope_Omega.Init(0.1f, 0.1f, Slope_First_REAL);
+
     // PID初始化
 
     // 底盘速度xPID, 输出摩擦力
-    PID_Velocity_X.Init(10.0f, 0.0f, 0.0f, 0.0f, 0.18f, 30.0f, 0.002f);
+    PID_Velocity_X.Init(0.5f, 0.0f, 0.0f, 0.0f, 0.18f, 30.0f, 0.002f);
 
     // 底盘速度yPID, 输出摩擦力
-    PID_Velocity_Y.Init(10.0f, 0.0f, 0.0f, 0.0f, 0.18f, 30.0f, 0.002f);
+    PID_Velocity_Y.Init(0.5f, 0.0f, 0.0f, 0.0f, 0.18f, 30.0f, 0.002f);
 
     // 底盘角速度PID, 输出扭矩
-    PID_Omega.Init(10.0f, 0.0f, 0.0f, 0.0f, 0.01f, 10.0f, 0.002f);
-
-    // 舵向电机初始化   使用2006电机角度环 实际角度设为校准后的角度
+    PID_Omega.Init(0.5f, 0.0f, 0.0f, 0.0f, 0.01f, 10.0f, 0.002f);
 
     // 舵向电机
     for (uint8_t i = 0; i < 4; i++)
@@ -59,15 +67,15 @@ void Class_Chassis::Init(float __Velocity_X_Max, float __Velocity_Y_Max, float _
         Motor_Steer[i].Init(&hfdcan3, static_cast<Motor::Enum_Motor_DJI_ID>(0x201 + i),
                             Motor::Class_Motor_DJI_C610::Parameters{
                                 .PID_Position = PID_Parameters{
-                                    .K_P = 20.0f,
+                                    .K_P = 10.0f,
                                     .K_I = 0.0f,
                                     .K_D = 0.0f,
                                     .K_F = 0.0f,
                                     .Out_Max = 10.0f,
-                                    .Dead_Zone = 0.5f,
+                                    .Dead_Zone = 0.0f,
                                 },
                                 .PID_Omega = PID_Parameters{
-                                    .K_P = 30.0f,
+                                    .K_P = 10.0f,
                                     .K_I = 0.0f,
                                     .K_D = 0.0f,
                                     .K_F = 0.0f,
@@ -102,6 +110,7 @@ void Class_Chassis::TIM_100ms_Alive_PeriodElapsedCallback()
     {
         Motor_Steer[i].TIM_100ms_Alive_PeriodElapsedCallback();
         Motor_Wheel[i].TIM_100ms_Alive_PeriodElapsedCallback();
+        Steer_Encoder[i].TIM_100ms_Alive_PeriodElapsedCallback();
     }
 }
 /**
@@ -110,10 +119,20 @@ void Class_Chassis::TIM_100ms_Alive_PeriodElapsedCallback()
  */
 void Class_Chassis::TIM_2ms_Control_PeriodElapsedCallback()
 {
-    for (int i = 0; i < 4; i++)
-    {
-        Motor_Steer[i].Set_Feedback_Position(Steer_Encoder[i].Get_Total_Angle() * DEG_TO_RAD);
-    }
+    // 斜坡函数
+#ifdef CHASSIS_SLOPE_ENABLE
+    Slope_Velocity_X.Set_Target(Target_Velocity_X);
+    Slope_Velocity_X.Set_Now_Real(Now_Velocity_X);
+    Slope_Velocity_X.TIM_Calculate_PeriodElapsedCallback();
+
+    Slope_Velocity_Y.Set_Target(Target_Velocity_Y);
+    Slope_Velocity_Y.Set_Now_Real(Now_Velocity_Y);
+    Slope_Velocity_Y.TIM_Calculate_PeriodElapsedCallback();
+
+    Slope_Omega.Set_Target(Target_Omega);
+    Slope_Omega.Set_Now_Real(Now_Omega);
+    Slope_Omega.TIM_Calculate_PeriodElapsedCallback();
+#endif
 
     // 自身解算
     Self_Resolution();
@@ -174,9 +193,9 @@ void Class_Chassis::Steer_Angle_Self_Resolution()
         // 计算角度
         tmp_angle = Steer_Encoder[i].Get_Total_Angle() * DEG_TO_RAD;
 
-        //Now_Steer_Angle[i] = fmod(tmp_angle, 2.0f * PI);
+        Now_Steer_Angle[i] = tmp_angle;
 
-        //Now_Steer_Angle[i] = Math_Modulus_Normalization(Now_Steer_Angle[i], 2.0f * PI);
+        // Now_Steer_Angle[i] = Math_Modulus_Normalization(Now_Steer_Angle[i], 2.0f * PI);
     }
 }
 
@@ -191,18 +210,24 @@ void Class_Chassis::Kinematics_Inverse_Resolution()
         float tmp_velocity_x, tmp_velocity_y, tmp_velocity_modulus;
 
         // 解算到每个轮组的具体线速度
+#ifdef CHASSIS_SLOPE_ENABLE
+        tmp_velocity_x = Slope_Velocity_X.Get_Out() - Slope_Omega.Get_Out() * Wheel_To_Core_Distance[i] * arm_sin_f32(Steer_Azimuth[i]);
+        tmp_velocity_y = Slope_Velocity_Y.Get_Out() + Slope_Omega.Get_Out() * Wheel_To_Core_Distance[i] * arm_cos_f32(Steer_Azimuth[i]);
+#else
         tmp_velocity_x = Target_Velocity_X - Target_Omega * Wheel_To_Core_Distance[i] * arm_sin_f32(Steer_Azimuth[i]);
         tmp_velocity_y = Target_Velocity_Y + Target_Omega * Wheel_To_Core_Distance[i] * arm_cos_f32(Steer_Azimuth[i]);
+#endif
         arm_sqrt_f32(tmp_velocity_x * tmp_velocity_x + tmp_velocity_y * tmp_velocity_y, &tmp_velocity_modulus);
 
         // 根据线速度决定轮向电机角速度
         Target_Wheel_Omega[i] = tmp_velocity_modulus / Wheel_Radius;
 
         // 根据速度的xy分量分别决定舵向电机角度
-        if (tmp_velocity_modulus == 0.0f)
+        if (tmp_velocity_modulus <= 0.01f)
         {
             // 排除除零问题
             Target_Steer_Angle[i] = Now_Steer_Angle[i];
+            Target_Wheel_Omega[i] = 0.0f;
         }
         else
         {
@@ -222,7 +247,9 @@ void Class_Chassis::_Steer_Motor_Kinematics_Nearest_Transposition()
 {
     for (int i = 0; i < 4; i++)
     {
-        float tmp_delta_angle = Math_Modulus_Normalization(Target_Steer_Angle[i] - Now_Steer_Angle[i], 2.0f * PI);
+        float tmp_delta_angle = Target_Steer_Angle[i] - Now_Steer_Angle[i];
+        tmp_delta_angle = fmod(tmp_delta_angle, 2.0f * PI);
+        tmp_delta_angle = Math_Modulus_Normalization(tmp_delta_angle, 2.0f * PI);
 
         // 根据转动角度范围决定是否需要就近转位
         if (-PI / 2.0f <= tmp_delta_angle && tmp_delta_angle <= PI / 2.0f)
@@ -263,15 +290,21 @@ void Class_Chassis::Output_To_Dynamics()
         case (Chassis_Control_Type_NORMAL):
         {
 
+#ifdef CHASSIS_SLOPE_ENABLE
+            PID_Velocity_X.Set_Target(Slope_Velocity_X.Get_Out());
+            PID_Velocity_Y.Set_Target(Slope_Velocity_Y.Get_Out());
+            PID_Omega.Set_Target(Slope_Omega.Get_Out());
+#else
             PID_Velocity_X.Set_Target(Target_Velocity_X);
+            PID_Velocity_Y.Set_Target(Target_Velocity_Y);
+            PID_Omega.Set_Target(Target_Omega);
+#endif
             PID_Velocity_X.Set_Now(Now_Velocity_X);
             PID_Velocity_X.TIM_Calculate_PeriodElapsedCallback();
 
-            PID_Velocity_Y.Set_Target(Target_Velocity_Y);
             PID_Velocity_Y.Set_Now(Now_Velocity_Y);
             PID_Velocity_Y.TIM_Calculate_PeriodElapsedCallback();
 
-            PID_Omega.Set_Target(Target_Omega);
             PID_Omega.Set_Now(Now_Omega);
             PID_Omega.TIM_Calculate_PeriodElapsedCallback();
 
@@ -359,24 +392,6 @@ void Class_Chassis::Output_To_Motor()
 {
     switch (Chassis_Control_Type)
     {
-        case (Chassis_Control_Type_UNCALIBRATED):
-        {
-            for (int i = 0; i < 4; i++)
-            {
-                // 对舵向电机单独校准
-                if (!Steer_Calibration_Status[i])
-                {
-                    Motor_Steer[i].Set_Control_Method(MOTOR_CONTROL_METHOD_SPEED);
-                    Motor_Steer[i].Set_Target_Speed(7.5f);
-                }
-                else
-                {
-                    Motor_Steer[i].Set_Target_Speed(0.0f);
-                }
-            }
-
-            break;
-        }
         case (Chassis_Control_Type_DISABLE):
         {
             // 底盘失能
@@ -394,6 +409,20 @@ void Class_Chassis::Output_To_Motor()
 
             break;
         }
+        case (Chassis_Control_Type_SELF_LOCK):
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                Motor_Steer[i].Set_Control_Method(MOTOR_CONTROL_METHOD_POSITION);
+                Motor_Steer[i].Set_Target_Position(Steer_Azimuth[i]);
+                Motor_Steer[i].Set_Feedback_Position(Steer_Encoder[i].Get_Total_Angle() * DEG_TO_RAD);
+
+                Motor_Wheel[i].Set_Control_Method(MOTOR_CONTROL_METHOD_CURRENT);
+                Motor_Wheel[i].Set_Control_Current(0.0f);
+            }
+            break;
+        }
+
         case (Chassis_Control_Type_NORMAL):
         {
             // 舵轮模型
@@ -408,6 +437,8 @@ void Class_Chassis::Output_To_Motor()
             {
 
                 Motor_Steer[i].Set_Target_Position(Target_Steer_Angle[i]);
+
+                Motor_Steer[i].Set_Feedback_Position(Steer_Encoder[i].Get_Total_Angle() * DEG_TO_RAD);
 
                 if (Math_Abs(Target_Wheel_Current[i]) >= Wheel_Current_Limit)
                 {
@@ -428,12 +459,12 @@ void Class_Chassis::Output_To_Motor()
     {
         Motor_Steer[i].Calculate();
     }
-     Motor::DJI_TIM_Send_Group(&hfdcan3, Motor::CAN_Tx_ID_Both);
+    //  Motor::DJI_TIM_Send_Group(&hfdcan3, Motor::CAN_Tx_ID_Both);
 
     // 轮向电机数据发送
     for (int i = 0; i < 4; i++)
     {
-        // Motor_Wheel[i].Calculate();
+        Motor_Wheel[i].Calculate();
     }
 }
 /************************ COPYRIGHT(C) ROBOPIONEER **************************/

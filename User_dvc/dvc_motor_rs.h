@@ -377,7 +377,7 @@ class Class_Motor_RS_MIT
 
     void TIM_Send_PeriodElapsedCallback();
 
-    private:
+    protected:
 
 
     // 初始化相关变量

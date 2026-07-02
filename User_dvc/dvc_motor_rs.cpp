@@ -591,7 +591,7 @@ void Class_Motor_RS_Private::TIM_Send_PeriodElapsedCallback()
  *
  */
 void Class_Motor_RS_Private::Data_Process()
-{   
+{
     // 获取扩展帧ID的29位
     uint32_t temp_extid = FDCAN_Manage_Object->Rx_Buffer.Header.Identifier & 0x1FFFFFFF;
      // 数据处理过程

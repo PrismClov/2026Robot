@@ -14,11 +14,11 @@
 #define ITA_ROBOT_H
 
 /* Includes -----------------------------------------------------------------*/
+#include "crt_KFS.h"
 #include "crt_chassis.h"
 #include "crt_lift.h"
 #include "crt_weapon.h"
 #include "dvc_crsf.h"
-#include "crt_KFS.h"
 
 /* Exported macros -----------------------------------------------------------*/
 
@@ -45,6 +45,14 @@ enum Enum_Active_Controller
 {
     Controller_NONE = 0,
     Controller_CRSF,
+};
+
+// 机器人模式枚举
+enum Enum_Robot_Mode
+{
+    Robot_Mode_Weapon = 0,
+    Robot_Mode_KFS,
+    Robot_Mode_Lift,
 };
 
 class Class_Chariot
@@ -84,7 +92,11 @@ protected:
 
     Enum_Control_Source Control_Source = Control_DISABLE;
 
+    Enum_Robot_Mode Robot_Mode = Robot_Mode_Weapon;
     // 遥控器拨动的死区, 0~1
     float Dead_Zone = 0.01f;
+
+    // 上一次SE位置（用于边沿检测）
+    Enum_CRSF_Switch_Pos Previous_SE_Pos = CRSF_SWITCH_LOW;
 };
 #endif

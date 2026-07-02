@@ -65,3 +65,4 @@ Control flow: `Distance_Update()` → `Move_To_Position()` → `Motor[i].Calcula
 
 
 
+每次对话前必须重新读取相关代码文件，而不是基于上一次的记忆开始
