@@ -22,7 +22,7 @@
 
 /* Private macros ------------------------------------------------------------*/
 
-// #define CHASSIS_SLOPE_ENABLE
+//#define CHASSIS_SLOPE_ENABLE
 
 /* Private types -------------------------------------------------------------*/
 
@@ -43,12 +43,12 @@ void Class_Chassis::Init(float __Velocity_X_Max, float __Velocity_Y_Max, float _
     Velocity_Y_Max = __Velocity_Y_Max;
     Omega_Max = __Omega_Max;
 
-    // 斜坡初始化
-    Slope_Velocity_X.Init(0.1f, 0.1f, Slope_First_REAL);
+    // 斜坡初始化（小斜率，柔和平滑）
+    Slope_Velocity_X.Init(0.02f, 0.02f, Slope_First_REAL);
 
-    Slope_Velocity_Y.Init(0.1f, 0.1f, Slope_First_REAL);
+    Slope_Velocity_Y.Init(0.02f, 0.02f, Slope_First_REAL);
 
-    Slope_Omega.Init(0.1f, 0.1f, Slope_First_REAL);
+    Slope_Omega.Init(0.02f, 0.02f, Slope_First_REAL);
 
     // PID初始化
 
@@ -80,7 +80,7 @@ void Class_Chassis::Init(float __Velocity_X_Max, float __Velocity_Y_Max, float _
                                     .K_D = 0.0f,
                                     .K_F = 0.0f,
                                     .Out_Max = 5.0f,
-                                    .Dead_Zone = 0.3f,
+                                    .Dead_Zone = 0.0f,
                                 },
                                 .Use_External_Position_Feedback = true,
                             },
@@ -228,11 +228,13 @@ void Class_Chassis::Kinematics_Inverse_Resolution()
             // 排除除零问题
             Target_Steer_Angle[i] = Now_Steer_Angle[i];
             Target_Wheel_Omega[i] = 0.0f;
+            // Chassis_Control_Type = Chassis_Control_Type_SELF_LOCK;
         }
         else
         {
             // 没有除零问题
             Target_Steer_Angle[i] = atan2f(tmp_velocity_y, tmp_velocity_x);
+            Chassis_Control_Type = Chassis_Control_Type_NORMAL;
         }
     }
 
@@ -446,8 +448,13 @@ void Class_Chassis::Output_To_Motor()
         {
             for (int i = 0; i < 4; i++)
             {
+                Target_Steer_Angle[i] = Steer_Azimuth[i];
+            }
+            _Steer_Motor_Kinematics_Nearest_Transposition();
+            for (int i = 0; i < 4; i++)
+            {
                 Motor_Steer[i].Set_Control_Method(MOTOR_CONTROL_METHOD_POSITION);
-                Motor_Steer[i].Set_Target_Position(Steer_Azimuth[i]);
+                Motor_Steer[i].Set_Target_Position(Target_Steer_Angle[i]);
                 Motor_Steer[i].Set_Feedback_Position(Steer_Encoder[i].Get_Total_Angle() * DEG_TO_RAD);
 
                 Motor_Wheel[i].Set_Control_Method(MOTOR_CONTROL_METHOD_CURRENT);

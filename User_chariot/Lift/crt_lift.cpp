@@ -115,6 +115,11 @@ void Class_FSM_Lift::Lift_TIM_Status_PeriodElapsedCallback()
 
             Lift->Set_Target_Position(Lift->Target_Distance_Wait_R2);
 
+            if (Lift->Backward_Yaw_Flag)
+            {
+                Status[Now_Status_Serial].Count_Time = 0;
+                Set_Status(Lift_Status_Init);
+            }
             if (Lift->Get_Is_Motion_Finished() && Lift->Yaw_Flag)
             {
                 Status[Now_Status_Serial].Count_Time = 0;
@@ -130,7 +135,12 @@ void Class_FSM_Lift::Lift_TIM_Status_PeriodElapsedCallback()
 
             Lift->Set_Target_Position(Lift->Target_Distance_Lift_R2);
 
-            if (Lift->Get_Is_Motion_Finished() && Lift->Yaw_Flag)
+            if (Lift->Backward_Yaw_Flag)
+            {
+                Status[Now_Status_Serial].Count_Time = 0;
+                Set_Status(Lift_Status_Wait_R2);
+            }
+            else if (Lift->Get_Is_Motion_Finished() && Lift->Yaw_Flag)
             {
                 Status[Now_Status_Serial].Count_Time = 0;
                 Set_Status(Lift_Status_Down_R2);
@@ -145,7 +155,12 @@ void Class_FSM_Lift::Lift_TIM_Status_PeriodElapsedCallback()
 
             Lift->Set_Target_Position(Lift->Target_Distance_Down_R2);
 
-            if (Lift->Get_Is_Motion_Finished() && Lift->Yaw_Flag)
+            if (Lift->Backward_Yaw_Flag)
+            {
+                Status[Now_Status_Serial].Count_Time = 0;
+                Set_Status(Lift_Status_Lift_R2);
+            }
+            else if (Lift->Get_Is_Motion_Finished() && Lift->Yaw_Flag)
             {
                 Status[Now_Status_Serial].Count_Time = 0;
                 Set_Status(Lift_Status_Wait_R2);
@@ -155,4 +170,5 @@ void Class_FSM_Lift::Lift_TIM_Status_PeriodElapsedCallback()
     }
     // Yaw_Flag 仅生效一次，每个状态只响应一次触发
     Lift->Yaw_Flag = false;
+    Lift->Backward_Yaw_Flag = false;
 }

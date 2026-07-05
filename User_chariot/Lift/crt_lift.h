@@ -47,14 +47,16 @@ public:
     inline float Get_Now_Distance_L();
     inline float Get_Now_Distance_R();
     inline void Yaw_Flag_True();
+    inline void Yaw_Flag_Backward();
 
 private:
-    bool Yaw_Flag = false; // Yaw到位触发，FSM检测到后切换状态
+    bool Yaw_Flag = false;      // Yaw到位触发，FSM检测到后切换状态
+    bool Backward_Yaw_Flag = false;
 
     float Target_Distance_Init = 0.0f;     // 初始化位置
-    float Target_Distance_Wait_R2 = 0.25f; // 底部(等待/下降到位)
+    float Target_Distance_Wait_R2 = 0.49f; // 底部(等待/下降到位)
     float Target_Distance_Lift_R2 = 0.0f;  // 顶部(抬升到位)
-    float Target_Distance_Down_R2 = 0.25f; // 底部(下降到位)
+    float Target_Distance_Down_R2 = 0.48f; // 底部(下降到位)
 
     float Empty_Gravity_Compensation[2] = {-0.2f, -0.2f}; // 空载重力补偿
     float Load_Gravity_Compensation[2] = {-2.2f, -2.2f};  // 负载重力补偿
@@ -73,6 +75,11 @@ inline float Class_Lift::Get_Now_Distance_R()
 inline void Class_Lift::Yaw_Flag_True()
 {
     Yaw_Flag = true;
+}
+
+inline void Class_Lift::Yaw_Flag_Backward()
+{
+    Backward_Yaw_Flag = true;
 }
 
 #endif
