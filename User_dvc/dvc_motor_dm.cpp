@@ -347,7 +347,7 @@ void Class_Motor_DM_Normal::TIM_Send_PeriodElapsedCallback()
         CAN_Send_Clear_Error();
     }
 }
-
+uint16_t tmp_encoder;
 /**
  * @brief 数据处理过程
  *
@@ -356,7 +356,7 @@ void Class_Motor_DM_Normal::Data_Process()
 {
     // 数据处理过程
     int32_t delta_encoder;
-    uint16_t tmp_encoder, tmp_omega, tmp_torque;
+    uint16_t tmp_omega, tmp_torque;
     Struct_Motor_DM_CAN_Rx_Data_Normal *tmp_buffer = (Struct_Motor_DM_CAN_Rx_Data_Normal *)FDCAN_Manage_Object->Rx_Buffer.Data;
 
     // 电机ID不匹配, 则不进行处理

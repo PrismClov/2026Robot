@@ -32,6 +32,8 @@
  */
 void Class_Chariot::Init()
 {
+    Serial_Screen.Init(&huart1);
+
     CRSF.Init(&huart7);
 
     Chassis.Init();
@@ -48,6 +50,7 @@ void Class_Chariot::TIM_100ms_Alive_PeriodElapsedCallback()
 {
     CRSF.TIM1msMod50_Alive_PeriodElapsedCallback();
     Chassis.TIM_100ms_Alive_PeriodElapsedCallback();
+    // Serial_Screen.TIM_100ms_Alive_PeriodElapsedCallback();
     // Lift.TIM_100ms_Alive_PeriodElapsedCallback();
     KFS.TIM_Alive_PeriodElapsedCallback();
     // Weapon.TIM_Alive_PeriodElapsedCallback();
@@ -141,7 +144,7 @@ void Class_Chariot::Control_Chassis()
     {
         float crsf_l_x, crsf_l_y, crsf_r_x, crsf_r_y;
         // 排除遥控器死区
-        crsf_l_x = (Math_Abs(CRSF.Get_Left_X()) > Dead_Zone) ? CRSF.Get_Left_X() : 0;
+        crsf_l_x = (Math_Abs(CRSF.Get_Left_X()) > Omega_Dead_Zone) ? CRSF.Get_Left_X() : 0;
         crsf_l_y = (Math_Abs(CRSF.Get_Left_Y()) > Dead_Zone) ? CRSF.Get_Left_Y() : 0;
         // 右摇杆X作为旋转
         crsf_r_x = (Math_Abs(CRSF.Get_Right_X()) > Dead_Zone) ? CRSF.Get_Right_X() : 0;
@@ -153,21 +156,20 @@ void Class_Chariot::Control_Chassis()
 
         // 遥控器开关操作逻辑
         // SA开关控制使能情况
-        if (Chassis.Get_Chassis_Control_Type() != Chassis_Control_Type_SELF_LOCK)
+
+        if (CRSF.Get_SA() == CRSF_SWITCH_HIGH) // SA高档，底盘随动
         {
-            if (CRSF.Get_SA() == CRSF_SWITCH_HIGH) // SA高档，底盘随动
-            {
-                // 底盘随动
-                Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_NORMAL);
-                Chassis.Set_Target_Velocity_X(-chassis_velocity_x);
-                Chassis.Set_Target_Velocity_Y(chassis_velocity_y);
-                Chassis.Set_Target_Omega(chassis_omega);
-            }
-            else if (CRSF.Get_SA() == CRSF_SWITCH_LOW) // SA低档 禁用模式
-            {
-                Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
-            }
+            // 底盘随动
+            Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_NORMAL);
+            Chassis.Set_Target_Velocity_X(-chassis_velocity_x);
+            Chassis.Set_Target_Velocity_Y(chassis_velocity_y);
+            Chassis.Set_Target_Omega(chassis_omega);
         }
+        else if (CRSF.Get_SA() == CRSF_SWITCH_LOW) // SA低档 禁用模式
+        {
+            Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
+        }
+
         // SB开关控制控制区域
         if (CRSF.Get_SB() == CRSF_SWITCH_LOW)
         {
@@ -186,7 +188,7 @@ void Class_Chariot::Control_Chassis()
         {
             case Robot_Mode_KFS:
             {
-                if (CRSF.Get_SE() == CRSF_SWITCH_LOW && Previous_SE_Pos == CRSF_SWITCH_HIGH)
+                if (CRSF.Get_SE() == CRSF_SWITCH_HIGH && Previous_SE_Pos == CRSF_SWITCH_LOW)
                 {
                     if (CRSF.Get_SD() == CRSF_SWITCH_LOW)
                     {
@@ -202,7 +204,7 @@ void Class_Chariot::Control_Chassis()
             }
             case Robot_Mode_Weapon:
             {
-                if (CRSF.Get_SE() == CRSF_SWITCH_LOW && Previous_SE_Pos == CRSF_SWITCH_HIGH)
+                if (CRSF.Get_SE() == CRSF_SWITCH_HIGH && Previous_SE_Pos == CRSF_SWITCH_LOW)
                 {
                     if (CRSF.Get_SD() == CRSF_SWITCH_LOW)
                     {
@@ -218,9 +220,16 @@ void Class_Chariot::Control_Chassis()
             }
             case Robot_Mode_Lift:
             {
-                if (CRSF.Get_SE() == CRSF_SWITCH_LOW && Previous_SE_Pos == CRSF_SWITCH_HIGH)
+                if (CRSF.Get_SE() == CRSF_SWITCH_HIGH && Previous_SE_Pos == CRSF_SWITCH_LOW)
                 {
-                    Lift.Yaw_Flag_True();
+                    if (CRSF.Get_SD() == CRSF_SWITCH_LOW)
+                    {
+                        Lift.Yaw_Flag_True();
+                    }
+                    else if (CRSF.Get_SD() == CRSF_SWITCH_HIGH)
+                    {
+                        Lift.Yaw_Flag_Backward();
+                    }
                 }
                 break;
             }

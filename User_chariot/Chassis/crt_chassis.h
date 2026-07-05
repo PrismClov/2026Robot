@@ -172,10 +172,8 @@ protected:
     // 低电流死区设置
     // float Low_Current_Deadzone = 0.3f;
     float Low_Current_Deadzone = 0.1f;
-    // float Low_Current_Threshold = 1.9f;  // 低电流阈
-    float Low_Current_Threshold = 1.3f;                          // 低电流阈
-                                                                 // float Low_Current_Feedforward[4] = {1.6f, 1.6f, 1.6f, 1.6f};  // 低电流前馈值
-    float Low_Current_Feedforward[4] = {1.3f, 1.3f, 1.3f, 1.3f}; // 低电流前馈值
+    float Low_Current_Threshold = 1.3f;                            // 低电流阈
+    float Low_Current_Feedforward[4] = {1.3f, 1.3f, 1.3f, 1.3f};  // 低电流前馈值
     // 读变量
 
     // 写变量
@@ -185,10 +183,10 @@ protected:
     // 舵向标定电机误差
 
     float steer_offset_deg[4] = {
-        129.67955003f,  // [0] 编码器朝前 129.67955003°
-        -86.3248444f, // [1] 编码器朝前 164.541274806°
-        43.01409946f,   // [2] 编码器朝前 43.01409946°
-        146.40174902f,  // [3] 编码器朝前 146.40174902°
+        126.36145f,  // [0] 编码器朝前 129.67955003°
+        -78.3702621,   // [1] 编码器朝前 164.541274806°
+        43.01409946f - 2.02160645f,   // [2] 编码器朝前 43.01409946°
+        146.40174902f + 0.219741821f, // [3] 编码器朝前 146.40174902°
     };
 
     // 目标速度X

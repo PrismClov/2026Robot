@@ -96,6 +96,13 @@ void Device_FDCAN1_Callback(Struct_FDCAN_Rx_Buffer *FDCAN_RxMessage)
             break;
         }
 
+        // Weapon 机械臂电机数据反馈
+        case 0x205:
+        {
+            chariot.Weapon.Motor_Arm.FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+            break;
+        }
+
         //  KFS 手腕电机数据反馈
         case 0xF0:
         {
@@ -212,12 +219,7 @@ void Device_FDCAN3_Callback(Struct_FDCAN_Rx_Buffer *FDCAN_RxMessage)
         // Weapon 俯仰电机数据反馈
         case 0x205:
         {
-            chariot.Weapon.Motor_Pitch[0].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
-            break;
-        }
-        case 0x206:
-        {
-            chariot.Weapon.Motor_Pitch[1].FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+            chariot.Weapon.Motor_Pitch.FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
             break;
         }
 
@@ -274,7 +276,7 @@ void Task1ms_TIM5_Callback()
     if (mod2 >= 10)
     {
         chariot.TIM_Calculate_PeriodElapsedCallback();
-        // Motor::DJI_TIM_Send_Group(&hfdcan1, Motor::CAN_Tx_ID_0x200_Only);
+        Motor::DJI_TIM_Send_Group(&hfdcan1, Motor::CAN_Tx_ID_0x200_Only);
         Motor::DJI_TIM_Send_Group(&hfdcan3, Motor::CAN_Tx_ID_Both);
         mod2 = 0;
     }
@@ -294,6 +296,7 @@ void Task_Init()
     FDCAN_Init(&hfdcan3, Device_FDCAN3_Callback);
     // UART初始化
     UART_Init(&huart7, CRSF_UART7_Callback, 64);
+    UART_Init(&huart1, nullptr, 128);
     // 定时器初始化
     HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
     HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
@@ -302,6 +305,7 @@ void Task_Init()
 
     TIM_Init(&htim5, Task1ms_TIM5_Callback);
 
+    HAL_Delay(2000);
     // 战车层初始化
     chariot.Init();
     // 交互层初始化
@@ -320,6 +324,7 @@ void Task_Init()
  */
 void Task_Loop()
 {
+//    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 1500);
 }
 
 /************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/

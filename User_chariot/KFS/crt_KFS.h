@@ -3,6 +3,7 @@
 
 #include "alg_fsm.h"
 #include "alg_pid.h"
+#include "alg_slope.h"
 #include "crt_multi_motor_sync.h"
 #include "drv_math.h"
 #include "dvc_airtool.h"
@@ -11,29 +12,33 @@
 #include "dvc_motor_dm_pid.h"
 #include "dvc_motor_rs_pid.h"
 
-#define MAX_KFS_STATUS 16
-#define MAX_LIFT_POSITION_INDEX 2
+#define MAX_KFS_STATUS 20
+#define MAX_LIFT_POSITION_INDEX 3
 
 class Class_KFS;
 
 enum Enum_KFS_Status
 {
-    KFS_Status_Init = 0,               // 初始化
-    KFS_Status_First_Pick_Prepare,     // 夹取准备
-    KFS_Status_First_Pick,             // 夹取第一个KFS
-    KFS_Status_First_Pick_Up,          // 夹取第一个KFS后抬起
-    KFS_Status_Storage,                // KFS存储
-    KFS_Status_Protect_Storage,        // 抵住KFS
-    KFS_Status_Second_Pick_Prepare,    // 夹取准备
-    KFS_Status_Second_Pick,            // 夹取第二个KFS
-    KFS_Status_Second_Pick_Up,         // 夹取第二个KFS后抬起
-    KFS_Status_Protect_Storage_Again,  // 再次保护存储的KFS
-    KFS_Status_First_Release_Prepare,  // 释放准备
-    KFS_Status_First_Release,          // 释放第一个KFS
-    KFS_Status_Get_Storage,            // 获取KFS存储
-    KFS_Status_Second_Release_Prepare, // 释放准备
-    KFS_Status_Second_Release,         // 释放第二个KFS
-    KFS_Status_Recover_Init            // 回到初始化状态
+    KFS_Status_Init = 0,                  // 初始化
+    KFS_Status_First_Pick_Prepare,        // 夹取准备
+    KFS_Status_First_Pick,                // 夹取第一个KFS
+    KFS_Status_First_Pick_Up,             // 夹取第一个KFS后抬起
+    KFS_Status_Prepare_Storage_Lift_Up,   // 准备存储抬升
+    KFS_Status_Storage,                   // KFS存储
+    KFS_Status_Storage_Lift_Down,         // 储存抬升放下来
+    KFS_Status_Storage_Arm_Up,            // 储存大臂抬起
+    KFS_Status_Protect_Storage,           // 抵住KFS
+    KFS_Status_Second_Pick_Prepare,       // 夹取准备
+    KFS_Status_Second_Pick,               // 夹取第二个KFS
+    KFS_Status_Second_Pick_Up,            // 夹取第二个KFS后抬起
+    KFS_Status_Prepare_Protect_Arm_Wrist, // 大臂手腕先动
+    KFS_Status_Protect_Storage_Again,     // 再次保护存储的KFS
+    KFS_Status_First_Release_Prepare,     // 释放准备
+    KFS_Status_First_Release,             // 释放第一个KFS
+    KFS_Status_Get_Storage,               // 获取KFS存储
+    KFS_Status_Second_Release_Prepare,    // 释放准备
+    KFS_Status_Second_Release,            // 释放第二个KFS
+    KFS_Status_Recover_Init               // 回到初始化状态
 };
 
 class Class_FSM_KFS : public Class_FSM
@@ -88,11 +93,11 @@ private:
 
     bool Backward_Yaw_Flag = false;
 
-    uint8_t Is_KFS_Picked = 1; // 0: 未抓取, 1: 已抓取 用于是否加入KFS重力补偿
+    uint8_t Is_KFS_Picked = 0; // 0: 未抓取, 1: 已抓取 用于是否加入KFS重力补偿
 
     float KFS_Gravity_Compensation_Ratio_Arm = -0.3f;
 
-    float KFS_Gravity_Compensation_Ratio_Wrist = 2.3f;
+    float KFS_Gravity_Compensation_Ratio_Wrist = 2.0f;
 
     // 移动电机参数
     bool Move_Task_Finished = false;
@@ -109,7 +114,7 @@ private:
         .debounce_us = 200000,
     };
 
-    const float Move_Position_Approach_Threshold = 0.01f;
+    const float Move_Position_Approach_Threshold = 0.1f;
 
     const float Move_Speed_Approach_Threshold = 0.1f;
 
@@ -127,28 +132,28 @@ private:
     // 手腕电机参数
     bool Wrist_Task_Finished = false;
 
-    float Processed_Wrist_Angle_Rad = 0.0f;
+    bool Need_Wrist_Vertical_Planning = false; // 是否需要手腕垂直规划
+    
+    float Processed_Wrist_Angle_Rad = 0.0f;    // 手腕和大臂的夹角，顺时针为正
 
-    const float Wrist_Distance_Brake_Threshold = 0.7f;
+    const float Wrist_Distance_Lock_Threshold = 0.02f;
 
-    const float Wrist_Distance_Lock_Threshold = 0.01f;
-
-    const float Wrist_Distance_Approach_Threshold = 0.01f;
+    const float Wrist_Distance_Approach_Threshold = 0.02f;
 
     const float Wrist_Speed_Approach_Threshold = 0.1f;
 
-    const float Wrist_Max_Velocity = 10.0f;
+    const float Wrist_Max_Velocity = 5.0f;
 
-    const float Wrist_Gravity_Compensation_Ratio = 0.88f;
+    const float Wrist_Gravity_Compensation_Ratio = 0.85f;
 
-    const float Wrist_Parallel_With_Arm_Angle_Offset = 2.97663522f;
+    const float Wrist_Parallel_With_Arm_Angle_Offset = 3.01663522f + PI;
+
+    Class_Slope Wrist_Speed_Slope;
 
     // 机械臂电机参数
     bool Arm_Task_Finished = false;
 
-    float Processed_Arm_Angle_Rad = 0.0f;
-
-    const float Arm_Distance_Brake_Threshold = 0.6f; // 刹车平滑阈值
+    float Processed_Arm_Angle_Rad = 0.0f; // 大臂和水平夹角，顺时针为正
 
     const float Arm_Distance_Lock_Threshold = 0.02f;
 
@@ -156,32 +161,36 @@ private:
 
     const float Arm_Speed_Approach_Threshold = 0.1f;
 
-    const float Arm_Max_Velocity = 11.0f;
+    const float Arm_Max_Velocity = 6.0f;
 
-    const float Arm_Gravity_Compensation_Ratio = -1.7f;
+    const float Arm_Gravity_Compensation_Ratio = -2.2f;
 
-    const float Arm_Horizontal_Offset = 2.55f - 2 * PI;
+    const float Arm_Horizontal_Offset = 4.00f;
+
+    Class_Slope Arm_Speed_Slope;
 
     // 气泵参数
     bool Pump_Task_Finished = false;
 
     SoftTimer_t Pump_Delay_Timer = {0, 0};
-    uint32_t Pump_Delay_Us = 500000; // 500ms延时时间，具体根据实际情况调整
+    uint32_t Pump_Delay_Us = 2000000; // 2s延时时间，具体根据实际情况调整
 
     // 状态机配置表
     struct Target
     {
         // 移动电机目标位置
-        float Move_Position[MAX_KFS_STATUS];
+        float Move_Position[MAX_KFS_STATUS] = {-0.2f, -2.5f, -2.5f, -2.5f, -5.8f, -5.8f, -5.8f, -5.8f, -5.8f, -0.2f, -0.2f, -0.2f, -0.2f, -0.2f, -0.2f, -0.2f};
 
         // 抬升高度
-        float Lift_Height[MAX_LIFT_POSITION_INDEX][MAX_KFS_STATUS];
+        float Lift_Height[MAX_LIFT_POSITION_INDEX][MAX_KFS_STATUS] = {{0.00f, 0.00f, 0.00f, 0.00f, 0.35f, 0.35f, 0.20f, 0.20f, 0.20f, 0.00f, 0.00f, 0.20f, 0.35f, 0.20f, 0.35f, 0.35f},
+                                                                      {0.00f, 0.20f, 0.20f, 0.20f, 0.35f, 0.35f, 0.20f, 0.20f, 0.20f, 0.20f, 0.20f, 0.20f, 0.35f, 0.20f, 0.35f, 0.35f},
+                                                                      {0.00f, 0.35f, 0.35f, 0.35f, 0.35f, 0.35f, 0.20f, 0.20f, 0.20f, 0.35f, 0.35f, 0.20f, 0.35f, 0.20f, 0.35f, 0.35f}};
 
         // 手腕目标角度
-        float Wrist_Angle[MAX_KFS_STATUS];
+        float Wrist_Angle[MAX_KFS_STATUS] = {0.0f, 2.07f, 1.81f, 2.27f, 2.27f, 2.0f, 2.0f, -1.0f, -1.0f, 2.07f, 1.81f, 2.27f, -1.6f, -1.6f, -1.3f, -1.3f};
 
         // 机械臂目标角度
-        float Arm_Angle[MAX_KFS_STATUS];
+        float Arm_Angle[MAX_KFS_STATUS] = {-1.35f, -0.5f, -0.22f, -0.7f, -0.7f, 1.14f, 1.14f, 0.8f, 1.57f, -0.5f, -0.22f, -0.7f, 1.57f, 1.57f, 1.0f, 1.0f};
 
         // 气泵状态
         uint8_t Pump_Status[MAX_KFS_STATUS];

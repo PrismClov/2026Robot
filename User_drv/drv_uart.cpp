@@ -176,6 +176,24 @@ uint8_t UART_Send_Data(UART_HandleTypeDef *huart, uint8_t *Data, uint16_t Length
 }
 
 /**
+ * @brief 发送字符数据帧
+ *
+ * @param huart UART编号
+ * @param Data 被发送的数据指针（字符数组）
+ * @param Length 长度
+ * @return char 执行状态
+ */
+char UART_Send_Char_Data(UART_HandleTypeDef *huart, char *Data, uint16_t Length)
+{
+    if (huart == NULL || Data == NULL || Length == 0) 
+    {
+        return HAL_ERROR;  
+    }
+    
+    return (HAL_UART_Transmit_DMA(huart, (uint8_t *)Data, Length));
+}
+
+/**
  * @brief UART的TIM定时器中断发送回调函数
  *
  */
