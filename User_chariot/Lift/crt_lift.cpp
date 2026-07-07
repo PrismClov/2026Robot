@@ -1,5 +1,8 @@
 #include "crt_lift.h"
 
+/**
+ * @brief 初始化
+ */
 void Class_Lift::Init()
 {
     // Lift抬升电机 (CAN3, ID 0x207-0x208)
@@ -59,6 +62,9 @@ void Class_Lift::Init()
     FSM_Lift.Init(3, Lift_Status_Init);
 }
 
+/**
+ * @brief 控制回调
+ */
 void Class_Lift::TIM_Calculate_PeriodElapsedCallback()
 {
     // 1. 校准(未完成则执行校准并跳过控制)
@@ -82,12 +88,18 @@ void Class_Lift::TIM_Calculate_PeriodElapsedCallback()
     Motor_Lift_R.Calculate();
 }
 
+/**
+ * @brief 存活检测
+ */
 void Class_Lift::TIM_100ms_Alive_PeriodElapsedCallback()
 {
     Motor_Lift_L.TIM_100ms_Alive_PeriodElapsedCallback();
     Motor_Lift_R.TIM_100ms_Alive_PeriodElapsedCallback();
 }
 
+/**
+ * @brief 状态机
+ */
 void Class_FSM_Lift::Lift_TIM_Status_PeriodElapsedCallback()
 {
     Status[Now_Status_Serial].Count_Time++;

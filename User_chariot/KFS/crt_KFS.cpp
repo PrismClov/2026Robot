@@ -1,5 +1,8 @@
 #include "crt_KFS.h"
 
+/**
+ * @brief 初始化
+ */
 void Class_KFS::Init()
 {
     // 抬升电机初始化 (CAN1, ID 0x202-0x203)
@@ -71,28 +74,32 @@ void Class_KFS::Init()
 
     // 机械臂电机初始化
     Motor_Arm.Init(&hfdcan1, 0x00, 0x01, Motor_DM_PID_Mode_ANGLE);
-    // Motor_Arm.PID_Omega.Init(0.6f, 0.0f, 0.0f, 0.0f, 0.0f, 10.0f, 0.002f, 0.0f);
     Motor_Arm.PID_Angle.Init(125.0f, 0.0f, 0.0f, 0.0f, 0.0f, 5.0f, 0.002f, 0.0f);
     Motor_Arm.PID_Omega.Init(0.8f, 0.0f, 0.0f, 0.0f, 0.0f, 10.0f, 0.002f, 0.0f);
-    // Motor_Arm.PID_Angle.Init(125.0f, 0.0f, 0.0f, 0.0f, 0.0f, 5.0f, 0.002f, 0.0f);
+
     // 手腕电机初始化
     Motor_Wrist.Init(&hfdcan1, 0xF0, 0x70, Motor_RS_PID_Mode_ANGLE);
-    // Motor_Wrist.PID_Omega.Init(1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 5.0f, 0.002f, 0.0f);
-    // Motor_Wrist.PID_Angle.Init(30.0f, 0.0f, 0.0f, 0.0f, 0.0f, 15.0f, 0.002f, 0.0f);
     Motor_Wrist.PID_Omega.Init(0.8f, 0.0f, 0.0f, 0.0f, 0.0f, 5.0f, 0.002f, 0.0f);
     Motor_Wrist.PID_Angle.Init(30.0f, 0.0f, 0.0f, 0.0f, 0.0f, 15.0f, 0.002f, 0.0f);
 
-    // // 气泵初始化
-    // Air_Pump.Init(GPIOC, GPIO_PIN_13);
     Arm_Speed_Slope.Init(Arm_Max_Velocity * 0.02f, Arm_Max_Velocity * 0.1f, Slope_First_REAL);
     Wrist_Speed_Slope.Init(Wrist_Max_Velocity * 0.02f, Wrist_Max_Velocity * 0.1f, Slope_First_REAL);
+
     Motor_Arm.CAN_Send_Enter();
     Motor_Wrist.CAN_Send_Enter();
+
+    // 气泵初始化
+    Air_Pump.Init(GPIOC, GPIO_PIN_13);
+    
     // 状态机初始化
     FSM_KFS.KFS = this;
     FSM_KFS.Init(MAX_KFS_STATUS, KFS_Status_Init);
 }
 
+/**
+ * @brief 移动控制
+ * @param x 目标位置
+ */
 void Class_KFS::Move_To_Position(float x)
 {
     if (!Is_Move_Calibrated)
@@ -106,11 +113,19 @@ void Class_KFS::Move_To_Position(float x)
     }
 }
 
+/**
+ * @brief 抬升控制
+ * @param height 目标高度
+ */
 void Class_KFS::Lift_To_Height(float height)
 {
     Lift.Set_Target_Position(height);
 }
 
+/**
+ * @brief 手腕控制
+ * @param angle 目标角度
+ */
 void Class_KFS::Wrist_To_Angle(float angle)
 {
     float wrist_error = angle - Processed_Wrist_Angle_Rad;
@@ -133,6 +148,10 @@ void Class_KFS::Wrist_To_Angle(float angle)
     }
 }
 
+/**
+ * @brief 机械臂控制
+ * @param angle 目标角度
+ */
 void Class_KFS::Arm_To_Angle(float angle)
 {
     float arm_error = angle - Processed_Arm_Angle_Rad;
@@ -155,6 +174,9 @@ void Class_KFS::Arm_To_Angle(float angle)
     }
 }
 
+/**
+ * @brief 控制回调
+ */
 void Class_KFS::TIM_Control_PeriodElapsedCallback()
 {
     // 更新反馈
@@ -191,6 +213,9 @@ void Class_KFS::TIM_Control_PeriodElapsedCallback()
     Motor_Arm.TIM_Send_PeriodElapsedCallback();
 }
 
+/**
+ * @brief 存活检测
+ */
 void Class_KFS::TIM_Alive_PeriodElapsedCallback()
 {
     // 移动电机存活函数
@@ -235,25 +260,14 @@ void Class_KFS::KFS_Status_Task()
     // 抬升
     Lift_To_Height(Target.Lift_Height[Lift_Height_Index][FSM_KFS.Get_Now_Status_Serial()]);
 
-    // 根据状态自动管理垂直规划标志位
-    Need_Wrist_Vertical_Planning = (FSM_KFS.Get_Now_Status_Serial() == KFS_Status_First_Pick ||
-                                    FSM_KFS.Get_Now_Status_Serial() == KFS_Status_Second_Pick);
-
     // 手腕角度
-    if (!Need_Wrist_Vertical_Planning)
-    {
-        Wrist_To_Angle(Target.Wrist_Angle[FSM_KFS.Get_Now_Status_Serial()]);
-    }
-    else
-    {
-        Wrist_To_Angle(PI / 2.0f - Processed_Arm_Angle_Rad);
-    }
+    Wrist_To_Angle(Target.Wrist_Angle[FSM_KFS.Get_Now_Status_Serial()]);
 
     // 机械臂角度
     Arm_To_Angle(Target.Arm_Angle[FSM_KFS.Get_Now_Status_Serial()]);
 
-    // // 气泵
-    // Target.Pump_Status[FSM_KFS.KFS_Status] ? Air_Pump.AIRPUMP_Open() : Air_Pump.AIRPUMP_Close();
+    // 气泵
+    Target.Pump_Status[FSM_KFS.Get_Now_Status_Serial()] ? Air_Pump.AIRPUMP_Open() : Air_Pump.AIRPUMP_Close();
 }
 
 /**
@@ -270,13 +284,8 @@ bool Class_KFS::Is_Action_Finished()
 
     Check_Arm_Task_Completion();
 
-    // // 在其他动作到位后再开始气泵消抖
-    // if (Move_Task_Finished && Lift_Task_Finished && Wrist_Task_Finished && Arm_Task_Finished && !Pump_Task_Finished)
-    // {
-    //     Check_Pump_Task_Completion();
-    // }
-    all_task_finished = Move_Task_Finished && Lift_Task_Finished && Wrist_Task_Finished && Arm_Task_Finished /*&& Pump_Task_Finished*/;
-    return Move_Task_Finished && Lift_Task_Finished && Wrist_Task_Finished && Arm_Task_Finished /*&& Pump_Task_Finished*/;
+    all_task_finished = Move_Task_Finished && Lift_Task_Finished && Wrist_Task_Finished && Arm_Task_Finished;
+    return Move_Task_Finished && Lift_Task_Finished && Wrist_Task_Finished && Arm_Task_Finished;
 }
 
 /**
@@ -313,7 +322,7 @@ void Class_KFS::Check_Wrist_Task_Completion()
         Wrist_Task_Finished = true;
     }
 }
-float aaa, bbb;
+
 /**
  * @brief 机械臂到位判定
  */
@@ -323,51 +332,6 @@ void Class_KFS::Check_Arm_Task_Completion()
         Math_Abs(Motor_Arm.Get_Now_Omega()) < Arm_Speed_Approach_Threshold)
     {
         Arm_Task_Finished = true;
-    }
-    aaa = Math_Abs(Processed_Arm_Angle_Rad - Target.Arm_Angle[FSM_KFS.Get_Now_Status_Serial()]);
-    bbb = Math_Abs(Motor_Arm.Get_Now_Omega());
-}
-
-/**
- * @brief 判断气泵动作是否完成
- */
-void Class_KFS::Check_Pump_Task_Completion()
-{
-    // 防止数组越界
-    if (FSM_KFS.KFS_Status == KFS_Status_Init)
-    {
-        Pump_Task_Finished = true;
-        return;
-    }
-
-    // 判断是否夹取KFS
-    if (Target.Pump_Status[FSM_KFS.Get_Now_Status_Serial()] && !Target.Pump_Status[FSM_KFS.Get_Now_Status_Serial() - 1])
-    {
-        Is_KFS_Picked = 1; // KFS已夹取
-        if (Pump_Delay_Timer.start_time == 0)
-        {
-            Pump_Delay_Timer.start_time = DWT_GetCurrentTimeUs();
-            Pump_Delay_Timer.expire_time = Pump_Delay_Us;
-            Pump_Task_Finished = false;
-        }
-        else if (Is_Timer_ExpiredUs(&Pump_Delay_Timer, Expire_Once))
-        {
-            Pump_Task_Finished = true;
-            Pump_Delay_Timer.start_time = 0;
-        }
-        else
-        {
-            Pump_Task_Finished = false;
-        }
-    }
-    else if (!Target.Pump_Status[FSM_KFS.Get_Now_Status_Serial()] && Target.Pump_Status[FSM_KFS.Get_Now_Status_Serial() - 1])
-    {
-        Is_KFS_Picked = 0; // KFS已释放，释放是瞬间完成的，无需延时
-        Pump_Task_Finished = true;
-    }
-    else
-    {
-        Pump_Task_Finished = true;
     }
 }
 
@@ -380,7 +344,6 @@ void Class_KFS::Enter_New_Status_Clear_Completion_Flag()
     Lift_Task_Finished = false;
     Wrist_Task_Finished = false;
     Arm_Task_Finished = false;
-    Pump_Task_Finished = false;
 }
 
 /**
@@ -395,7 +358,6 @@ void Class_FSM_KFS::KFS_TIM_Status_PeriodElapsedCallback()
         case KFS_Status_Init:
         {
             KFS->Is_KFS_Picked = 0;
-            KFS->Need_Wrist_Vertical_Planning = false;
             KFS->KFS_Status_Task();
 
             if (KFS->Is_Action_Finished())

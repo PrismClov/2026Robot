@@ -132,8 +132,6 @@ private:
     // 手腕电机参数
     bool Wrist_Task_Finished = false;
 
-    bool Need_Wrist_Vertical_Planning = false; // 是否需要手腕垂直规划
-    
     float Processed_Wrist_Angle_Rad = 0.0f;    // 手腕和大臂的夹角，顺时针为正
 
     const float Wrist_Distance_Lock_Threshold = 0.02f;
@@ -170,30 +168,176 @@ private:
     Class_Slope Arm_Speed_Slope;
 
     // 气泵参数
-    bool Pump_Task_Finished = false;
-
-    SoftTimer_t Pump_Delay_Timer = {0, 0};
-    uint32_t Pump_Delay_Us = 2000000; // 2s延时时间，具体根据实际情况调整
+    // （去掉了吸盘延时）
 
     // 状态机配置表
     struct Target
     {
         // 移动电机目标位置
-        float Move_Position[MAX_KFS_STATUS] = {-0.2f, -2.5f, -2.5f, -2.5f, -5.8f, -5.8f, -5.8f, -5.8f, -5.8f, -0.2f, -0.2f, -0.2f, -0.2f, -0.2f, -0.2f, -0.2f};
+        float Move_Position[MAX_KFS_STATUS] = {
+            -0.2f, // Init
+            -0.2f, // First_Pick_Prepare
+            -0.2f, // First_Pick
+            -0.2f, // First_Pick_Up
+            -5.8f, // Prepare_Storage_Lift_Up
+            -5.8f, // Storage
+            -5.8f, // Storage_Lift_Down
+            -5.8f, // Storage_Arm_Up
+            -5.8f, // Protect_Storage
+            -0.2f, // Second_Pick_Prepare
+            -0.2f, // Second_Pick
+            -0.2f, // Second_Pick_Up
+            -0.2f, // Prepare_Protect_Arm_Wrist
+            -0.2f, // Protect_Storage_Again
+            -0.2f, // First_Release_Prepare
+            -0.2f, // First_Release
+            0.0f,  // Get_Storage
+            0.0f,  // Second_Release_Prepare
+            0.0f,  // Second_Release
+            0.0f,  // Recover_Init
+        };
 
         // 抬升高度
-        float Lift_Height[MAX_LIFT_POSITION_INDEX][MAX_KFS_STATUS] = {{0.00f, 0.00f, 0.00f, 0.00f, 0.35f, 0.35f, 0.20f, 0.20f, 0.20f, 0.00f, 0.00f, 0.20f, 0.35f, 0.20f, 0.35f, 0.35f},
-                                                                      {0.00f, 0.20f, 0.20f, 0.20f, 0.35f, 0.35f, 0.20f, 0.20f, 0.20f, 0.20f, 0.20f, 0.20f, 0.35f, 0.20f, 0.35f, 0.35f},
-                                                                      {0.00f, 0.35f, 0.35f, 0.35f, 0.35f, 0.35f, 0.20f, 0.20f, 0.20f, 0.35f, 0.35f, 0.20f, 0.35f, 0.20f, 0.35f, 0.35f}};
+        float Lift_Height[MAX_LIFT_POSITION_INDEX][MAX_KFS_STATUS] = {
+            { // Lift_Height_Index = 0
+                0.00f, // Init
+                0.00f, // First_Pick_Prepare
+                0.00f, // First_Pick
+                0.00f, // First_Pick_Up
+                0.35f, // Prepare_Storage_Lift_Up
+                0.35f, // Storage
+                0.20f, // Storage_Lift_Down
+                0.20f, // Storage_Arm_Up
+                0.20f, // Protect_Storage
+                0.00f, // Second_Pick_Prepare
+                0.00f, // Second_Pick
+                0.20f, // Second_Pick_Up
+                0.35f, // Prepare_Protect_Arm_Wrist
+                0.20f, // Protect_Storage_Again
+                0.35f, // First_Release_Prepare
+                0.35f, // First_Release
+                0.00f, // Get_Storage
+                0.00f, // Second_Release_Prepare
+                0.00f, // Second_Release
+                0.00f, // Recover_Init
+            },
+            { // Lift_Height_Index = 1
+                0.20f, // Init
+                0.20f, // First_Pick_Prepare
+                0.20f, // First_Pick
+                0.20f, // First_Pick_Up
+                0.35f, // Prepare_Storage_Lift_Up
+                0.35f, // Storage
+                0.20f, // Storage_Lift_Down
+                0.20f, // Storage_Arm_Up
+                0.20f, // Protect_Storage
+                0.20f, // Second_Pick_Prepare
+                0.20f, // Second_Pick
+                0.20f, // Second_Pick_Up
+                0.35f, // Prepare_Protect_Arm_Wrist
+                0.20f, // Protect_Storage_Again
+                0.35f, // First_Release_Prepare
+                0.35f, // First_Release
+                0.00f, // Get_Storage
+                0.00f, // Second_Release_Prepare
+                0.00f, // Second_Release
+                0.00f, // Recover_Init
+            },
+            { // Lift_Height_Index = 2
+                0.35f, // Init
+                0.35f, // First_Pick_Prepare
+                0.35f, // First_Pick
+                0.35f, // First_Pick_Up
+                0.35f, // Prepare_Storage_Lift_Up
+                0.35f, // Storage
+                0.20f, // Storage_Lift_Down
+                0.20f, // Storage_Arm_Up
+                0.20f, // Protect_Storage
+                0.35f, // Second_Pick_Prepare
+                0.35f, // Second_Pick
+                0.20f, // Second_Pick_Up
+                0.35f, // Prepare_Protect_Arm_Wrist
+                0.20f, // Protect_Storage_Again
+                0.35f, // First_Release_Prepare
+                0.35f, // First_Release
+                0.00f, // Get_Storage
+                0.00f, // Second_Release_Prepare
+                0.00f, // Second_Release
+                0.00f, // Recover_Init
+            },
+        };
 
         // 手腕目标角度
-        float Wrist_Angle[MAX_KFS_STATUS] = {0.0f, 2.07f, 1.81f, 2.27f, 2.27f, 2.0f, 2.0f, -1.0f, -1.0f, 2.07f, 1.81f, 2.27f, -1.6f, -1.6f, -1.3f, -1.3f};
+        float Wrist_Angle[MAX_KFS_STATUS] = {
+            0.0f,   // Init
+            2.2f,  // First_Pick_Prepare
+            2.04f,  // First_Pick
+            2.27f,  // First_Pick_Up
+            2.27f,  // Prepare_Storage_Lift_Up
+            2.0f,   // Storage
+            2.0f,   // Storage_Lift_Down
+            -1.0f,  // Storage_Arm_Up
+            -1.0f,  // Protect_Storage
+            2.07f,  // Second_Pick_Prepare
+            1.81f,  // Second_Pick
+            2.27f,  // Second_Pick_Up
+            -1.6f,  // Prepare_Protect_Arm_Wrist
+            -1.6f,  // Protect_Storage_Again
+            -1.3f,  // First_Release_Prepare
+            -1.3f,  // First_Release
+            0.0f,   // Get_Storage
+            0.0f,   // Second_Release_Prepare
+            0.0f,   // Second_Release
+            0.0f,   // Recover_Init
+        };
 
         // 机械臂目标角度
-        float Arm_Angle[MAX_KFS_STATUS] = {-1.35f, -0.5f, -0.22f, -0.7f, -0.7f, 1.14f, 1.14f, 0.8f, 1.57f, -0.5f, -0.22f, -0.7f, 1.57f, 1.57f, 1.0f, 1.0f};
+        float Arm_Angle[MAX_KFS_STATUS] = {
+            -1.35f, // Init
+            -0.5f,  // First_Pick_Prepare
+            -0.18f, // First_Pick
+            -0.7f,  // First_Pick_Up
+            -0.7f,  // Prepare_Storage_Lift_Up
+            1.14f,  // Storage
+            1.14f,  // Storage_Lift_Down
+            0.8f,   // Storage_Arm_Up
+            1.57f,  // Protect_Storage
+            -0.5f,  // Second_Pick_Prepare
+            -0.22f, // Second_Pick
+            -0.7f,  // Second_Pick_Up
+            1.57f,  // Prepare_Protect_Arm_Wrist
+            1.57f,  // Protect_Storage_Again
+            1.0f,   // First_Release_Prepare
+            1.0f,   // First_Release
+            0.0f,   // Get_Storage
+            0.0f,   // Second_Release_Prepare
+            0.0f,   // Second_Release
+            0.0f,   // Recover_Init
+        };
 
-        // 气泵状态
-        uint8_t Pump_Status[MAX_KFS_STATUS];
+        // 气泵状态（1=吸, 0=放）
+        uint8_t Pump_Status[MAX_KFS_STATUS] = {
+            0, // Init
+            0, // First_Pick_Prepare
+            1, // First_Pick
+            1, // First_Pick_Up
+            1, // Prepare_Storage_Lift_Up
+            1, // Storage
+            1, // Storage_Lift_Down
+            0, // Storage_Arm_Up
+            0, // Protect_Storage
+            0, // Second_Pick_Prepare
+            1, // Second_Pick
+            1, // Second_Pick_Up
+            1, // Prepare_Protect_Arm_Wrist
+            1, // Protect_Storage_Again
+            1, // First_Release_Prepare
+            1, // First_Release
+            0, // Get_Storage
+            1, // Second_Release_Prepare
+            1, // Second_Release
+            0, // Recover_Init
+        };
     } Target;
 
     // 控制内部接口
@@ -223,8 +367,6 @@ private:
     void Check_Wrist_Task_Completion();
 
     void Check_Arm_Task_Completion();
-
-    void Check_Pump_Task_Completion();
 
     void Enter_New_Status_Clear_Completion_Flag();
 };

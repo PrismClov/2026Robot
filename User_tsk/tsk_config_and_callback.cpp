@@ -117,8 +117,10 @@ void Device_FDCAN1_Callback(Struct_FDCAN_Rx_Buffer *FDCAN_RxMessage)
             break;
         }
 
-        case 0xF2:
+        // 武器夹取旋转电机
+        case 0xFD:
         {
+            chariot.Weapon.Motor_Rotate.CAN_RxCpltCallback(FDCAN_RxMessage->Data);
             break;
         }
         default:
@@ -276,7 +278,7 @@ void Task1ms_TIM5_Callback()
     if (mod2 >= 10)
     {
         chariot.TIM_Calculate_PeriodElapsedCallback();
-        Motor::DJI_TIM_Send_Group(&hfdcan1, Motor::CAN_Tx_ID_0x200_Only);
+        Motor::DJI_TIM_Send_Group(&hfdcan1, Motor::CAN_Tx_ID_Both);
         Motor::DJI_TIM_Send_Group(&hfdcan3, Motor::CAN_Tx_ID_Both);
         mod2 = 0;
     }
@@ -322,9 +324,13 @@ void Task_Init()
  * @brief 前台循环任务
  *
  */
+// uint32_t cmp = 500;
 void Task_Loop()
 {
-//    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 1500);
+//    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, cmp);
+//    __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, cmp);
+//    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, cmp);
+//    __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, cmp);
 }
 
 /************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/

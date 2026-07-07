@@ -1,14 +1,17 @@
 #include "crt_weapon.h"
 
+/**
+ * @brief 初始化
+ */
 void Class_Weapon::Init()
 {
     // 夹取舵机
-    Pick_Servo[0].Init(&htim1, TIM_CHANNEL_1, 500, 2500);
-    Pick_Servo[1].Init(&htim1, TIM_CHANNEL_3, 500, 2500);
-    Pick_Servo[2].Init(&htim2, TIM_CHANNEL_1, 500, 2500);
+    Pick_Servo[0].Init(&htim1, TIM_CHANNEL_3, 500, 2500);
+    Pick_Servo[1].Init(&htim1, TIM_CHANNEL_1, 500, 2500);
+    Pick_Servo[2].Init(&htim2, TIM_CHANNEL_3, 500, 2500);
 
     // 抓取舵机
-    Grab_Servo.Init(&htim2, TIM_CHANNEL_3, 500, 2500);
+    Grab_Servo.Init(&htim2, TIM_CHANNEL_1, 500, 2500);
 
     // 机械臂电机 (CAN1, ID 0x205)
     Motor_Arm.Init(
@@ -16,16 +19,17 @@ void Class_Weapon::Init()
         Motor::Motor_DJI_ID_0x205,
         Motor::Class_Motor_DJI_C620::Parameters{
             .PID_Position = PID_Parameters{
-                .K_P = 6.0f,
+                .K_P = 50.0f,
                 .K_I = 0.0f,
                 .K_D = 0.0f,
-                .Out_Max = 30.0f,
+                .Out_Max = 6.0f,
             },
             .PID_Omega = PID_Parameters{
-                .K_P = 7.5f,
+                .K_P = 2.0f,
                 .K_I = 0.0f,
                 .K_D = 0.0f,
                 .Out_Max = 30.0f,
+                .Dead_Zone = 0.5f,
             },
         },
         3591.0f / 187.0f / 18.0f * 28.0f);
@@ -36,25 +40,25 @@ void Class_Weapon::Init()
         Motor::Motor_DJI_ID_0x204,
         Motor::Class_Motor_DJI_C620::Parameters{
             .PID_Position = PID_Parameters{
-                .K_P = 0.0f,
+                .K_P = 30.0f,
                 .K_I = 0.0f,
                 .K_D = 0.0f,
-                .Out_Max = 30.0f,
-                .Dead_Zone = 0.0f,
+                .Out_Max = 10.0f,
+                .Dead_Zone = 0.015f,
             },
             .PID_Omega = PID_Parameters{
                 .K_P = 2.0f,
                 .K_I = 0.0f,
                 .K_D = 0.0f,
                 .Out_Max = 30.0f,
-                .Dead_Zone = 0.0f,
+                .Dead_Zone = 0.5f,
             },
         });
 
     // 旋转电机
-    Motor_Rotate.Init(&hfdcan2, 0x01, 0x01, Motor_RS_PID_Mode_ANGLE);
-    Motor_Rotate.PID_Omega.Init(1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 5.0f, 0.002f, 0.0f);
-    Motor_Rotate.PID_Angle.Init(30.0f, 0.0f, 0.0f, 0.0f, 0.0f, 15.0f, 0.002f, 0.0f);
+    Motor_Rotate.Init(&hfdcan1, 0xFD, 0x7F, Motor_RS_PID_Mode_ANGLE);
+    Motor_Rotate.PID_Omega.Init(1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 5.0f, 0.002f, 0.5f);
+    Motor_Rotate.PID_Angle.Init(30.0f, 0.0f, 0.0f, 0.0f, 0.0f, 2.0f, 0.002f, 0.0f);
 
     // 俯仰电机
     Motor_Pitch.Init(
@@ -62,24 +66,31 @@ void Class_Weapon::Init()
         Motor::Motor_DJI_ID_0x205,
         Motor::Class_Motor_DJI_C620::Parameters{
             .PID_Position = PID_Parameters{
-                .K_P = 0.0f,
+                .K_P = 40.0f,
                 .K_I = 0.0f,
                 .K_D = 0.0f,
-                .Out_Max = 30.0f,
+                .Out_Max = 8.0f,
             },
             .PID_Omega = PID_Parameters{
-                .K_P = 0.0f,
+                .K_P = 2.0f,
                 .K_I = 0.0f,
                 .K_D = 0.0f,
                 .Out_Max = 20.0f,
+                .Dead_Zone = 0.5f,
             },
         });
+
+    Motor_Rotate.CAN_Send_Enter();
 
     FSM_Weapon.Weapon = this;
 
     FSM_Weapon.Init(MAX_WEAPON_STATUS, Weapon_Status_Init);
 }
 
+/**
+ * @brief 移动控制
+ * @param x 目标位置
+ */
 void Class_Weapon::Move_To_Position(float x)
 {
     if (!Move_Calibrated)
@@ -101,6 +112,10 @@ void Class_Weapon::Move_To_Position(float x)
     }
 }
 
+/**
+ * @brief 机械臂控制
+ * @param x 目标位置
+ */
 void Class_Weapon::Arm_To_Position(float x)
 {
     if (!Arm_Calibrated)
@@ -122,6 +137,10 @@ void Class_Weapon::Arm_To_Position(float x)
     }
 }
 
+/**
+ * @brief 俯仰控制
+ * @param x 目标位置
+ */
 void Class_Weapon::Pitch_To_Position(float x)
 {
     if (!Pitch_Calibrated)
@@ -146,29 +165,18 @@ void Class_Weapon::Pitch_To_Position(float x)
 /**
  * @brief 周期中断函数
  */
-float position_arm = 0.0f;
 void Class_Weapon::TIM_Weapon_PeriodElapsedCallback()
 {
-    // FSM_Weapon.Weapon_TIM_Status_PeriodElapsedCallback();
+    FSM_Weapon.Weapon_TIM_Status_PeriodElapsedCallback();
 
-    // Motor_Rotate.TIM_Calculate_PeriodElapsedCallback();
-    // Motor_Rotate.TIM_Send_PeriodElapsedCallback();
-    Arm_To_Position(position_arm);
+    Motor_Rotate.TIM_Calculate_PeriodElapsedCallback();
+    Motor_Rotate.TIM_Send_PeriodElapsedCallback();
+
     Motor_Arm.Calculate();
 
-    // Motor_Move.Calculate();
+    Motor_Pitch.Calculate();
 
-    // Motor_Pitch.Calculate();
-
-    // // Move位置切换
-    // if (Move_Yaw_Flag)
-    // {
-    //     Move_Yaw_Flag = false;
-
-    //     Move_Index = (Move_Index + 1) % 3;
-
-    //     Move_To_Position(Move_Target_Position[Move_Index]);
-    // }
+    Motor_Move.Calculate();
 }
 
 /**
@@ -190,30 +198,26 @@ void Class_Weapon::TIM_Alive_PeriodElapsedCallback()
  */
 bool Class_Weapon::Is_Action_Finished()
 {
-    if (!Arm_Task_Finished)
-    {
-        Check_Arm_Task_Completion();
-    }
+    Check_Arm_Task_Completion();
 
-    if (!Move_Task_Finished)
-    {
-        Check_Move_Task_Completion();
-    }
+    Check_Move_Task_Completion();
 
-    if (!Pitch_Task_Finished)
-    {
-        Check_Pitch_Task_Completion();
-    }
+    Check_Pitch_Task_Completion();
+
+    Check_Rotate_Task_Completion();
 
     // 在其他动作到位后再开始舵机延时
-    if (Arm_Task_Finished && Move_Task_Finished && Pitch_Task_Finished && !Servo_Task_Finished)
-    {
-        Check_Servo_Task_Completion();
-    }
+    // if (Arm_Task_Finished && Move_Task_Finished && Pitch_Task_Finished && !Servo_Task_Finished)
+    // {
+    //     Check_Servo_Task_Completion();
+    // }
 
-    return Arm_Task_Finished && Move_Task_Finished && Pitch_Task_Finished && Servo_Task_Finished;
+    return Arm_Task_Finished && Move_Task_Finished && Pitch_Task_Finished;
 }
 
+/**
+ * @brief 机械臂到位判定
+ */
 void Class_Weapon::Check_Arm_Task_Completion()
 {
     if (Arm_Calibrated &&
@@ -224,6 +228,9 @@ void Class_Weapon::Check_Arm_Task_Completion()
     }
 }
 
+/**
+ * @brief 移动到位判定
+ */
 void Class_Weapon::Check_Move_Task_Completion()
 {
     if (Move_Calibrated &&
@@ -234,6 +241,9 @@ void Class_Weapon::Check_Move_Task_Completion()
     }
 }
 
+/**
+ * @brief 俯仰到位判定
+ */
 void Class_Weapon::Check_Pitch_Task_Completion()
 {
     if (Pitch_Calibrated &&
@@ -244,6 +254,19 @@ void Class_Weapon::Check_Pitch_Task_Completion()
     }
 }
 
+/**
+ * @brief 旋转到位判定
+ */
+void Class_Weapon::Check_Rotate_Task_Completion()
+{
+    if (Math_Abs(Motor_Rotate.Get_Target_Angle() - Motor_Rotate.Get_Now_Angle() < Position_Threshold) &&
+        Math_Abs(Motor_Rotate.Get_Target_Omega() - Motor_Rotate.Get_Now_Omega()) < Omega_Threshold)
+    {
+        Rotate_Task_Finished = true;
+    }
+}
+
+/**
 void Class_Weapon::Check_Servo_Task_Completion()
 {
     // 防止数组越界
@@ -278,13 +301,18 @@ void Class_Weapon::Check_Servo_Task_Completion()
         Servo_Task_Finished = true;
     }
 }
+*/
 
+/**
+ * @brief 清除完成标志
+ */
 void Class_Weapon::Enter_New_Status_Clear_Completion_Flag()
 {
     Arm_Task_Finished = false;
     Move_Task_Finished = false;
     Pitch_Task_Finished = false;
-    Servo_Task_Finished = false;
+    Rotate_Task_Finished = false;
+    // Servo_Task_Finished = false;
 }
 
 /**
@@ -293,7 +321,7 @@ void Class_Weapon::Enter_New_Status_Clear_Completion_Flag()
 void Class_Weapon::Weapon_Grab_Status_Task()
 {
     // 旋转电机
-    Motor_Rotate.Set_Target_Angle(Target.Rotate_Target_Position[FSM_Weapon.Get_Now_Status_Serial()]);
+    Motor_Rotate.Set_Target_Angle(Target.Rotate_Target_Position[FSM_Weapon.Get_Now_Status_Serial()] + Rotate_Bias_Rad);
 
     // 机械臂电机
     Arm_To_Position(Target.Arm_Target_Position[FSM_Weapon.Get_Now_Status_Serial()]);
@@ -305,9 +333,16 @@ void Class_Weapon::Weapon_Grab_Status_Task()
     Pitch_To_Position(Target.Pitch_Target_Position[FSM_Weapon.Get_Now_Status_Serial()]);
 
     // 夹取舵机
-    Pick_Servo[0].Set_Normalized_Position(Target.Pick_Servo_Target_Position[FSM_Weapon.Get_Now_Status_Serial()]);
-    Pick_Servo[1].Set_Normalized_Position(Target.Pick_Servo_Target_Position[FSM_Weapon.Get_Now_Status_Serial()]);
-    Pick_Servo[2].Set_Normalized_Position(Target.Pick_Servo_Target_Position[FSM_Weapon.Get_Now_Status_Serial()]);
+    if (Need_All_Servo_Action)
+    {
+        Pick_Servo[0].Set_Normalized_Position(Target.Pick_Servo_Target_Position[FSM_Weapon.Get_Now_Status_Serial()]);
+        Pick_Servo[1].Set_Normalized_Position(Target.Pick_Servo_Target_Position[FSM_Weapon.Get_Now_Status_Serial()]);
+        Pick_Servo[2].Set_Normalized_Position(Target.Pick_Servo_Target_Position[FSM_Weapon.Get_Now_Status_Serial()]);
+    }
+    else
+    {
+        Pick_Servo[2 - Move_Index].Set_Normalized_Position(Target.Pick_Servo_Target_Position[FSM_Weapon.Get_Now_Status_Serial()]);
+    }
 
     // 抓取舵机
     Grab_Servo.Set_Normalized_Position(Target.Grab_Servo_Target_Position[FSM_Weapon.Get_Now_Status_Serial()]);
@@ -325,284 +360,269 @@ void Class_FSM_Weapon::Weapon_TIM_Status_PeriodElapsedCallback()
     {
         case Weapon_Status_Init:
         {
-            if (Status[Now_Status_Serial].Count_Time == 0)
-            {
-                Weapon->Enter_New_Status_Clear_Completion_Flag();
-            }
+            Weapon->Need_All_Servo_Action = true;
 
             Weapon->Weapon_Grab_Status_Task();
 
-            if (Weapon->Is_Action_Finished())
+            // if (Weapon->Is_Action_Finished())
+            // {
+            if (Weapon->Forward_Yaw_Flag)
             {
-                if (Weapon->Forward_Yaw_Flag)
-                {
-                    Weapon->Forward_Yaw_Flag = false;
-                    Status[Now_Status_Serial].Count_Time = 0;
-                    Set_Status(Weapon_Status_Grab_Prepare);
-                }
+                Status[Now_Status_Serial].Count_Time = 0;
+                Weapon->Enter_New_Status_Clear_Completion_Flag();
+                Set_Status(Weapon_Status_Grab_Prepare);
             }
+            // }
             break;
         }
 
         case Weapon_Status_Grab_Prepare:
         {
-            if (Status[Now_Status_Serial].Count_Time == 0)
+            Weapon->Need_All_Servo_Action = true;
+
+            if (Weapon->Backward_Yaw_Flag)
             {
+                Status[Now_Status_Serial].Count_Time = 0;
                 Weapon->Enter_New_Status_Clear_Completion_Flag();
+                Set_Status(Weapon_Status_Init);
             }
 
             Weapon->Weapon_Grab_Status_Task();
 
-            if (Weapon->Is_Action_Finished())
+            // if (Weapon->Is_Action_Finished())
+            // {
+            if (Weapon->Forward_Yaw_Flag)
             {
-                if (Weapon->Forward_Yaw_Flag)
-                {
-                    Weapon->Forward_Yaw_Flag = false;
-                    Status[Now_Status_Serial].Count_Time = 0;
-                    Set_Status(Weapon_Status_Grab);
-                }
-                if (Weapon->Backward_Yaw_Flag)
-                {
-                    Weapon->Backward_Yaw_Flag = false;
-                    Status[Now_Status_Serial].Count_Time = 0;
-                    Set_Status(Weapon_Status_Init);
-                }
+                Status[Now_Status_Serial].Count_Time = 0;
+                Weapon->Enter_New_Status_Clear_Completion_Flag();
+                Set_Status(Weapon_Status_Grab);
             }
+            // }
             break;
         }
 
         case Weapon_Status_Grab:
         {
-            if (Status[Now_Status_Serial].Count_Time == 0)
-            {
-                Weapon->Enter_New_Status_Clear_Completion_Flag();
-            }
+            Weapon->Need_All_Servo_Action = true;
 
-            Weapon->Weapon_Grab_Status_Task();
-
-            if (Weapon->Is_Action_Finished())
+            if (Weapon->Backward_Yaw_Flag)
             {
-                Weapon->Forward_Yaw_Flag = false;
                 Status[Now_Status_Serial].Count_Time = 0;
+                Weapon->Enter_New_Status_Clear_Completion_Flag();
+                Set_Status(Weapon_Status_Grab);
+            }
+            Weapon->Weapon_Grab_Status_Task();
+            if (Weapon->Forward_Yaw_Flag)
+            {
+                // if (Weapon->Is_Action_Finished())
+                // {
+                Status[Now_Status_Serial].Count_Time = 0;
+                Weapon->Enter_New_Status_Clear_Completion_Flag();
                 Set_Status(Weapon_Status_Lift_1);
+                // }
             }
             break;
         }
 
         case Weapon_Status_Lift_1:
         {
-            if (Status[Now_Status_Serial].Count_Time == 0)
+            Weapon->Need_All_Servo_Action = true;
+
+            if (Weapon->Backward_Yaw_Flag)
             {
+                Status[Now_Status_Serial].Count_Time = 0;
                 Weapon->Enter_New_Status_Clear_Completion_Flag();
+                Set_Status(Weapon_Status_Grab);
             }
 
             Weapon->Weapon_Grab_Status_Task();
 
-            if (Weapon->Is_Action_Finished())
+            // if (Weapon->Is_Action_Finished())
+            // {
+            if (Weapon->Forward_Yaw_Flag)
             {
-                if (Weapon->Forward_Yaw_Flag)
-                {
-                    Weapon->Forward_Yaw_Flag = false;
-                    Status[Now_Status_Serial].Count_Time = 0;
-                    Set_Status(Weapon_Status_Pick);
-                }
-                if (Weapon->Backward_Yaw_Flag)
-                {
-                    Weapon->Backward_Yaw_Flag = false;
-                    Status[Now_Status_Serial].Count_Time = 0;
-                    Set_Status(Weapon_Status_Grab);
-                }
+                Status[Now_Status_Serial].Count_Time = 0;
+                Weapon->Enter_New_Status_Clear_Completion_Flag();
+                Set_Status(Weapon_Status_Pick);
             }
+            // }
             break;
         }
 
         case Weapon_Status_Pick:
         {
-            if (Status[Now_Status_Serial].Count_Time == 0)
+            Weapon->Need_All_Servo_Action = true;
+
+            if (Weapon->Backward_Yaw_Flag)
             {
+                Status[Now_Status_Serial].Count_Time = 0;
                 Weapon->Enter_New_Status_Clear_Completion_Flag();
+                Set_Status(Weapon_Status_Lift_1);
             }
 
             Weapon->Weapon_Grab_Status_Task();
 
-            if (Weapon->Is_Action_Finished())
+            // if (Weapon->Is_Action_Finished())
+            // {
+            if (Weapon->Forward_Yaw_Flag)
             {
-                if (Weapon->Forward_Yaw_Flag)
-                {
-                    Weapon->Forward_Yaw_Flag = false;
-                    Status[Now_Status_Serial].Count_Time = 0;
-                    Set_Status(Weapon_Status_Lift_2);
-                }
-                if (Weapon->Backward_Yaw_Flag)
-                {
-                    Weapon->Backward_Yaw_Flag = false;
-                    Status[Now_Status_Serial].Count_Time = 0;
-                    Set_Status(Weapon_Status_Lift_1);
-                }
+                Status[Now_Status_Serial].Count_Time = 0;
+                Weapon->Enter_New_Status_Clear_Completion_Flag();
+                Set_Status(Weapon_Status_Lift_2);
             }
+            // }
             break;
         }
 
         case Weapon_Status_Lift_2:
         {
-            if (Status[Now_Status_Serial].Count_Time == 0)
+            Weapon->Need_All_Servo_Action = false;
+
+            if (Weapon->Backward_Yaw_Flag)
             {
+                Status[Now_Status_Serial].Count_Time = 0;
                 Weapon->Enter_New_Status_Clear_Completion_Flag();
+                Set_Status(Weapon_Status_Pick);
             }
 
             Weapon->Weapon_Grab_Status_Task();
 
-            if (Weapon->Is_Action_Finished())
+            // if (Weapon->Is_Action_Finished())
+            // {
+            if (Weapon->Forward_Yaw_Flag)
             {
-                if (Weapon->Forward_Yaw_Flag)
-                {
-                    Weapon->Forward_Yaw_Flag = false;
-                    Status[Now_Status_Serial].Count_Time = 0;
-                    Set_Status(Weapon_Status_Rotate_To_Connection);
-                }
-                if (Weapon->Backward_Yaw_Flag)
-                {
-                    Weapon->Backward_Yaw_Flag = false;
-                    Status[Now_Status_Serial].Count_Time = 0;
-                    Set_Status(Weapon_Status_Pick);
-                }
+                Status[Now_Status_Serial].Count_Time = 0;
+                Weapon->Enter_New_Status_Clear_Completion_Flag();
+                Set_Status(Weapon_Status_Rotate_To_Connection);
             }
+            // }
             break;
         }
 
         case Weapon_Status_Rotate_To_Connection:
         {
-            if (Status[Now_Status_Serial].Count_Time == 0)
+            Weapon->Need_All_Servo_Action = false;
+
+            if (Weapon->Backward_Yaw_Flag)
             {
+                Status[Now_Status_Serial].Count_Time = 0;
                 Weapon->Enter_New_Status_Clear_Completion_Flag();
+                Set_Status(Weapon_Status_Lift_2);
             }
 
             Weapon->Weapon_Grab_Status_Task();
 
-            if (Weapon->Is_Action_Finished())
+            // if (Weapon->Is_Action_Finished())
+            // {
+            if (Weapon->Forward_Yaw_Flag)
             {
-                if (Weapon->Forward_Yaw_Flag)
-                {
-                    Weapon->Forward_Yaw_Flag = false;
-                    Status[Now_Status_Serial].Count_Time = 0;
-                    Set_Status(Weapon_Status_Rotate_To_Storage);
-                }
-                if (Weapon->Backward_Yaw_Flag)
-                {
-                    Weapon->Backward_Yaw_Flag = false;
-                    Status[Now_Status_Serial].Count_Time = 0;
-                    Set_Status(Weapon_Status_Lift_2);
-                }
+                Status[Now_Status_Serial].Count_Time = 0;
+                Weapon->Enter_New_Status_Clear_Completion_Flag();
+                Set_Status(Weapon_Status_Rotate_To_Storage_Prepare);
+            }
+            // }
+            break;
+        }
+
+        case Weapon_Status_Rotate_To_Storage_Prepare:
+        {
+            Weapon->Need_All_Servo_Action = false;
+
+            if (Weapon->Backward_Yaw_Flag)
+            {
+                Status[Now_Status_Serial].Count_Time = 0;
+                Weapon->Enter_New_Status_Clear_Completion_Flag();
+                Set_Status(Weapon_Status_Rotate_To_Connection);
+            }
+
+            Weapon->Weapon_Grab_Status_Task();
+
+            if (Weapon->Forward_Yaw_Flag)
+            {
+                Status[Now_Status_Serial].Count_Time = 0;
+                Weapon->Enter_New_Status_Clear_Completion_Flag();
+                Set_Status(Weapon_Status_Rotate_To_Storage);
             }
             break;
         }
 
         case Weapon_Status_Rotate_To_Storage:
         {
-            if (Status[Now_Status_Serial].Count_Time == 0)
+            Weapon->Need_All_Servo_Action = false;
+
+            if (Weapon->Backward_Yaw_Flag)
             {
+                Status[Now_Status_Serial].Count_Time = 0;
                 Weapon->Enter_New_Status_Clear_Completion_Flag();
+                Set_Status(Weapon_Status_Pick);
             }
 
             Weapon->Weapon_Grab_Status_Task();
 
-            if (Weapon->Is_Action_Finished())
+            // if (Weapon->Is_Action_Finished())
+            // {
+            if (Weapon->Forward_Yaw_Flag)
             {
-                if (Weapon->Forward_Yaw_Flag)
-                {
-                    Weapon->Forward_Yaw_Flag = false;
-                    Status[Now_Status_Serial].Count_Time = 0;
-                    Set_Status(Weapon_Status_Attack_Postition_1);
-                }
-                if (Weapon->Backward_Yaw_Flag)
-                {
-                    Weapon->Backward_Yaw_Flag = false;
-                    Status[Now_Status_Serial].Count_Time = 0;
-                    Set_Status(Weapon_Status_Servo_Action);
-                }
+                Status[Now_Status_Serial].Count_Time = 0;
+                Weapon->Enter_New_Status_Clear_Completion_Flag();
+                Set_Status(Weapon_Status_Attack_Postition_1);
             }
+            // }
             break;
         }
 
         case Weapon_Status_Attack_Postition_1:
         {
-            if (Status[Now_Status_Serial].Count_Time == 0)
+            Weapon->Need_All_Servo_Action = false;
+
+            if (Weapon->Backward_Yaw_Flag)
             {
+                Status[Now_Status_Serial].Count_Time = 0;
                 Weapon->Enter_New_Status_Clear_Completion_Flag();
+                Set_Status(Weapon_Status_Rotate_To_Storage_Prepare);
             }
 
             Weapon->Weapon_Grab_Status_Task();
 
-            if (Weapon->Is_Action_Finished())
+            // if (Weapon->Is_Action_Finished())
+            // {
+            if (Weapon->Forward_Yaw_Flag)
             {
-                if (Weapon->Forward_Yaw_Flag)
-                {
-                    Weapon->Forward_Yaw_Flag = false;
-                    Status[Now_Status_Serial].Count_Time = 0;
-                    Set_Status(Weapon_Status_Attack_Postition_2);
-                }
-                if (Weapon->Backward_Yaw_Flag)
-                {
-                    Weapon->Backward_Yaw_Flag = false;
-                    Status[Now_Status_Serial].Count_Time = 0;
-                    Set_Status(Weapon_Status_Rotate_To_Storage);
-                }
+                Status[Now_Status_Serial].Count_Time = 0;
+                Weapon->Enter_New_Status_Clear_Completion_Flag();
+                Set_Status(Weapon_Status_Attack_Postition_2);
             }
+            // }
             break;
         }
 
         case Weapon_Status_Attack_Postition_2:
         {
-            if (Status[Now_Status_Serial].Count_Time == 0)
+            Weapon->Need_All_Servo_Action = false;
+
+            if (Weapon->Backward_Yaw_Flag)
             {
+                Status[Now_Status_Serial].Count_Time = 0;
                 Weapon->Enter_New_Status_Clear_Completion_Flag();
+                Set_Status(Weapon_Status_Rotate_To_Storage_Prepare);
             }
 
             Weapon->Weapon_Grab_Status_Task();
 
-            if (Weapon->Is_Action_Finished())
+            // if (Weapon->Is_Action_Finished())
+            // {
+            if (Weapon->Forward_Yaw_Flag)
             {
-                if (Weapon->Forward_Yaw_Flag)
-                {
-                    Weapon->Forward_Yaw_Flag = false;
-                    Status[Now_Status_Serial].Count_Time = 0;
-                    Set_Status(Weapon_Status_Attack_Postition_1);
-                }
-                if (Weapon->Backward_Yaw_Flag)
-                {
-                    Weapon->Backward_Yaw_Flag = false;
-                    Status[Now_Status_Serial].Count_Time = 0;
-                    Set_Status(Weapon_Status_Rotate_To_Storage);
-                }
-            }
-            break;
-        }
-
-        case Weapon_Status_Servo_Action:
-        {
-            if (Status[Now_Status_Serial].Count_Time == 0)
-            {
+                Status[Now_Status_Serial].Count_Time = 0;
                 Weapon->Enter_New_Status_Clear_Completion_Flag();
+                Set_Status(Weapon_Status_Attack_Postition_1);
             }
-
-            Weapon->Weapon_Grab_Status_Task();
-
-            if (Weapon->Is_Action_Finished())
-            {
-                if (Weapon->Forward_Yaw_Flag)
-                {
-                    Weapon->Forward_Yaw_Flag = false;
-                    Status[Now_Status_Serial].Count_Time = 0;
-                    Set_Status(Weapon_Status_Rotate_To_Storage);
-                }
-                if (Weapon->Backward_Yaw_Flag)
-                {
-                    Weapon->Backward_Yaw_Flag = false;
-                    Status[Now_Status_Serial].Count_Time = 0;
-                    Set_Status(Weapon_Status_Lift_1);
-                }
-            }
+            // }
             break;
         }
     }
+
+    // 清空标志位
+    Weapon->Forward_Yaw_Flag = false;
+    Weapon->Backward_Yaw_Flag = false;
 }
