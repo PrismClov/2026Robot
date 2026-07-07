@@ -38,8 +38,8 @@ void Class_Chariot::Init()
 
     Chassis.Init();
     // Lift.Init();
-    // Weapon.Init();
-    KFS.Init();
+    Weapon.Init();
+    // KFS.Init();
 }
 
 /**
@@ -52,28 +52,23 @@ void Class_Chariot::TIM_100ms_Alive_PeriodElapsedCallback()
     Chassis.TIM_100ms_Alive_PeriodElapsedCallback();
     // Serial_Screen.TIM_100ms_Alive_PeriodElapsedCallback();
     // Lift.TIM_100ms_Alive_PeriodElapsedCallback();
-    KFS.TIM_Alive_PeriodElapsedCallback();
-    // Weapon.TIM_Alive_PeriodElapsedCallback();
+    // KFS.TIM_Alive_PeriodElapsedCallback();
+    Weapon.TIM_Alive_PeriodElapsedCallback();
 }
 
 void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
 {
-    // // Lift
+    // Lift
     // Lift.TIM_Calculate_PeriodElapsedCallback();
-
-    // if(Lift.FSM_Lift.Lift_Status == Lift_Status_Wait_R2)
-    // {
-    //     Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_SELF_LOCK);
-    // }
 
     // 底盘控制
     Chassis.TIM_2ms_Control_PeriodElapsedCallback();
 
     // KFS
-    KFS.TIM_Control_PeriodElapsedCallback();
+    // KFS.TIM_Control_PeriodElapsedCallback();
 
-    // // Weapon
-    // Weapon.TIM_Weapon_PeriodElapsedCallback();
+    // Weapon
+    Weapon.TIM_Weapon_PeriodElapsedCallback();
 }
 /**
  * @brief 50ms定时任务
@@ -199,7 +194,7 @@ void Class_Chariot::Control_Chassis()
                         KFS.Status_Backward();
                     }
                 }
-                KFS.Set_Lift_Height_Index(CRSF.Get_SC() % 2);
+                KFS.Set_Lift_Height_Index(CRSF.Get_SC());
                 break;
             }
             case Robot_Mode_Weapon:
@@ -235,6 +230,8 @@ void Class_Chariot::Control_Chassis()
             }
         }
         Previous_SE_Pos = CRSF.Get_SE();
+
+        Weapon.Set_Rotate_Bias(Math_Int_To_Float(CRSF.Get_S1(), -100, 100, -Weapon.Bias_Max, Weapon.Bias_Max));
     }
 }
 void Class_Chariot::TIM_Control_Callback()
