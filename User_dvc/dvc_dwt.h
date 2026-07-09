@@ -1,7 +1,7 @@
 #ifndef __DWT_H__
 #define __DWT_H__
 
-#include "drv_config.h"
+#include "stm32h7xx_hal.h"
 typedef struct
 {
     uint32_t s;

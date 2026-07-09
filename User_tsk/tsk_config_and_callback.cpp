@@ -48,6 +48,7 @@
 #include "dvc_motor_rs.h"
 #include "dvc_swerve_module.h"
 #include "ita_robot.h"
+#include "drv_config.h"
 Class_Chariot chariot;
 
 /* Private macros ------------------------------------------------------------*/
@@ -285,13 +286,22 @@ void Task1ms_TIM5_Callback()
 
     chariot.TIM_Unline_Protect_PeriodElapsedCallback();
 }
-
+void SPI_Callback(uint8_t *tx_buffer, uint8_t* rx_buffer, uint16_t Length)
+{
+    (void)tx_buffer;
+    (void)rx_buffer;
+    (void)Length;
+}
 void Task_Init()
 {
     // 驱动层初始化
     DWT_Init();
     // 点俩灯, 开24V
     BSP_Init(BSP_DC24_L_OFF | BSP_DC24_R_OFF | BSP_DC5_ON, 0.0, 0.0);
+    SPI1_Device.Init(&hspi1, GPIOA, GPIO_PIN_4, SPI_Callback);
+    
+    // 注册到中断系统
+    RegisterSPIDevice(&hspi1, &SPI1_Device);
     // CAN总线初始化
     FDCAN_Init(&hfdcan1, Device_FDCAN1_Callback);
     FDCAN_Init(&hfdcan2, Device_FDCAN2_Callback);
