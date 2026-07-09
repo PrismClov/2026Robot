@@ -13,10 +13,10 @@
 
 /* Includes ------------------------------------------------------------------*/
 
+#include "config.h"
 #include "drv_math.h"
 #include "dvc_crsf.h"
 #include "ita_robot.h"
-#include "config.h"
 
 /* Private macros ------------------------------------------------------------*/
 
@@ -37,15 +37,18 @@ void Class_Chariot::Init()
 
     CRSF.Init(&huart7);
 
-    Chassis.Init();
+    Chassis.Init(8.0f, 8.0f, 8.0f);
 
-    // Weapon.Init();
+    Weapon.Init();
+    Weapon.Chariot = this;
 
     KFS.Init();
 
 #if defined(MAIN_COMPETITION) || defined(SKILL_COMPETITION_2)
-    // Lift.Init();
+    Lift.Init();
+    Lift.Chariot = this;
 #endif
+
 }
 
 /**
@@ -57,15 +60,15 @@ void Class_Chariot::TIM_100ms_Alive_PeriodElapsedCallback()
     CRSF.TIM1msMod50_Alive_PeriodElapsedCallback();
 
     Chassis.TIM_100ms_Alive_PeriodElapsedCallback();
-    
+
     Serial_Screen.TIM_100ms_Alive_PeriodElapsedCallback();
-    
-    // KFS.TIM_Alive_PeriodElapsedCallback();
-    
-    // Weapon.TIM_Alive_PeriodElapsedCallback();
+
+    KFS.TIM_Alive_PeriodElapsedCallback();
+
+    Weapon.TIM_Alive_PeriodElapsedCallback();
 
 #if defined(MAIN_COMPETITION) || defined(SKILL_COMPETITION_2)
-    // Lift.TIM_100ms_Alive_PeriodElapsedCallback();
+    Lift.TIM_100ms_Alive_PeriodElapsedCallback();
 #endif
 }
 
@@ -75,14 +78,14 @@ void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
     Chassis.TIM_2ms_Control_PeriodElapsedCallback();
 
     // KFS
-    // KFS.TIM_Control_PeriodElapsedCallback();
+    KFS.TIM_Control_PeriodElapsedCallback();
 
     // Weapon
-    // Weapon.TIM_Weapon_PeriodElapsedCallback();
+    Weapon.TIM_Weapon_PeriodElapsedCallback();
 
 #if defined(MAIN_COMPETITION) || defined(SKILL_COMPETITION_2)
     // Lift
-    // Lift.TIM_Calculate_PeriodElapsedCallback();
+    Lift.TIM_Calculate_PeriodElapsedCallback();
 #endif
 }
 /**

@@ -24,6 +24,7 @@
 /* Exported macros -----------------------------------------------------------*/
 
 /* Exported types ------------------------------------------------------------*/
+
 /**
  * @brief CRSF控制数据来源
  *
@@ -64,7 +65,7 @@ public:
 
     // 串口屏
     Class_SerialScreen Serial_Screen;
-    
+
     // 舵轮底盘
     Class_Chassis Chassis;
 
@@ -87,6 +88,7 @@ public:
     void Judge_Active_Controller();
     void Control_Chassis();
 
+    inline Enum_Robot_Mode Get_Robot_Mode() const;
 protected:
     // CRSF控制数据来源
     Enum_CRSF_Control_Type CRSF_Control_Type = CRSF_Control_Type_NONE;
@@ -106,4 +108,10 @@ protected:
     // 上一次SE位置（用于边沿检测）
     Enum_CRSF_Switch_Pos Previous_SE_Pos = CRSF_SWITCH_LOW;
 };
+
+inline Enum_Robot_Mode Class_Chariot::Get_Robot_Mode() const
+{
+    return Robot_Mode;
+}
+
 #endif

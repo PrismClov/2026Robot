@@ -5,6 +5,7 @@
 #include "crt_multi_motor_sync.h"
 #include "dvc_motor_dji.h"
 
+class Class_Chariot;
 class Class_Lift;
 
 /**
@@ -16,7 +17,9 @@ enum Enum_Lift_Status
 {
     Lift_Status_Init = 0,
     Lift_Status_Wait_R2,
+    Lift_Status_Show_Graph,
     Lift_Status_Lift_R2,
+    Lift_Status_Lift_R2_Complete,
     Lift_Status_Down_R2,
 };
 
@@ -33,6 +36,8 @@ public:
 class Class_Lift : public Class_MultiMotorSync_Base<2>
 {
 public:
+    Class_Chariot *Chariot;
+
     Class_FSM_Lift FSM_Lift;
     friend class Class_FSM_Lift;
 
@@ -53,7 +58,7 @@ private:
     bool Yaw_Flag = false;      // Yaw到位触发，FSM检测到后切换状态
     bool Backward_Yaw_Flag = false;
 
-    float Target_Distance_Init = 0.0f;     // 初始化位置
+    float Target_Distance_Init = 0.35f;     // 初始化位置
     float Target_Distance_Wait_R2 = 0.49f; // 底部(等待/下降到位)
     float Target_Distance_Lift_R2 = 0.0f;  // 顶部(抬升到位)
     float Target_Distance_Down_R2 = 0.48f; // 底部(下降到位)

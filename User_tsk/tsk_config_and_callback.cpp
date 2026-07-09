@@ -41,12 +41,7 @@
 #include "drv_can.h"
 #include "drv_tim.h"
 #include "drv_uart.h"
-#include "dvc_ds_servo.h"
-#include "dvc_dwt.h"
-#include "dvc_motor_dji.h"
-#include "dvc_motor_mksesc.h"
-#include "dvc_motor_rs.h"
-#include "dvc_swerve_module.h"
+#include "config.h"
 #include "ita_robot.h"
 Class_Chariot chariot;
 
@@ -100,6 +95,13 @@ void Device_FDCAN1_Callback(Struct_FDCAN_Rx_Buffer *FDCAN_RxMessage)
         case 0x205:
         {
             chariot.Weapon.Motor_Arm.FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
+            break;
+        }
+
+        // Weapon 抓取电机数据反馈
+        case 0x206:
+        {
+            chariot.Weapon.Grab_Servo.FDCAN_RxCpltCallback(FDCAN_RxMessage->Data);
             break;
         }
 

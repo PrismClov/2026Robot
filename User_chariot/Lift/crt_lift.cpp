@@ -1,4 +1,5 @@
 #include "crt_lift.h"
+#include "ita_robot.h"
 
 /**
  * @brief 初始化
@@ -59,7 +60,7 @@ void Class_Lift::Init()
                                            }});
 
     FSM_Lift.Lift = this;
-    FSM_Lift.Init(3, Lift_Status_Init);
+    FSM_Lift.Init(6, Lift_Status_Init);
 }
 
 /**
@@ -118,6 +119,12 @@ void Class_FSM_Lift::Lift_TIM_Status_PeriodElapsedCallback()
                 Status[Now_Status_Serial].Count_Time = 0;
                 Set_Status(Lift_Status_Wait_R2);
             }
+
+            if (Lift->Chariot->Get_Robot_Mode() == Robot_Mode_Lift)
+            {
+                Lift->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
+            }
+
             break;
         }
         case Lift_Status_Wait_R2:
@@ -135,12 +142,67 @@ void Class_FSM_Lift::Lift_TIM_Status_PeriodElapsedCallback()
             if (Lift->Get_Is_Motion_Finished() && Lift->Yaw_Flag)
             {
                 Status[Now_Status_Serial].Count_Time = 0;
+                Set_Status(Lift_Status_Show_Graph);
+            }
+
+            if (Lift->Chariot->Get_Robot_Mode() == Robot_Mode_Lift)
+            {
+                Lift->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_2);
+            }
+            break;
+        }
+
+        case Lift_Status_Show_Graph:
+        {
+            Lift->Motor_Lift_L.Set_Feedforward_Current(Lift->Empty_Gravity_Compensation[0]);
+            Lift->Motor_Lift_R.Set_Feedforward_Current(Lift->Empty_Gravity_Compensation[1]);
+
+            Lift->Set_Target_Position(Lift->Target_Distance_Wait_R2);
+
+            if (Lift->Backward_Yaw_Flag)
+            {
+                Status[Now_Status_Serial].Count_Time = 0;
+                Set_Status(Lift_Status_Wait_R2);
+            }
+            if (Lift->Get_Is_Motion_Finished() && Lift->Yaw_Flag)
+            {
+                Status[Now_Status_Serial].Count_Time = 0;
                 Set_Status(Lift_Status_Lift_R2);
+            }
+            if (Lift->Chariot->Get_Robot_Mode() == Robot_Mode_Lift)
+            {
+                Lift->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
             }
             break;
         }
 
         case Lift_Status_Lift_R2:
+        {
+            Lift->Motor_Lift_L.Set_Feedforward_Current(Lift->Load_Gravity_Compensation[0]);
+            Lift->Motor_Lift_R.Set_Feedforward_Current(Lift->Load_Gravity_Compensation[1]);
+
+            Lift->Set_Target_Position(Lift->Target_Distance_Lift_R2);
+
+            if (Lift->Backward_Yaw_Flag)
+            {
+                Status[Now_Status_Serial].Count_Time = 0;
+                Set_Status(Lift_Status_Show_Graph);
+            }
+            else if (Lift->Get_Is_Motion_Finished() && Lift->Yaw_Flag)
+            {
+                Status[Now_Status_Serial].Count_Time = 0;
+                Set_Status(Lift_Status_Lift_R2_Complete);
+            }
+
+            if (Lift->Chariot->Get_Robot_Mode() == Robot_Mode_Lift)
+            {
+                Lift->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
+            }
+
+            break;
+        }
+
+        case Lift_Status_Lift_R2_Complete:
         {
             Lift->Motor_Lift_L.Set_Feedforward_Current(Lift->Load_Gravity_Compensation[0]);
             Lift->Motor_Lift_R.Set_Feedforward_Current(Lift->Load_Gravity_Compensation[1]);
@@ -157,9 +219,14 @@ void Class_FSM_Lift::Lift_TIM_Status_PeriodElapsedCallback()
                 Status[Now_Status_Serial].Count_Time = 0;
                 Set_Status(Lift_Status_Down_R2);
             }
+
+            if (Lift->Chariot->Get_Robot_Mode() == Robot_Mode_Lift)
+            {
+                Lift->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_3);
+            }
+
             break;
         }
-
         case Lift_Status_Down_R2:
         {
             Lift->Motor_Lift_L.Set_Feedforward_Current(Lift->Load_Gravity_Compensation[0]);
@@ -176,6 +243,11 @@ void Class_FSM_Lift::Lift_TIM_Status_PeriodElapsedCallback()
             {
                 Status[Now_Status_Serial].Count_Time = 0;
                 Set_Status(Lift_Status_Wait_R2);
+            }
+
+            if (Lift->Chariot->Get_Robot_Mode() == Robot_Mode_Lift)
+            {
+                Lift->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
             }
             break;
         }

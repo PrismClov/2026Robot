@@ -34,8 +34,8 @@ enum Enum_KFS_Status
     KFS_Status_Second_Pick,               // 夹取第二个KFS
     KFS_Status_Second_Pick_Up,            // 夹取第二个KFS后抬起
     KFS_Status_Prepare_Protect_Arm_Wrist, // 大臂手腕先动
-    KFS_Status_Protect_Storage_Again,     // 再次保护存储的KFS
 #endif
+    KFS_Status_Protect_Storage_Again, // 再次保护存储的KFS
 #if defined(MAIN_COMPETITION)
     KFS_Status_First_Release_Prepare, // 释放准备
     KFS_Status_First_Release,         // 释放第一个KFS
@@ -149,6 +149,10 @@ private:
     // 手腕电机参数
     bool Wrist_Task_Finished = false;
 
+    bool Pump_Task_Finished = false;
+
+    SoftTimer_t Pump_Debounce_Timer = {};
+
     float Processed_Wrist_Angle_Rad = 0.0f; // 手腕和大臂的夹角，顺时针为正
 
     const float Wrist_Distance_Lock_Threshold = 0.02f;
@@ -161,7 +165,7 @@ private:
 
     const float Wrist_Gravity_Compensation_Ratio = 0.85f;
 
-    const float Wrist_Parallel_With_Arm_Angle_Offset = 3.01663522f + PI;
+    const float Wrist_Parallel_With_Arm_Angle_Offset = 3.02919078f;
 
     Class_Slope Wrist_Speed_Slope;
 
@@ -204,8 +208,8 @@ private:
             -0.2f, // Second_Pick
             -0.2f, // Second_Pick_Up
             -0.2f, // Prepare_Protect_Arm_Wrist
-            -0.2f, // Protect_Storage_Again
 #endif
+            -0.2f, // Protect_Storage_Again
 #if defined(MAIN_COMPETITION)
             -0.2f, // First_Release_Prepare
             -0.2f, // First_Release
@@ -245,8 +249,8 @@ private:
                 0.00f, // Second_Pick
                 0.20f, // Second_Pick_Up
                 0.35f, // Prepare_Protect_Arm_Wrist
-                0.20f, // Protect_Storage_Again
 #endif
+                0.25f, // Protect_Storage_Again
 #if defined(MAIN_COMPETITION)
                 0.35f, // First_Release_Prepare
                 0.35f, // First_Release
@@ -283,8 +287,8 @@ private:
                 0.20f, // Second_Pick
                 0.20f, // Second_Pick_Up
                 0.35f, // Prepare_Protect_Arm_Wrist
-                0.20f, // Protect_Storage_Again
 #endif
+                0.25f, // Protect_Storage_Again
 #if defined(MAIN_COMPETITION)
                 0.35f, // First_Release_Prepare
                 0.35f, // First_Release
@@ -321,8 +325,8 @@ private:
                 0.35f, // Second_Pick
                 0.20f, // Second_Pick_Up
                 0.35f, // Prepare_Protect_Arm_Wrist
-                0.20f, // Protect_Storage_Again
 #endif
+                0.25f, // Protect_Storage_Again
 #if defined(MAIN_COMPETITION)
                 0.35f, // First_Release_Prepare
                 0.35f, // First_Release
@@ -351,8 +355,8 @@ private:
             2.07f, // First_Pick_Prepare
             1.81f, // First_Pick
             2.27f, // First_Pick_Up
-            2.27f, // Prepare_Storage_Lift_Up
-            2.0f,  // Storage
+            2.05f, // Prepare_Storage_Lift_Up
+            2.05f, // Storage
             2.0f,  // Storage_Lift_Down
             -1.0f, // Storage_Arm_Up
             -1.0f, // Protect_Storage
@@ -361,8 +365,8 @@ private:
             1.81f, // Second_Pick
             2.27f, // Second_Pick_Up
             -1.6f, // Prepare_Protect_Arm_Wrist
-            -1.6f, // Protect_Storage_Again
 #endif
+            -1.6f, // Protect_Storage_Again
 #if defined(MAIN_COMPETITION)
             -1.0f, // First_Release_Prepare
             -1.0f, // First_Release
@@ -380,7 +384,7 @@ private:
             -1.0f, // Third_Release_Prepare
             -1.0f, // Third_Release
 #endif
-            0.0f, // Recover_Init
+            0.00f, // Recover_Init
         };
 
         // 机械臂目标角度
@@ -400,8 +404,8 @@ private:
             -0.22f, // Second_Pick
             -0.7f,  // Second_Pick_Up
             1.57f,  // Prepare_Protect_Arm_Wrist
-            1.57f,  // Protect_Storage_Again
 #endif
+            1.57f,  // Protect_Storage_Again
 #if defined(MAIN_COMPETITION)
             0.7f, // First_Release_Prepare
             0.7f, // First_Release
@@ -416,10 +420,10 @@ private:
             0.3f, // Pick_From_Ground_Prepare
             0.3f, // Pick_From_Ground
             0.3f, // Pick_Up_From_Ground
-            0.6f,  // Third_Release_Prepare
-            0.6f,  // Third_Release
+            0.6f, // Third_Release_Prepare
+            0.6f, // Third_Release
 #endif
-            -1.35f, // Recover_Init
+            -1.57f, // Recover_Init
         };
 
         // 气泵状态（1=吸, 0=放）
@@ -439,8 +443,8 @@ private:
             1, // Second_Pick
             1, // Second_Pick_Up
             1, // Prepare_Protect_Arm_Wrist
-            1, // Protect_Storage_Again
 #endif
+            1, // Protect_Storage_Again
 #if defined(MAIN_COMPETITION)
             1, // First_Release_Prepare
             0, // First_Release
@@ -489,6 +493,8 @@ private:
     void Check_Wrist_Task_Completion();
 
     void Check_Arm_Task_Completion();
+
+    void Check_Pump_Task_Completion();
 
     void Enter_New_Status_Clear_Completion_Flag();
 };
