@@ -15,34 +15,38 @@
 
 #define MAX_LIFT_POSITION_INDEX 3
 
+class Class_Chariot;
 class Class_KFS;
 
 enum Enum_KFS_Status
 {
     KFS_Status_Init = 0, // 初始化
 #if defined(SKILL_COMPETITION_1) || defined(MAIN_COMPETITION)
-    KFS_Status_First_Pick_Prepare,        // 夹取准备
-    KFS_Status_First_Pick,                // 夹取第一个KFS
-    KFS_Status_First_Pick_Up,             // 夹取第一个KFS后抬起
-    KFS_Status_Prepare_Storage_Lift_Up,   // 准备存储抬升
-    KFS_Status_Storage,                   // KFS存储
-    KFS_Status_Storage_Lift_Down,         // 储存抬升放下来
-    KFS_Status_Storage_Arm_Up,            // 储存大臂抬起
-    KFS_Status_Protect_Storage,           // 抵住KFS
-    KFS_Status_Second_Pick_Arm_Up,        // 抬起大臂准备第二次夹取
-    KFS_Status_Second_Pick_Prepare,       // 夹取准备
-    KFS_Status_Second_Pick,               // 夹取第二个KFS
-    KFS_Status_Second_Pick_Up,            // 夹取第二个KFS后抬起
-    KFS_Status_Prepare_Protect_Arm_Wrist, // 大臂手腕先动
+    KFS_Status_First_Pick_Prepare,      // 夹取准备
+    KFS_Status_First_Pick,              // 夹取第一个KFS
+    KFS_Status_First_Pick_Up,           // 夹取第一个KFS后抬起
+    KFS_Status_Prepare_Storage_Lift_Up, // 准备存储抬升
+    KFS_Status_Storage,                 // KFS存储
+    KFS_Status_Storage_Lift_Down,       // 储存抬升放下来
+    KFS_Status_Storage_Arm_Up,          // 储存大臂抬起
+    KFS_Status_Protect_Storage,         // 抵住KFS
+    KFS_Status_Second_Pick_Arm_Up,      // 抬起大臂准备第二次夹取
+    KFS_Status_Second_Pick_Prepare,     // 夹取准备
+    KFS_Status_Second_Pick,             // 夹取第二个KFS
 #endif
+    KFS_Status_Second_Pick_Up, // 夹取第二个KFS后抬起
+#if defined(SKILL_COMPETITION_1) || defined(MAIN_COMPETITION)
+    KFS_Status_Prepare_Protect_Arm_Wrist, // 大臂手腕先动
+
     KFS_Status_Protect_Storage_Again, // 再次保护存储的KFS
+#endif
 #if defined(MAIN_COMPETITION)
     KFS_Status_First_Release_Prepare, // 释放准备
     KFS_Status_First_Release,         // 释放第一个KFS
+    KFS_Status_Get_Storage_Prepare,   // 获取KFS存储准备
+    KFS_Status_Get_Storage,           // 获取KFS存储
 #endif
-#if defined(SKILL_COMPETITION_2) || defined(MAIN_COMPETITION)
-    KFS_Status_Get_Storage_Prepare,    // 获取KFS存储准备
-    KFS_Status_Get_Storage,            // 获取KFS存储
+#if !defined(SKILL_COMPETITION_1)
     KFS_Status_Second_Release_Prepare, // 释放准备
     KFS_Status_Second_Release,         // 释放第二个KFS
 #endif
@@ -53,8 +57,9 @@ enum Enum_KFS_Status
     KFS_Status_Third_Release_Prepare,
     KFS_Status_Third_Release,
 #endif
+#if !defined(SKILL_COMPETITION_1)
     KFS_Status_Recover_Init, // 回到初始化状态
-
+#endif
     MAX_KFS_STATUS // 最大状态数
 };
 
@@ -87,6 +92,9 @@ public:
 
     // 气泵
     Class_AIRPUMP Air_Pump;
+
+    // Chariot 指针
+    Class_Chariot *Chariot;
 
     // 状态机
     Class_FSM_KFS FSM_KFS;
@@ -206,17 +214,19 @@ private:
             -5.8f, // Second_Pick_Arm_Up
             -0.2f, // Second_Pick_Prepare
             -0.2f, // Second_Pick
-            -0.2f, // Second_Pick_Up
-            -0.2f, // Prepare_Protect_Arm_Wrist
 #endif
+            -0.2f, // Second_Pick_Up
+#if defined(SKILL_COMPETITION_1) || defined(MAIN_COMPETITION)
+            -0.2f, // Prepare_Protect_Arm_Wrist
             -0.2f, // Protect_Storage_Again
+#endif
 #if defined(MAIN_COMPETITION)
             -0.2f, // First_Release_Prepare
             -0.2f, // First_Release
-#endif
-#if defined(SKILL_COMPETITION_2) || defined(MAIN_COMPETITION)
             -0.2f, // Get_Storage_Prepare
             -0.2f, // Get_Storage
+#endif
+#if !defined(SKILL_COMPETITION_1)
             -0.2f, // Second_Release_Prepare
             -0.2f, // Second_Release
 #endif
@@ -227,7 +237,9 @@ private:
             -0.2f, // Third_Release_Prepare
             -0.2f, // Third_Release
 #endif
+#if !defined(SKILL_COMPETITION_1)
             -0.2f, // Recover_Init
+#endif
         };
 
         // 抬升高度
@@ -247,17 +259,19 @@ private:
                 0.20f, // Second_Pick_Arm_Up
                 0.00f, // Second_Pick_Prepare
                 0.00f, // Second_Pick
-                0.20f, // Second_Pick_Up
-                0.35f, // Prepare_Protect_Arm_Wrist
 #endif
+                0.20f, // Second_Pick_Up
+#if defined(SKILL_COMPETITION_1) || defined(MAIN_COMPETITION)
+                0.35f, // Prepare_Protect_Arm_Wrist
                 0.25f, // Protect_Storage_Again
+#endif
 #if defined(MAIN_COMPETITION)
                 0.35f, // First_Release_Prepare
                 0.35f, // First_Release
-#endif
-#if defined(SKILL_COMPETITION_2) || defined(MAIN_COMPETITION)
                 0.15f, // Get_Storage_Prepare
                 0.15f, // Get_Storage
+#endif
+#if !defined(SKILL_COMPETITION_1)
                 0.35f, // Second_Release_Prepare
                 0.35f, // Second_Release
 #endif
@@ -268,7 +282,9 @@ private:
                 0.35f, // Third_Release_Prepare
                 0.35f, // Third_Release
 #endif
+#if !defined(SKILL_COMPETITION_1)
                 0.00f, // Recover_Init
+#endif
             },
             {
                 // Lift_Height_Index = 1
@@ -285,17 +301,19 @@ private:
                 0.20f, // Second_Pick_Arm_Up
                 0.20f, // Second_Pick_Prepare
                 0.20f, // Second_Pick
-                0.20f, // Second_Pick_Up
-                0.35f, // Prepare_Protect_Arm_Wrist
 #endif
+                0.20f, // Second_Pick_Up
+#if defined(SKILL_COMPETITION_1) || defined(MAIN_COMPETITION)
+                0.35f, // Prepare_Protect_Arm_Wrist
                 0.25f, // Protect_Storage_Again
+#endif
 #if defined(MAIN_COMPETITION)
                 0.35f, // First_Release_Prepare
                 0.35f, // First_Release
-#endif
-#if defined(SKILL_COMPETITION_2) || defined(MAIN_COMPETITION)
                 0.15f, // Get_Storage_Prepare
                 0.15f, // Get_Storage
+#endif
+#if !defined(SKILL_COMPETITION_1)
                 0.35f, // Second_Release_Prepare
                 0.35f, // Second_Release
 #endif
@@ -306,7 +324,9 @@ private:
                 0.35f, // Third_Release_Prepare
                 0.35f, // Third_Release
 #endif
+#if !defined(SKILL_COMPETITION_1)
                 0.00f, // Recover_Init
+#endif
             },
             {
                 // Lift_Height_Index = 2
@@ -323,17 +343,19 @@ private:
                 0.20f, // Second_Pick_Arm_Up
                 0.35f, // Second_Pick_Prepare
                 0.35f, // Second_Pick
-                0.20f, // Second_Pick_Up
-                0.35f, // Prepare_Protect_Arm_Wrist
 #endif
+                0.35f, // Second_Pick_Up
+#if defined(SKILL_COMPETITION_1) || defined(MAIN_COMPETITION)
+                0.35f, // Prepare_Protect_Arm_Wrist
                 0.25f, // Protect_Storage_Again
+#endif
 #if defined(MAIN_COMPETITION)
                 0.35f, // First_Release_Prepare
                 0.35f, // First_Release
-#endif
-#if defined(SKILL_COMPETITION_2) || defined(MAIN_COMPETITION)
                 0.15f, // Get_Storage_Prepare
                 0.15f, // Get_Storage
+#endif
+#if !defined(SKILL_COMPETITION_1)
                 0.35f, // Second_Release_Prepare
                 0.35f, // Second_Release
 #endif
@@ -344,7 +366,9 @@ private:
                 0.35f, // Third_Release_Prepare
                 0.35f, // Third_Release
 #endif
+#if !defined(SKILL_COMPETITION_1)
                 0.00f, // Recover_Init
+#endif
             },
         };
 
@@ -355,25 +379,28 @@ private:
             2.07f, // First_Pick_Prepare
             1.81f, // First_Pick
             2.27f, // First_Pick_Up
-            2.05f, // Prepare_Storage_Lift_Up
-            2.05f, // Storage
+            2.2f,  // Prepare_Storage_Lift_Up
+            2.2f,  // Storage
+
             2.0f,  // Storage_Lift_Down
             -1.0f, // Storage_Arm_Up
             -1.0f, // Protect_Storage
             -1.0f, // Second_Pick_Arm_Up
             2.07f, // Second_Pick_Prepare
             1.81f, // Second_Pick
-            2.27f, // Second_Pick_Up
-            -1.6f, // Prepare_Protect_Arm_Wrist
 #endif
+            2.27f, // Second_Pick_Up
+#if defined(SKILL_COMPETITION_1) || defined(MAIN_COMPETITION)
+            -1.6f, // Prepare_Protect_Arm_Wrist
             -1.6f, // Protect_Storage_Again
+#endif
 #if defined(MAIN_COMPETITION)
             -1.0f, // First_Release_Prepare
             -1.0f, // First_Release
-#endif
-#if defined(SKILL_COMPETITION_2) || defined(MAIN_COMPETITION)
             1.9f,  // Get_Storage_Prepare
             1.9f,  // Get_Storage
+#endif
+#if !defined(SKILL_COMPETITION_1)
             -1.0f, // Second_Release_Prepare
             -1.0f, // Second_Release
 #endif
@@ -384,7 +411,9 @@ private:
             -1.0f, // Third_Release_Prepare
             -1.0f, // Third_Release
 #endif
+#if !defined(SKILL_COMPETITION_1)
             0.00f, // Recover_Init
+#endif
         };
 
         // 机械臂目标角度
@@ -395,24 +424,26 @@ private:
             -0.22f, // First_Pick
             -0.7f,  // First_Pick_Up
             -0.7f,  // Prepare_Storage_Lift_Up
-            1.14f,  // Storage
-            1.14f,  // Storage_Lift_Down
+            1.3f,   // Storage
+            1.3f,   // Storage_Lift_Down
             0.8f,   // Storage_Arm_Up
             1.57f,  // Protect_Storage
             -0.5f,  // Second_Pick_Arm_Up
             -0.5f,  // Second_Pick_Prepare
             -0.22f, // Second_Pick
-            -0.7f,  // Second_Pick_Up
-            1.57f,  // Prepare_Protect_Arm_Wrist
 #endif
-            1.57f,  // Protect_Storage_Again
+            -0.7f, // Second_Pick_Up
+#if defined(SKILL_COMPETITION_1) || defined(MAIN_COMPETITION)
+            1.57f, // Prepare_Protect_Arm_Wrist
+            1.57f, // Protect_Storage_Again
+#endif
 #if defined(MAIN_COMPETITION)
             0.7f, // First_Release_Prepare
             0.7f, // First_Release
-#endif
-#if defined(SKILL_COMPETITION_2) || defined(MAIN_COMPETITION)
             0.7f, // Get_Storage_Prepare
             1.5f, // Get_Storage
+#endif
+#if !defined(SKILL_COMPETITION_1)
             0.7f, // Second_Release_Prepare
             0.7f, // Second_Release
 #endif
@@ -423,7 +454,9 @@ private:
             0.6f, // Third_Release_Prepare
             0.6f, // Third_Release
 #endif
+#if !defined(SKILL_COMPETITION_1)
             -1.57f, // Recover_Init
+#endif
         };
 
         // 气泵状态（1=吸, 0=放）
@@ -441,17 +474,19 @@ private:
             0, // Second_Pick_Arm_Up
             0, // Second_Pick_Prepare
             1, // Second_Pick
-            1, // Second_Pick_Up
-            1, // Prepare_Protect_Arm_Wrist
 #endif
+            1, // Second_Pick_Up
+#if defined(SKILL_COMPETITION_1) || defined(MAIN_COMPETITION)
+            1, // Prepare_Protect_Arm_Wrist
             1, // Protect_Storage_Again
+#endif
 #if defined(MAIN_COMPETITION)
             1, // First_Release_Prepare
             0, // First_Release
-#endif
-#if defined(SKILL_COMPETITION_2) || defined(MAIN_COMPETITION)
             0, // Get_Storage_Prepare
             1, // Get_Storage
+#endif
+#if !defined(SKILL_COMPETITION_1)
             1, // Second_Release_Prepare
             0, // Second_Release
 #endif
@@ -462,7 +497,9 @@ private:
             1, // Third_Release_Prepare
             0, // Third_Release
 #endif
+#if !defined(SKILL_COMPETITION_1)
             0, // Recover_Init
+#endif
         };
     } Target;
 

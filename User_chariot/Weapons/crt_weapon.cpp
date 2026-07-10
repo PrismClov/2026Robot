@@ -24,10 +24,10 @@ void Class_Weapon::Init()
         Motor::Motor_DJI_ID_0x206,
         Motor::Class_Motor_DJI_C620::Parameters{
             .PID_Position = PID_Parameters{
-                .K_P = 25.0f,
+                .K_P = 30.0f,
                 .K_I = 0.0f,
                 .K_D = 0.0f,
-                .Out_Max = 10.0f,
+                .Out_Max = 15.0f,
             },
             .PID_Omega = PID_Parameters{
                 .K_P = 1.0f,
@@ -442,7 +442,7 @@ void Class_FSM_Weapon::Weapon_TIM_Status_PeriodElapsedCallback()
             }
             // }
 
-            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon)
+            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon && Weapon->Chariot->CRSF.Get_SA() == CRSF_SWITCH_HIGH)
             {
                 Weapon->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
             }
@@ -473,7 +473,7 @@ void Class_FSM_Weapon::Weapon_TIM_Status_PeriodElapsedCallback()
             }
             // }
 
-            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon)
+            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon  && Weapon->Chariot->CRSF.Get_SA() == CRSF_SWITCH_HIGH)
             {
                 Weapon->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
             }
@@ -496,7 +496,7 @@ void Class_FSM_Weapon::Weapon_TIM_Status_PeriodElapsedCallback()
                 // }
             }
 
-            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon)
+            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon  && Weapon->Chariot->CRSF.Get_SA() == CRSF_SWITCH_HIGH)
             {
                 Weapon->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
             }
@@ -527,7 +527,7 @@ void Class_FSM_Weapon::Weapon_TIM_Status_PeriodElapsedCallback()
             }
             // }
 
-            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon)
+            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon  && Weapon->Chariot->CRSF.Get_SA() == CRSF_SWITCH_HIGH)
             {
                 Weapon->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
             }
@@ -559,7 +559,7 @@ void Class_FSM_Weapon::Weapon_TIM_Status_PeriodElapsedCallback()
 
             // }
 
-            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon)
+            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon  && Weapon->Chariot->CRSF.Get_SA() == CRSF_SWITCH_HIGH)
             {
                 Weapon->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
             }
@@ -587,7 +587,7 @@ void Class_FSM_Weapon::Weapon_TIM_Status_PeriodElapsedCallback()
                 Set_Status(Now_Status_Serial + 1);
             }
 
-            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon)
+            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon  && Weapon->Chariot->CRSF.Get_SA() == CRSF_SWITCH_HIGH)
             {
                 Weapon->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
             }
@@ -617,7 +617,7 @@ void Class_FSM_Weapon::Weapon_TIM_Status_PeriodElapsedCallback()
             }
             // }
 
-            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon)
+            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon  && Weapon->Chariot->CRSF.Get_SA() == CRSF_SWITCH_HIGH)
             {
                 Weapon->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
             }
@@ -646,7 +646,7 @@ void Class_FSM_Weapon::Weapon_TIM_Status_PeriodElapsedCallback()
                 Set_Status(Now_Status_Serial + 1);
             }
             // }
-            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon)
+            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon  && Weapon->Chariot->CRSF.Get_SA() == CRSF_SWITCH_HIGH)
             {
                 Weapon->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
             }
@@ -671,7 +671,7 @@ void Class_FSM_Weapon::Weapon_TIM_Status_PeriodElapsedCallback()
                 Set_Status(Now_Status_Serial + 1);
             }
 
-            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon)
+            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon  && Weapon->Chariot->CRSF.Get_SA() == CRSF_SWITCH_HIGH)
             {
                 Weapon->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_1);
             }
@@ -700,7 +700,7 @@ void Class_FSM_Weapon::Weapon_TIM_Status_PeriodElapsedCallback()
                 Weapon->Enter_New_Status_Clear_Completion_Flag();
                 Set_Status(Now_Status_Serial + 1);
             }
-            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon)
+            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon  && Weapon->Chariot->CRSF.Get_SA() == CRSF_SWITCH_HIGH)
             {
                 Weapon->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
             }
@@ -729,7 +729,7 @@ void Class_FSM_Weapon::Weapon_TIM_Status_PeriodElapsedCallback()
                 Set_Status(Weapon_Status_Attack_Postition_2);
             }
             // }
-            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon)
+            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon  && Weapon->Chariot->CRSF.Get_SA() == CRSF_SWITCH_HIGH)
             {
                 Weapon->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
             }
@@ -758,9 +758,9 @@ void Class_FSM_Weapon::Weapon_TIM_Status_PeriodElapsedCallback()
                 Set_Status(Weapon_Status_Attack_Postition_1);
             }
             // }
-            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon)
+            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon  && Weapon->Chariot->CRSF.Get_SA() == CRSF_SWITCH_HIGH)
             {
-                Weapon->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
+                Weapon->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0 );
             }
             break;
         }

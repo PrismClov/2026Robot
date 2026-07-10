@@ -1,4 +1,5 @@
 #include "crt_KFS.h"
+#include "ita_robot.h"
 
 /**
  * @brief 初始化
@@ -278,7 +279,6 @@ void Class_KFS::KFS_Status_Task()
 /**
  * @brief 判断当前动作是否完成
  */
-bool all_task_finished = false;
 bool Class_KFS::Is_Action_Finished()
 {
     Check_Move_Task_Completion();
@@ -289,8 +289,7 @@ bool Class_KFS::Is_Action_Finished()
 
     Check_Arm_Task_Completion();
 
-    all_task_finished = Move_Task_Finished && Lift_Task_Finished && Wrist_Task_Finished && Arm_Task_Finished && Pump_Task_Finished;
-    return all_task_finished;
+    return Move_Task_Finished && Lift_Task_Finished && Wrist_Task_Finished && Arm_Task_Finished && Pump_Task_Finished;
 }
 
 /**
@@ -361,7 +360,7 @@ void Class_KFS::Check_Pump_Task_Completion()
         if (Pump_Debounce_Timer.start_time == 0)
         {
             Pump_Debounce_Timer.start_time = DWT_GetCurrentTimeUs();
-            Pump_Debounce_Timer.expire_time = 1000000;
+            Pump_Debounce_Timer.expire_time = 2000000;
         }
         if (Is_Timer_ExpiredUs(&Pump_Debounce_Timer, Expire_Once))
         {
@@ -407,6 +406,10 @@ void Class_FSM_KFS::KFS_TIM_Status_PeriodElapsedCallback()
                 KFS->Enter_New_Status_Clear_Completion_Flag();
                 Set_Status(Now_Status_Serial + 1);
             }
+            if (KFS->Chariot->Get_Robot_Mode() == Robot_Mode_KFS)
+            {
+                KFS->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
+            }
             break;
         }
 
@@ -429,6 +432,10 @@ void Class_FSM_KFS::KFS_TIM_Status_PeriodElapsedCallback()
                 Status[Now_Status_Serial].Count_Time = 0;
                 KFS->Enter_New_Status_Clear_Completion_Flag();
                 Set_Status(Now_Status_Serial + 1);
+            }
+            if (KFS->Chariot->Get_Robot_Mode() == Robot_Mode_KFS)
+            {
+                KFS->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
             }
             break;
         }
@@ -453,6 +460,10 @@ void Class_FSM_KFS::KFS_TIM_Status_PeriodElapsedCallback()
                 Set_Status(Now_Status_Serial + 1);
             }
 
+            if (KFS->Chariot->Get_Robot_Mode() == Robot_Mode_KFS)
+            {
+                KFS->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
+            }
             break;
         }
 
@@ -474,6 +485,10 @@ void Class_FSM_KFS::KFS_TIM_Status_PeriodElapsedCallback()
                 Status[Now_Status_Serial].Count_Time = 0;
                 KFS->Enter_New_Status_Clear_Completion_Flag();
                 Set_Status(Now_Status_Serial + 1);
+            }
+            if (KFS->Chariot->Get_Robot_Mode() == Robot_Mode_KFS)
+            {
+                KFS->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
             }
             break;
         }
@@ -497,6 +512,10 @@ void Class_FSM_KFS::KFS_TIM_Status_PeriodElapsedCallback()
                 KFS->Enter_New_Status_Clear_Completion_Flag();
                 Set_Status(Now_Status_Serial + 1);
             }
+            if (KFS->Chariot->Get_Robot_Mode() == Robot_Mode_KFS)
+            {
+                KFS->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
+            }
             break;
         }
 
@@ -517,6 +536,10 @@ void Class_FSM_KFS::KFS_TIM_Status_PeriodElapsedCallback()
                 Status[Now_Status_Serial].Count_Time = 0;
                 KFS->Enter_New_Status_Clear_Completion_Flag();
                 Set_Status(Now_Status_Serial + 1);
+            }
+            if (KFS->Chariot->Get_Robot_Mode() == Robot_Mode_KFS)
+            {
+                KFS->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
             }
             break;
         }
@@ -541,6 +564,10 @@ void Class_FSM_KFS::KFS_TIM_Status_PeriodElapsedCallback()
                 Set_Status(Now_Status_Serial + 1);
             }
 
+            if (KFS->Chariot->Get_Robot_Mode() == Robot_Mode_KFS)
+            {
+                KFS->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
+            }
             break;
         }
 
@@ -561,6 +588,10 @@ void Class_FSM_KFS::KFS_TIM_Status_PeriodElapsedCallback()
                 Status[Now_Status_Serial].Count_Time = 0;
                 KFS->Enter_New_Status_Clear_Completion_Flag();
                 Set_Status(Now_Status_Serial + 1);
+            }
+            if (KFS->Chariot->Get_Robot_Mode() == Robot_Mode_KFS)
+            {
+                KFS->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
             }
             break;
         }
@@ -583,6 +614,10 @@ void Class_FSM_KFS::KFS_TIM_Status_PeriodElapsedCallback()
                 KFS->Enter_New_Status_Clear_Completion_Flag();
                 Set_Status(Now_Status_Serial + 1);
             }
+            if (KFS->Chariot->Get_Robot_Mode() == Robot_Mode_KFS)
+            {
+                KFS->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
+            }
             break;
         }
 
@@ -603,6 +638,10 @@ void Class_FSM_KFS::KFS_TIM_Status_PeriodElapsedCallback()
                 Status[Now_Status_Serial].Count_Time = 0;
                 KFS->Enter_New_Status_Clear_Completion_Flag();
                 Set_Status(Now_Status_Serial + 1);
+            }
+            if (KFS->Chariot->Get_Robot_Mode() == Robot_Mode_KFS)
+            {
+                KFS->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
             }
             break;
         }
@@ -625,6 +664,10 @@ void Class_FSM_KFS::KFS_TIM_Status_PeriodElapsedCallback()
                 KFS->Enter_New_Status_Clear_Completion_Flag();
                 Set_Status(Now_Status_Serial + 1);
             }
+            if (KFS->Chariot->Get_Robot_Mode() == Robot_Mode_KFS)
+            {
+                KFS->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
+            }
             break;
         }
 
@@ -640,19 +683,26 @@ void Class_FSM_KFS::KFS_TIM_Status_PeriodElapsedCallback()
                 Set_Status(Now_Status_Serial + 1);
             }
 
+            if (KFS->Chariot->Get_Robot_Mode() == Robot_Mode_KFS)
+            {
+                KFS->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
+            }
             break;
         }
+
+#endif
 
         case KFS_Status_Second_Pick_Up:
         {
             KFS->Is_KFS_Picked = 1;
+#if defined(SKILL_COMPETITION_1) || defined(MAIN_COMPETITION)
             if (KFS->Backward_Yaw_Flag)
             {
                 Status[Now_Status_Serial].Count_Time = 0;
                 KFS->Enter_New_Status_Clear_Completion_Flag();
                 Set_Status(KFS_Status_Second_Pick_Prepare);
             }
-
+#endif
             KFS->KFS_Status_Task();
 
             if (KFS->Forward_Yaw_Flag)
@@ -661,9 +711,14 @@ void Class_FSM_KFS::KFS_TIM_Status_PeriodElapsedCallback()
                 KFS->Enter_New_Status_Clear_Completion_Flag();
                 Set_Status(Now_Status_Serial + 1);
             }
+            if (KFS->Chariot->Get_Robot_Mode() == Robot_Mode_KFS)
+            {
+                KFS->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
+            }
             break;
         }
 
+#if defined(SKILL_COMPETITION_1) || defined(MAIN_COMPETITION)
         case KFS_Status_Prepare_Protect_Arm_Wrist:
         {
             KFS->Is_KFS_Picked = 1;
@@ -675,9 +730,12 @@ void Class_FSM_KFS::KFS_TIM_Status_PeriodElapsedCallback()
                 KFS->Enter_New_Status_Clear_Completion_Flag();
                 Set_Status(Now_Status_Serial + 1);
             }
+            if (KFS->Chariot->Get_Robot_Mode() == Robot_Mode_KFS)
+            {
+                KFS->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
+            }
             break;
         }
-
 #endif
 
 #if defined(MAIN_COMPETITION)
@@ -699,6 +757,10 @@ void Class_FSM_KFS::KFS_TIM_Status_PeriodElapsedCallback()
                 KFS->Enter_New_Status_Clear_Completion_Flag();
                 Set_Status(Now_Status_Serial + 1);
             }
+            if (KFS->Chariot->Get_Robot_Mode() == Robot_Mode_KFS)
+            {
+                KFS->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
+            }
             break;
         }
 
@@ -713,11 +775,15 @@ void Class_FSM_KFS::KFS_TIM_Status_PeriodElapsedCallback()
                 KFS->Enter_New_Status_Clear_Completion_Flag();
                 Set_Status(Now_Status_Serial + 1);
             }
+            if (KFS->Chariot->Get_Robot_Mode() == Robot_Mode_KFS)
+            {
+                KFS->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
+            }
             break;
         }
 #endif
 
-#if defined(SKILL_COMPETITION_2) || defined(MAIN_COMPETITION)
+#if defined(MAIN_COMPETITION)
         case KFS_Status_Get_Storage_Prepare:
         {
             KFS->Is_KFS_Picked = 0;
@@ -729,6 +795,10 @@ void Class_FSM_KFS::KFS_TIM_Status_PeriodElapsedCallback()
                 Status[Now_Status_Serial].Count_Time = 0;
                 KFS->Enter_New_Status_Clear_Completion_Flag();
                 Set_Status(Now_Status_Serial + 1);
+            }
+            if (KFS->Chariot->Get_Robot_Mode() == Robot_Mode_KFS)
+            {
+                KFS->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
             }
             break;
         }
@@ -745,9 +815,15 @@ void Class_FSM_KFS::KFS_TIM_Status_PeriodElapsedCallback()
                 Set_Status(Now_Status_Serial + 1);
             }
 
+            if (KFS->Chariot->Get_Robot_Mode() == Robot_Mode_KFS)
+            {
+                KFS->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
+            }
             break;
         }
+#endif
 
+#if !defined(SKILL_COMPETITION_1)
         case KFS_Status_Second_Release_Prepare:
         {
             KFS->Is_KFS_Picked = 1;
@@ -766,6 +842,10 @@ void Class_FSM_KFS::KFS_TIM_Status_PeriodElapsedCallback()
                 KFS->Enter_New_Status_Clear_Completion_Flag();
                 Set_Status(Now_Status_Serial + 1);
             }
+            if (KFS->Chariot->Get_Robot_Mode() == Robot_Mode_KFS)
+            {
+                KFS->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
+            }
             break;
         }
 
@@ -779,6 +859,10 @@ void Class_FSM_KFS::KFS_TIM_Status_PeriodElapsedCallback()
                 Status[Now_Status_Serial].Count_Time = 0;
                 KFS->Enter_New_Status_Clear_Completion_Flag();
                 Set_Status(Now_Status_Serial + 1);
+            }
+            if (KFS->Chariot->Get_Robot_Mode() == Robot_Mode_KFS)
+            {
+                KFS->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
             }
             break;
         }
@@ -795,6 +879,10 @@ void Class_FSM_KFS::KFS_TIM_Status_PeriodElapsedCallback()
                 KFS->Enter_New_Status_Clear_Completion_Flag();
                 Set_Status(Now_Status_Serial + 1);
             }
+            if (KFS->Chariot->Get_Robot_Mode() == Robot_Mode_KFS)
+            {
+                KFS->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
+            }
             break;
         }
 
@@ -807,6 +895,10 @@ void Class_FSM_KFS::KFS_TIM_Status_PeriodElapsedCallback()
                 Status[Now_Status_Serial].Count_Time = 0;
                 KFS->Enter_New_Status_Clear_Completion_Flag();
                 Set_Status(Now_Status_Serial + 1);
+            }
+            if (KFS->Chariot->Get_Robot_Mode() == Robot_Mode_KFS)
+            {
+                KFS->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
             }
             break;
         }
@@ -822,6 +914,10 @@ void Class_FSM_KFS::KFS_TIM_Status_PeriodElapsedCallback()
                 KFS->Enter_New_Status_Clear_Completion_Flag();
                 Set_Status(Now_Status_Serial + 1);
             }
+            if (KFS->Chariot->Get_Robot_Mode() == Robot_Mode_KFS)
+            {
+                KFS->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
+            }
             break;
         }
 
@@ -835,6 +931,10 @@ void Class_FSM_KFS::KFS_TIM_Status_PeriodElapsedCallback()
                 Status[Now_Status_Serial].Count_Time = 0;
                 KFS->Enter_New_Status_Clear_Completion_Flag();
                 Set_Status(Now_Status_Serial + 1);
+            }
+            if (KFS->Chariot->Get_Robot_Mode() == Robot_Mode_KFS)
+            {
+                KFS->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
             }
             break;
         }
@@ -850,10 +950,15 @@ void Class_FSM_KFS::KFS_TIM_Status_PeriodElapsedCallback()
                 KFS->Enter_New_Status_Clear_Completion_Flag();
                 Set_Status(Now_Status_Serial + 1);
             }
+            if (KFS->Chariot->Get_Robot_Mode() == Robot_Mode_KFS)
+            {
+                KFS->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
+            }
             break;
         }
 #endif
 
+#if defined(SKILL_COMPETITION_1) || defined(MAIN_COMPETITION)
         case KFS_Status_Protect_Storage_Again:
         {
             KFS->Is_KFS_Picked = 1;
@@ -865,9 +970,15 @@ void Class_FSM_KFS::KFS_TIM_Status_PeriodElapsedCallback()
                 KFS->Enter_New_Status_Clear_Completion_Flag();
                 Set_Status(Now_Status_Serial + 1);
             }
+            if (KFS->Chariot->Get_Robot_Mode() == Robot_Mode_KFS)
+            {
+                KFS->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
+            }
             break;
         }
+#endif
 
+#if !defined(SKILL_COMPETITION_1)
         case KFS_Status_Recover_Init:
         {
             KFS->Is_KFS_Picked = 0;
@@ -875,8 +986,13 @@ void Class_FSM_KFS::KFS_TIM_Status_PeriodElapsedCallback()
 
             // 末状态保持即可
 
+            if (KFS->Chariot->Get_Robot_Mode() == Robot_Mode_KFS)
+            {
+                KFS->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
+            }
             break;
         }
+#endif
     }
 
     // 清空标志位

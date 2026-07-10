@@ -34,7 +34,6 @@
 void Class_Chariot::Init()
 {
     Serial_Screen.Init(&huart1);
-
     CRSF.Init(&huart7);
 
     Chassis.Init(8.0f, 8.0f, 8.0f);
@@ -43,12 +42,12 @@ void Class_Chariot::Init()
     Weapon.Chariot = this;
 
     KFS.Init();
+    KFS.Chariot = this;
 
 #if defined(MAIN_COMPETITION) || defined(SKILL_COMPETITION_2)
     Lift.Init();
     Lift.Chariot = this;
 #endif
-
 }
 
 /**
@@ -174,13 +173,17 @@ void Class_Chariot::Control_Chassis()
         {
             // 底盘随动
             Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_NORMAL);
-            Chassis.Set_Target_Velocity_X(-chassis_velocity_x);
-            Chassis.Set_Target_Velocity_Y(chassis_velocity_y);
+            Chassis.Set_Target_Velocity_X(chassis_velocity_y);
+            Chassis.Set_Target_Velocity_Y(chassis_velocity_x);
             Chassis.Set_Target_Omega(chassis_omega);
         }
         else if (CRSF.Get_SA() == CRSF_SWITCH_LOW) // SA低档 禁用模式
         {
             Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
+            if (Robot_Mode == Robot_Mode_Weapon)
+            {
+                Serial_Screen.Jump_To_Page(SCREEN_PAGE_4);
+            }
         }
 
         // SB开关控制控制区域

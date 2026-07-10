@@ -167,10 +167,10 @@ private:
 #if defined(MAIN_COMPETITION) || defined(SKILL_COMPETITION_1)
             1.5f,  // Grab_Prepare
             1.5f,  // Grab
-            0.65f, // Lift_1
-            0.65f, // Pick
-            0.65f, // Lift_2_Prepare
-            0.65f, // Lift_2
+            0.8f, // Lift_1
+            0.8f, // Pick
+            0.8f, // Lift_2_Prepare
+            0.8f, // Lift_2
             0.0f,  // Rotate_To_Connection
             0.0f,  // Show_Completion_Graph
 #endif
@@ -199,11 +199,11 @@ private:
 
         // 抓取舵机目标位置
         float Grab_Servo_Target_Position[MAX_WEAPON_STATUS] = {
-            -1.5f, // Init
+            -1.2f, // Init
 #if defined(MAIN_COMPETITION) || defined(SKILL_COMPETITION_1)
-            -1.5f, // Grab_Prepare
-            -1.5f, // Grab
-            -1.5f, // Lift_1
+            -1.2f, // Grab_Prepare
+            -1.2f, // Grab
+            -1.2f, // Lift_1
             0.0f, // Pick
             0.0f, // Lift_2_Prepare
             0.0f, // Lift_2
@@ -243,8 +243,8 @@ private:
             2.5f, // Pick
             2.5f, // Lift_2_Prepare
             1.0f, // Lift_2
-            2.5f, // Rotate_To_Connection
-            2.5f, // Show_Completion_Graph
+            0.35f, // Rotate_To_Connection
+            0.35f, // Show_Completion_Graph
 #endif
             2.5f, // Rotate_To_Storage_Prepare
             2.5f, // Attack_Postition_1
