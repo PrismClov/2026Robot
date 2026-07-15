@@ -34,9 +34,11 @@
 void Class_Chariot::Init()
 {
     Serial_Screen.Init(&huart1);
+    UART_Send_Data(&huart1, (uint8_t *)"BL(235);\r\n", 10);
+
     CRSF.Init(&huart7);
 
-    Chassis.Init(8.0f, 8.0f, 8.0f);
+    Chassis.Init(8.0f, 8.0f, 4.0f);
 
     Weapon.Init();
     Weapon.Chariot = this;
@@ -204,6 +206,8 @@ void Class_Chariot::Control_Chassis()
         {
             case Robot_Mode_KFS:
             {
+                KFS.Set_Arm_Bias(Math_Int_To_Float(CRSF.Get_S1(), -100, 100, -Weapon.Bias_Max, Weapon.Bias_Max));
+
                 if (CRSF.Get_SE() == CRSF_SWITCH_HIGH && Previous_SE_Pos == CRSF_SWITCH_LOW)
                 {
                     if (CRSF.Get_SD() == CRSF_SWITCH_LOW)
@@ -220,6 +224,8 @@ void Class_Chariot::Control_Chassis()
             }
             case Robot_Mode_Weapon:
             {
+                Weapon.Set_Rotate_Bias(Math_Int_To_Float(CRSF.Get_S1(), -100, 100, -Weapon.Bias_Max, Weapon.Bias_Max));
+
                 if (CRSF.Get_SE() == CRSF_SWITCH_HIGH && Previous_SE_Pos == CRSF_SWITCH_LOW)
                 {
                     if (CRSF.Get_SD() == CRSF_SWITCH_LOW)
@@ -251,8 +257,6 @@ void Class_Chariot::Control_Chassis()
             }
         }
         Previous_SE_Pos = CRSF.Get_SE();
-
-        Weapon.Set_Rotate_Bias(Math_Int_To_Float(CRSF.Get_S1(), -100, 100, -Weapon.Bias_Max, Weapon.Bias_Max));
     }
 }
 void Class_Chariot::TIM_Control_Callback()

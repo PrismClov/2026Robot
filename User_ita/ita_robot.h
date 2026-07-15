@@ -100,10 +100,10 @@ protected:
 
     Enum_Robot_Mode Robot_Mode = Robot_Mode_Weapon;
     // 遥控器拨动的死区, 0~1
-    float Dead_Zone = 0.01f;
+    float Dead_Zone = 0.1f;
 
     // Omega死区(左摇杆X), 0~1
-    float Omega_Dead_Zone = 0.015f;
+    float Omega_Dead_Zone = 0.1f;
 
     // 上一次SE位置（用于边沿检测）
     Enum_CRSF_Switch_Pos Previous_SE_Pos = CRSF_SWITCH_LOW;

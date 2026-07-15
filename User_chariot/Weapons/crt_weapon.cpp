@@ -47,7 +47,7 @@ void Class_Weapon::Init()
                 .K_P = 50.0f,
                 .K_I = 0.0f,
                 .K_D = 0.0f,
-                .Out_Max = 6.0f,
+                .Out_Max = 8.0f,
             },
             .PID_Omega = PID_Parameters{
                 .K_P = 2.0f,
@@ -383,10 +383,10 @@ void Class_Weapon::Enter_New_Status_Clear_Completion_Flag()
 void Class_Weapon::Weapon_Grab_Status_Task()
 {
     // 旋转电机
-    Motor_Rotate.Set_Target_Angle(Target.Rotate_Target_Position[FSM_Weapon.Get_Now_Status_Serial()] + Rotate_Bias_Rad);
+    Motor_Rotate.Set_Target_Angle(Target.Rotate_Target_Position[FSM_Weapon.Get_Now_Status_Serial()] + (Chariot->Get_Robot_Mode() == Robot_Mode_Weapon ? Rotate_Bias_Rad : 0));
 
     // 机械臂电机
-#if !defined(SKILL_COMPETITION_2)
+#if defined(SKILL_COMPETITION_1) || defined(MAIN_COMPETITION)
     Arm_To_Position(Target.Arm_Target_Position[FSM_Weapon.Get_Now_Status_Serial()]);
 #endif
 
@@ -397,7 +397,7 @@ void Class_Weapon::Weapon_Grab_Status_Task()
     Pitch_To_Position(Target.Pitch_Target_Position[FSM_Weapon.Get_Now_Status_Serial()]);
 
     // 夹取舵机
-#if defined(SKILL_COMPETITION_1)
+#if defined(SKILL_COMPETITION_1) || defined(MAIN_COMPETITION)
     if (Need_All_Servo_Action)
     {
         Pick_Servo[0].Set_Normalized_Position(Target.Pick_Servo_Target_Position[FSM_Weapon.Get_Now_Status_Serial()]);
@@ -408,8 +408,6 @@ void Class_Weapon::Weapon_Grab_Status_Task()
     {
         Pick_Servo[2 - Move_Index].Set_Normalized_Position(Target.Pick_Servo_Target_Position[FSM_Weapon.Get_Now_Status_Serial()]);
     }
-#elif defined(MAIN_COMPETITION)
-    Pick_Servo[1].Set_Normalized_Position(Target.Pick_Servo_Target_Position[FSM_Weapon.Get_Now_Status_Serial()]);
 #endif
 
     // 抓取电机
@@ -449,7 +447,7 @@ void Class_FSM_Weapon::Weapon_TIM_Status_PeriodElapsedCallback()
             break;
         }
 
-#if defined(MAIN_COMPETITION) || defined(SKILL_COMPETITION_1)
+#if defined(SKILL_COMPETITION_1) || defined(MAIN_COMPETITION)
         case Weapon_Status_Grab_Prepare:
         {
             Weapon->Need_All_Servo_Action = true;
@@ -473,7 +471,7 @@ void Class_FSM_Weapon::Weapon_TIM_Status_PeriodElapsedCallback()
             }
             // }
 
-            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon  && Weapon->Chariot->CRSF.Get_SA() == CRSF_SWITCH_HIGH)
+            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon && Weapon->Chariot->CRSF.Get_SA() == CRSF_SWITCH_HIGH)
             {
                 Weapon->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
             }
@@ -496,7 +494,7 @@ void Class_FSM_Weapon::Weapon_TIM_Status_PeriodElapsedCallback()
                 // }
             }
 
-            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon  && Weapon->Chariot->CRSF.Get_SA() == CRSF_SWITCH_HIGH)
+            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon && Weapon->Chariot->CRSF.Get_SA() == CRSF_SWITCH_HIGH)
             {
                 Weapon->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
             }
@@ -527,12 +525,14 @@ void Class_FSM_Weapon::Weapon_TIM_Status_PeriodElapsedCallback()
             }
             // }
 
-            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon  && Weapon->Chariot->CRSF.Get_SA() == CRSF_SWITCH_HIGH)
+            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon && Weapon->Chariot->CRSF.Get_SA() == CRSF_SWITCH_HIGH)
             {
                 Weapon->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
             }
             break;
         }
+#endif
+#if defined(SKILL_COMPETITION_1) || defined(MAIN_COMPETITION)
 
         case Weapon_Status_Pick:
         {
@@ -559,13 +559,15 @@ void Class_FSM_Weapon::Weapon_TIM_Status_PeriodElapsedCallback()
 
             // }
 
-            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon  && Weapon->Chariot->CRSF.Get_SA() == CRSF_SWITCH_HIGH)
+            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon && Weapon->Chariot->CRSF.Get_SA() == CRSF_SWITCH_HIGH)
             {
                 Weapon->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
             }
 
             break;
         }
+#endif
+#if defined(SKILL_COMPETITION_1) || defined(MAIN_COMPETITION)
 
         case Weapon_Status_Lift_2_Prepare:
         {
@@ -587,7 +589,7 @@ void Class_FSM_Weapon::Weapon_TIM_Status_PeriodElapsedCallback()
                 Set_Status(Now_Status_Serial + 1);
             }
 
-            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon  && Weapon->Chariot->CRSF.Get_SA() == CRSF_SWITCH_HIGH)
+            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon && Weapon->Chariot->CRSF.Get_SA() == CRSF_SWITCH_HIGH)
             {
                 Weapon->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
             }
@@ -617,12 +619,14 @@ void Class_FSM_Weapon::Weapon_TIM_Status_PeriodElapsedCallback()
             }
             // }
 
-            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon  && Weapon->Chariot->CRSF.Get_SA() == CRSF_SWITCH_HIGH)
+            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon && Weapon->Chariot->CRSF.Get_SA() == CRSF_SWITCH_HIGH)
             {
                 Weapon->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
             }
             break;
         }
+#endif
+#if defined(SKILL_COMPETITION_1) || defined(MAIN_COMPETITION)
 
         case Weapon_Status_Rotate_To_Connection:
         {
@@ -632,7 +636,7 @@ void Class_FSM_Weapon::Weapon_TIM_Status_PeriodElapsedCallback()
             {
                 Status[Now_Status_Serial].Count_Time = 0;
                 Weapon->Enter_New_Status_Clear_Completion_Flag();
-                Set_Status(Weapon_Status_Lift_2);
+                Set_Status(Now_Status_Serial - 1);
             }
 
             Weapon->Weapon_Grab_Status_Task();
@@ -646,7 +650,7 @@ void Class_FSM_Weapon::Weapon_TIM_Status_PeriodElapsedCallback()
                 Set_Status(Now_Status_Serial + 1);
             }
             // }
-            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon  && Weapon->Chariot->CRSF.Get_SA() == CRSF_SWITCH_HIGH)
+            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon && Weapon->Chariot->CRSF.Get_SA() == CRSF_SWITCH_HIGH)
             {
                 Weapon->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
             }
@@ -663,7 +667,9 @@ void Class_FSM_Weapon::Weapon_TIM_Status_PeriodElapsedCallback()
                 Weapon->Enter_New_Status_Clear_Completion_Flag();
                 Set_Status(Now_Status_Serial - 1);
             }
-            
+
+            Weapon->Weapon_Grab_Status_Task();
+
             if (Weapon->Forward_Yaw_Flag)
             {
                 Status[Now_Status_Serial].Count_Time = 0;
@@ -671,9 +677,9 @@ void Class_FSM_Weapon::Weapon_TIM_Status_PeriodElapsedCallback()
                 Set_Status(Now_Status_Serial + 1);
             }
 
-            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon  && Weapon->Chariot->CRSF.Get_SA() == CRSF_SWITCH_HIGH)
+            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon && Weapon->Chariot->CRSF.Get_SA() == CRSF_SWITCH_HIGH)
             {
-                Weapon->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_1);
+                Weapon->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_3);
             }
             break;
         }
@@ -683,14 +689,12 @@ void Class_FSM_Weapon::Weapon_TIM_Status_PeriodElapsedCallback()
         {
             Weapon->Need_All_Servo_Action = false;
 
-#if defined(MAIN_COMPETITION) || defined(SKILL_COMPETITION_1)
             if (Weapon->Backward_Yaw_Flag)
             {
                 Status[Now_Status_Serial].Count_Time = 0;
                 Weapon->Enter_New_Status_Clear_Completion_Flag();
-                Set_Status(Weapon_Status_Lift_2_Prepare);
+                Set_Status(Weapon_Status_Show_Completion_Graph);
             }
-#endif
 
             Weapon->Weapon_Grab_Status_Task();
 
@@ -700,14 +704,14 @@ void Class_FSM_Weapon::Weapon_TIM_Status_PeriodElapsedCallback()
                 Weapon->Enter_New_Status_Clear_Completion_Flag();
                 Set_Status(Now_Status_Serial + 1);
             }
-            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon  && Weapon->Chariot->CRSF.Get_SA() == CRSF_SWITCH_HIGH)
+            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon && Weapon->Chariot->CRSF.Get_SA() == CRSF_SWITCH_HIGH)
             {
                 Weapon->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
             }
             break;
         }
 
-        case Weapon_Status_Attack_Postition_1:
+        case Weapon_Status_Attack_Position_1:
         {
             Weapon->Need_All_Servo_Action = false;
 
@@ -726,17 +730,17 @@ void Class_FSM_Weapon::Weapon_TIM_Status_PeriodElapsedCallback()
             {
                 Status[Now_Status_Serial].Count_Time = 0;
                 Weapon->Enter_New_Status_Clear_Completion_Flag();
-                Set_Status(Weapon_Status_Attack_Postition_2);
+                Set_Status(Weapon_Status_Attack_Position_2);
             }
             // }
-            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon  && Weapon->Chariot->CRSF.Get_SA() == CRSF_SWITCH_HIGH)
+            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon && Weapon->Chariot->CRSF.Get_SA() == CRSF_SWITCH_HIGH)
             {
                 Weapon->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
             }
             break;
         }
 
-        case Weapon_Status_Attack_Postition_2:
+        case Weapon_Status_Attack_Position_2:
         {
             Weapon->Need_All_Servo_Action = false;
 
@@ -755,12 +759,12 @@ void Class_FSM_Weapon::Weapon_TIM_Status_PeriodElapsedCallback()
             {
                 Status[Now_Status_Serial].Count_Time = 0;
                 Weapon->Enter_New_Status_Clear_Completion_Flag();
-                Set_Status(Weapon_Status_Attack_Postition_1);
+                Set_Status(Weapon_Status_Attack_Position_1);
             }
             // }
-            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon  && Weapon->Chariot->CRSF.Get_SA() == CRSF_SWITCH_HIGH)
+            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon && Weapon->Chariot->CRSF.Get_SA() == CRSF_SWITCH_HIGH)
             {
-                Weapon->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0 );
+                Weapon->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
             }
             break;
         }

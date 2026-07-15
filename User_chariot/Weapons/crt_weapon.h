@@ -14,19 +14,19 @@ class Class_Weapon;
 enum Enum_Weapon_Status
 {
     Weapon_Status_Init = 0, // 初始化
-#if defined(MAIN_COMPETITION) || defined(SKILL_COMPETITION_1)
-    Weapon_Status_Grab_Prepare, // 抓取准备
-    Weapon_Status_Grab,         // 抓取
-    Weapon_Status_Lift_1,       // 抬起
-    Weapon_Status_Pick, // 夹取
-    Weapon_Status_Lift_2_Prepare, // 抬前准备(打开pick舵机)
+#if defined(SKILL_COMPETITION_1) || defined(MAIN_COMPETITION)
+    Weapon_Status_Grab_Prepare,          // 抓取准备
+    Weapon_Status_Grab,                  // 抓取
+    Weapon_Status_Lift_1,                // 抬起
+    Weapon_Status_Pick,                  // 夹取
+    Weapon_Status_Lift_2_Prepare,        // 抬前准备(打开pick舵机)
     Weapon_Status_Lift_2,                // 抬起
     Weapon_Status_Rotate_To_Connection,  // 旋转到对接位置
     Weapon_Status_Show_Completion_Graph, // 显示对接成功图像
 #endif
     Weapon_Status_Rotate_To_Storage_Prepare, // 旋转到存储位置-先旋转，机械臂保持缩回
-    Weapon_Status_Attack_Postition_1, // 第一个攻击位置
-    Weapon_Status_Attack_Postition_2, // 第二个攻击位置
+    Weapon_Status_Attack_Position_1,         // 第一个攻击位置
+    Weapon_Status_Attack_Position_2,         // 第二个攻击位置
 
     MAX_WEAPON_STATUS
 };
@@ -71,7 +71,7 @@ public:
 
     friend class Class_FSM_Weapon;
 
-    const float Bias_Max = PI / 24; // 5°微调范围
+    const float Bias_Max = PI / 15; // 5°微调范围
 
     void Init();
 
@@ -164,91 +164,121 @@ private:
         // 机械臂目标位置
         float Arm_Target_Position[MAX_WEAPON_STATUS] = {
             0.0f, // Init
-#if defined(MAIN_COMPETITION) || defined(SKILL_COMPETITION_1)
-            1.5f,  // Grab_Prepare
-            1.5f,  // Grab
+#if defined(SKILL_COMPETITION_1) || defined(MAIN_COMPETITION)
+            1.5f, // Grab_Prepare
+            1.5f, // Grab
             0.8f, // Lift_1
+#endif
+#if defined(SKILL_COMPETITION_1) || defined(MAIN_COMPETITION)
             0.8f, // Pick
+#endif
+#if defined(SKILL_COMPETITION_1) || defined(MAIN_COMPETITION)
             0.8f, // Lift_2_Prepare
             0.8f, // Lift_2
-            0.0f,  // Rotate_To_Connection
-            0.0f,  // Show_Completion_Graph
+#endif
+#if defined(SKILL_COMPETITION_1) || defined(MAIN_COMPETITION)
+            0.0f, // Rotate_To_Connection
+            0.0f, // Show_Completion_Graph
 #endif
             0.0f, // Rotate_To_Storage_Prepare
-            0.0f, // Attack_Postition_1
-            0.0f, // Attack_Postition_2
+            0.0f, // Attack_Position_1
+            0.0f, // Attack_Position_2
         };
 
         // 夹取舵机目标位置
         float Pick_Servo_Target_Position[MAX_WEAPON_STATUS] = {
             1.0f, // Init
-#if defined(MAIN_COMPETITION) || defined(SKILL_COMPETITION_1)
+#if defined(SKILL_COMPETITION_1) || defined(MAIN_COMPETITION)
             1.0f, // Grab_Prepare
             0.0f, // Grab
             0.0f, // Lift_1
+#endif
+#if defined(SKILL_COMPETITION_1) || defined(MAIN_COMPETITION)
             0.0f, // Pick
+#endif
+#if defined(SKILL_COMPETITION_1) || defined(MAIN_COMPETITION)
             1.0f, // Lift_2_Prepare
             1.0f, // Lift_2
+#endif
+#if defined(SKILL_COMPETITION_1) || defined(MAIN_COMPETITION)
             1.0f, // Rotate_To_Connection
             1.0f, // Show_Completion_Graph
 #endif
             1.0f, // Rotate_To_Storage_Prepare
-            1.0f, // Attack_Postition_1
-            1.0f, // Attack_Postition_2
+            1.0f, // Attack_Position_1
+            1.0f, // Attack_Position_2
         };
 
         // 抓取舵机目标位置
         float Grab_Servo_Target_Position[MAX_WEAPON_STATUS] = {
             -1.2f, // Init
-#if defined(MAIN_COMPETITION) || defined(SKILL_COMPETITION_1)
+#if defined(SKILL_COMPETITION_1) || defined(MAIN_COMPETITION)
             -1.2f, // Grab_Prepare
             -1.2f, // Grab
             -1.2f, // Lift_1
+#endif
+#if defined(SKILL_COMPETITION_1) || defined(MAIN_COMPETITION)
             0.0f, // Pick
+#endif
+#if defined(SKILL_COMPETITION_1) || defined(MAIN_COMPETITION)
             0.0f, // Lift_2_Prepare
             0.0f, // Lift_2
+#endif
+#if defined(SKILL_COMPETITION_1) || defined(MAIN_COMPETITION)
             0.0f, // Rotate_To_Connection
             0.0f, // Show_Completion_Graph
 #endif
             0.0f, // Rotate_To_Storage_Prepare
-            0.0f, // Attack_Postition_1
-            0.0f, // Attack_Postition_2
+            0.0f, // Attack_Position_1
+            0.0f, // Attack_Position_2
         };
 
         // 旋转电机目标位置
         float Rotate_Target_Position[MAX_WEAPON_STATUS] = {
             3.65f, // Init
-#if defined(MAIN_COMPETITION) || defined(SKILL_COMPETITION_1)
+#if defined(SKILL_COMPETITION_1) || defined(MAIN_COMPETITION)
             3.65f, // Grab_Prepare
             3.65f, // Grab
             3.65f, // Lift_1
+#endif
+#if defined(SKILL_COMPETITION_1) || defined(MAIN_COMPETITION)
             3.65f, // Pick
+#endif
+#if defined(SKILL_COMPETITION_1) || defined(MAIN_COMPETITION)
             3.65f, // Lift_2_Prepare
             3.65f, // Lift_2
-            5.2f,    // Rotate_To_Connection
-            5.2f,    // Show_Completion_Graph
 #endif
-            3.65f, // Rotate_To_Storage_Prepare
-            3.65f + PI / 6.0f, // Attack_Postition_1
-            3.65f + PI / 3.0f, // Attack_Postition_2
+#if defined(SKILL_COMPETITION_1) || defined(MAIN_COMPETITION)
+            5.2f, // Rotate_To_Connection
+            5.2f, // Show_Completion_Graph
+#endif
+            3.65f,             // Rotate_To_Storage_Prepare
+            3.65f + PI / 2.5f, // Attack_Position_1
+            3.65f - PI / 2.5f, // Attack_Position_2
         };
 
         // 俯仰电机目标位置
         float Pitch_Target_Position[MAX_WEAPON_STATUS] = {
             2.5f, // Init
-#if defined(MAIN_COMPETITION) || defined(SKILL_COMPETITION_1)
+#if defined(SKILL_COMPETITION_1) || defined(MAIN_COMPETITION)
             3.5f, // Grab_Prepare
-            2.5f, // Grab
-            2.5f, // Lift_1
-            2.5f, // Pick
-            2.5f, // Lift_2_Prepare
+            2.2f, // Grab
+            2.2f, // Lift_1
+#endif
+#if defined(SKILL_COMPETITION_1) || defined(MAIN_COMPETITION)
+            2.2f, // Pick
+#endif
+#if defined(SKILL_COMPETITION_1) || defined(MAIN_COMPETITION)
+            2.2f, // Lift_2_Prepare
             1.0f, // Lift_2
+#endif
+#if defined(SKILL_COMPETITION_1) || defined(MAIN_COMPETITION)
             0.35f, // Rotate_To_Connection
             0.35f, // Show_Completion_Graph
 #endif
-            2.5f, // Rotate_To_Storage_Prepare
-            2.5f, // Attack_Postition_1
-            2.5f, // Attack_Postition_2
+            2.2f, // Rotate_To_Storage_Prepare
+            2.5f, // Attack_Position_1
+            2.5f, // Attack_Position_2
         };
     } Target;
 

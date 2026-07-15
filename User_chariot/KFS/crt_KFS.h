@@ -50,13 +50,11 @@ enum Enum_KFS_Status
     KFS_Status_Second_Release_Prepare, // 释放准备
     KFS_Status_Second_Release,         // 释放第二个KFS
 #endif
-#if defined(SKILL_COMPETITION_2)
     KFS_Status_Pick_From_Ground_Prepare,
     KFS_Status_Pick_From_Ground,
     KFS_Status_Pick_Up_From_Ground,
     KFS_Status_Third_Release_Prepare,
     KFS_Status_Third_Release,
-#endif
 #if !defined(SKILL_COMPETITION_1)
     KFS_Status_Recover_Init, // 回到初始化状态
 #endif
@@ -100,6 +98,8 @@ public:
     Class_FSM_KFS FSM_KFS;
     friend class Class_FSM_KFS;
 
+    const float Bias_Max = PI / 24.0f;
+
     void Init();
 
     void TIM_Control_PeriodElapsedCallback();
@@ -107,6 +107,8 @@ public:
     void TIM_Alive_PeriodElapsedCallback();
 
     inline void Set_Lift_Height_Index(uint8_t index);
+
+    inline void Set_Arm_Bias(float bias);
 
     inline void Status_Forward();
 
@@ -196,12 +198,16 @@ private:
 
     Class_Slope Arm_Speed_Slope;
 
+    float Arm_Bias_Rad = 0.0f;
+
+    float Add_Bias = false;
+    
     // 状态机配置表
     struct Target
     {
         // 移动电机目标位置
         float Move_Position[MAX_KFS_STATUS] = {
-            -0.2f, // Init
+            -5.8f, // Init
 #if defined(SKILL_COMPETITION_1) || defined(MAIN_COMPETITION)
             -0.2f, // First_Pick_Prepare
             -0.2f, // First_Pick
@@ -221,24 +227,22 @@ private:
             -0.2f, // Protect_Storage_Again
 #endif
 #if defined(MAIN_COMPETITION)
-            -0.2f, // First_Release_Prepare
-            -0.2f, // First_Release
+            -5.8f, // First_Release_Prepare
+            -5.8f, // First_Release
             -0.2f, // Get_Storage_Prepare
             -0.2f, // Get_Storage
 #endif
 #if !defined(SKILL_COMPETITION_1)
-            -0.2f, // Second_Release_Prepare
-            -0.2f, // Second_Release
+            -5.8f, // Second_Release_Prepare
+            -5.8f, // Second_Release
 #endif
-#if defined(SKILL_COMPETITION_2)
             -0.2f, // Pick_From_Ground_Prepare
             -0.2f, // Pick_From_Ground
             -0.2f, // Pick_Up_From_Ground
-            -0.2f, // Third_Release_Prepare
-            -0.2f, // Third_Release
-#endif
+            -5.8f, // Third_Release_Prepare
+            -5.8f, // Third_Release
 #if !defined(SKILL_COMPETITION_1)
-            -0.2f, // Recover_Init
+            -5.8f, // Recover_Init
 #endif
         };
 
@@ -275,20 +279,18 @@ private:
                 0.35f, // Second_Release_Prepare
                 0.35f, // Second_Release
 #endif
-#if defined(SKILL_COMPETITION_2)
                 0.20f, // Pick_From_Ground_Prepare
                 0.00f, // Pick_From_Ground
                 0.35f, // Pick_Up_From_Ground
                 0.35f, // Third_Release_Prepare
                 0.35f, // Third_Release
-#endif
 #if !defined(SKILL_COMPETITION_1)
                 0.00f, // Recover_Init
 #endif
             },
             {
                 // Lift_Height_Index = 1
-                0.20f, // Init
+                0.00f, // Init
 #if defined(SKILL_COMPETITION_1) || defined(MAIN_COMPETITION)
                 0.20f, // First_Pick_Prepare
                 0.20f, // First_Pick
@@ -317,20 +319,18 @@ private:
                 0.35f, // Second_Release_Prepare
                 0.35f, // Second_Release
 #endif
-#if defined(SKILL_COMPETITION_2)
                 0.20f, // Pick_From_Ground_Prepare
                 0.00f, // Pick_From_Ground
                 0.35f, // Pick_Up_From_Ground
                 0.35f, // Third_Release_Prepare
                 0.35f, // Third_Release
-#endif
 #if !defined(SKILL_COMPETITION_1)
                 0.00f, // Recover_Init
 #endif
             },
             {
                 // Lift_Height_Index = 2
-                0.35f, // Init
+                0.00f, // Init  
 #if defined(SKILL_COMPETITION_1) || defined(MAIN_COMPETITION)
                 0.35f, // First_Pick_Prepare
                 0.35f, // First_Pick
@@ -359,13 +359,11 @@ private:
                 0.35f, // Second_Release_Prepare
                 0.35f, // Second_Release
 #endif
-#if defined(SKILL_COMPETITION_2)
                 0.20f, // Pick_From_Ground_Prepare
                 0.00f, // Pick_From_Ground
                 0.35f, // Pick_Up_From_Ground
                 0.35f, // Third_Release_Prepare
                 0.35f, // Third_Release
-#endif
 #if !defined(SKILL_COMPETITION_1)
                 0.00f, // Recover_Init
 #endif
@@ -404,13 +402,11 @@ private:
             -1.0f, // Second_Release_Prepare
             -1.0f, // Second_Release
 #endif
-#if defined(SKILL_COMPETITION_2)
-            1.35f, // Pick_From_Ground_Prepare
-            1.35f, // Pick_From_Ground
+            1.1f,  // Pick_From_Ground_Prepare
+            1.1f,  // Pick_From_Ground
             1.2f,  // Pick_Up_From_Ground
             -1.0f, // Third_Release_Prepare
             -1.0f, // Third_Release
-#endif
 #if !defined(SKILL_COMPETITION_1)
             0.00f, // Recover_Init
 #endif
@@ -447,15 +443,13 @@ private:
             0.7f, // Second_Release_Prepare
             0.7f, // Second_Release
 #endif
-#if defined(SKILL_COMPETITION_2)
-            0.3f, // Pick_From_Ground_Prepare
-            0.3f, // Pick_From_Ground
-            0.3f, // Pick_Up_From_Ground
-            0.6f, // Third_Release_Prepare
-            0.6f, // Third_Release
-#endif
+            0.5f, // Pick_From_Ground_Prepare
+            0.5f, // Pick_From_Ground
+            0.5f, // Pick_Up_From_Ground
+            0.7f, // Third_Release_Prepare
+            0.7f, // Third_Release
 #if !defined(SKILL_COMPETITION_1)
-            -1.57f, // Recover_Init
+            -1.35f, // Recover_Init
 #endif
         };
 
@@ -490,13 +484,11 @@ private:
             1, // Second_Release_Prepare
             0, // Second_Release
 #endif
-#if defined(SKILL_COMPETITION_2)
             0, // Pick_From_Ground_Prepare
             1, // Pick_From_Ground
             1, // Pick_Up_From_Ground
             1, // Third_Release_Prepare
             0, // Third_Release
-#endif
 #if !defined(SKILL_COMPETITION_1)
             0, // Recover_Init
 #endif
@@ -545,6 +537,11 @@ inline void Class_KFS::Set_Lift_Height_Index(uint8_t index)
     {
         Lift_Height_Index = index;
     }
+}
+
+inline void Class_KFS::Set_Arm_Bias(float bias)
+{
+    Arm_Bias_Rad = Math_Abs(bias) <= Bias_Max ? bias : Arm_Bias_Rad;
 }
 
 /**

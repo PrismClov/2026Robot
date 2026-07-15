@@ -3,6 +3,7 @@
 
 #include "alg_fsm.h"
 #include "crt_multi_motor_sync.h"
+#include "dvc_dwt.h"
 #include "dvc_motor_dji.h"
 
 class Class_Chariot;
@@ -18,8 +19,8 @@ enum Enum_Lift_Status
     Lift_Status_Init = 0,
     Lift_Status_Wait_R2,
     Lift_Status_Show_Graph,
+    Lift_Status_Show_Ready_Lift,
     Lift_Status_Lift_R2,
-    Lift_Status_Lift_R2_Complete,
     Lift_Status_Down_R2,
 };
 
@@ -55,16 +56,18 @@ public:
     inline void Yaw_Flag_Backward();
 
 private:
-    bool Yaw_Flag = false;      // Yaw到位触发，FSM检测到后切换状态
+    bool Yaw_Flag = false; // Yaw到位触发，FSM检测到后切换状态
     bool Backward_Yaw_Flag = false;
 
-    float Target_Distance_Init = 0.35f;     // 初始化位置
+    float Target_Distance_Init = 0.35f;    // 初始化位置
     float Target_Distance_Wait_R2 = 0.49f; // 底部(等待/下降到位)
     float Target_Distance_Lift_R2 = 0.0f;  // 顶部(抬升到位)
     float Target_Distance_Down_R2 = 0.48f; // 底部(下降到位)
 
     float Empty_Gravity_Compensation[2] = {-0.2f, -0.2f}; // 空载重力补偿
     float Load_Gravity_Compensation[2] = {-2.2f, -2.2f};  // 负载重力补偿
+
+    SoftTimer_t Show_Graph_Delay_Timer = {};
 };
 
 inline float Class_Lift::Get_Now_Distance_L()

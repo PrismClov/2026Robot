@@ -22,7 +22,7 @@
 
 /* Private macros ------------------------------------------------------------*/
 
-// #define CHASSIS_SLOPE_ENABLE
+#define CHASSIS_SLOPE_ENABLE
 
 /* Private types -------------------------------------------------------------*/
 
@@ -44,22 +44,22 @@ void Class_Chassis::Init(float __Velocity_X_Max, float __Velocity_Y_Max, float _
     Omega_Max = __Omega_Max;
 
     // 斜坡初始化（小斜率，柔和平滑）
-    Slope_Velocity_X.Init(0.02f, 0.02f, Slope_First_REAL);
+    Slope_Velocity_X.Init(10.0f, 2.0f, Slope_First_REAL);
 
-    Slope_Velocity_Y.Init(0.02f, 0.02f, Slope_First_REAL);
+    Slope_Velocity_Y.Init(10.0f, 2.0f, Slope_First_REAL);
 
-    Slope_Omega.Init(0.02f, 0.02f, Slope_First_REAL);
+    Slope_Omega.Init(5.0f, 5.0f, Slope_First_REAL);
 
     // PID初始化
 
     // 底盘速度xPID, 输出摩擦力
-    PID_Velocity_X.Init(1.0f, 0.0f, 0.0f, 0.0f, 0.18f, 30.0f, 0.002f);
+    PID_Velocity_X.Init(30.0f, 0.0f, 0.0f, 0.0f, 0.18f, 30.0f, 0.002f);
 
     // 底盘速度yPID, 输出摩擦力
-    PID_Velocity_Y.Init(1.0f, 0.0f, 0.0f, 0.0f, 0.18f, 30.0f, 0.002f);
+    PID_Velocity_Y.Init(30.0f, 0.0f, 0.0f, 0.0f, 0.18f, 30.0f, 0.002f);
 
     // 底盘角速度PID, 输出扭矩
-    PID_Omega.Init(0.5f, 0.0f, 0.0f, 0.0f, 0.01f, 10.0f, 0.002f);
+    PID_Omega.Init(0.4f, 0.0f, 0.0f, 0.0f, 0.01f, 10.0f, 0.002f);
 
     // 舵向电机
     for (uint8_t i = 0; i < 4; i++)
