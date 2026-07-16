@@ -13,10 +13,10 @@
 
 /* Includes ------------------------------------------------------------------*/
 
+#include "config.h"
 #include "drv_math.h"
 #include "dvc_crsf.h"
 #include "ita_robot.h"
-#include "config.h"
 
 /* Private macros ------------------------------------------------------------*/
 
@@ -34,17 +34,21 @@
 void Class_Chariot::Init()
 {
     Serial_Screen.Init(&huart1);
+    UART_Send_Data(&huart1, (uint8_t *)"BL(235);\r\n", 10);
 
     CRSF.Init(&huart7);
 
-    Chassis.Init();
+    Chassis.Init(8.0f, 8.0f, 4.0f);
 
-    // Weapon.Init();
+    Weapon.Init();
+    Weapon.Chariot = this;
 
     KFS.Init();
+    KFS.Chariot = this;
 
 #if defined(MAIN_COMPETITION) || defined(SKILL_COMPETITION_2)
-    // Lift.Init();
+    Lift.Init();
+    Lift.Chariot = this;
 #endif
 }
 
@@ -57,15 +61,15 @@ void Class_Chariot::TIM_100ms_Alive_PeriodElapsedCallback()
     CRSF.TIM1msMod50_Alive_PeriodElapsedCallback();
 
     Chassis.TIM_100ms_Alive_PeriodElapsedCallback();
-    
+
     Serial_Screen.TIM_100ms_Alive_PeriodElapsedCallback();
-    
-    // KFS.TIM_Alive_PeriodElapsedCallback();
-    
-    // Weapon.TIM_Alive_PeriodElapsedCallback();
+
+    KFS.TIM_Alive_PeriodElapsedCallback();
+
+    Weapon.TIM_Alive_PeriodElapsedCallback();
 
 #if defined(MAIN_COMPETITION) || defined(SKILL_COMPETITION_2)
-    // Lift.TIM_100ms_Alive_PeriodElapsedCallback();
+    Lift.TIM_100ms_Alive_PeriodElapsedCallback();
 #endif
 }
 
@@ -75,14 +79,14 @@ void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
     Chassis.TIM_2ms_Control_PeriodElapsedCallback();
 
     // KFS
-    // KFS.TIM_Control_PeriodElapsedCallback();
+    KFS.TIM_Control_PeriodElapsedCallback();
 
     // Weapon
-    // Weapon.TIM_Weapon_PeriodElapsedCallback();
+    Weapon.TIM_Weapon_PeriodElapsedCallback();
 
 #if defined(MAIN_COMPETITION) || defined(SKILL_COMPETITION_2)
     // Lift
-    // Lift.TIM_Calculate_PeriodElapsedCallback();
+    Lift.TIM_Calculate_PeriodElapsedCallback();
 #endif
 }
 /**
@@ -171,13 +175,17 @@ void Class_Chariot::Control_Chassis()
         {
             // 底盘随动
             Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_NORMAL);
-            Chassis.Set_Target_Velocity_X(-chassis_velocity_x);
-            Chassis.Set_Target_Velocity_Y(chassis_velocity_y);
+            Chassis.Set_Target_Velocity_X(chassis_velocity_y);
+            Chassis.Set_Target_Velocity_Y(chassis_velocity_x);
             Chassis.Set_Target_Omega(chassis_omega);
         }
         else if (CRSF.Get_SA() == CRSF_SWITCH_LOW) // SA低档 禁用模式
         {
             Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
+            if (Robot_Mode == Robot_Mode_Weapon)
+            {
+                Serial_Screen.Jump_To_Page(SCREEN_PAGE_4);
+            }
         }
 
         // SB开关控制控制区域
@@ -198,6 +206,8 @@ void Class_Chariot::Control_Chassis()
         {
             case Robot_Mode_KFS:
             {
+                KFS.Set_Arm_Bias(Math_Int_To_Float(CRSF.Get_S1(), -100, 100, -Weapon.Bias_Max, Weapon.Bias_Max));
+
                 if (CRSF.Get_SE() == CRSF_SWITCH_HIGH && Previous_SE_Pos == CRSF_SWITCH_LOW)
                 {
                     if (CRSF.Get_SD() == CRSF_SWITCH_LOW)
@@ -214,6 +224,8 @@ void Class_Chariot::Control_Chassis()
             }
             case Robot_Mode_Weapon:
             {
+                Weapon.Set_Rotate_Bias(Math_Int_To_Float(CRSF.Get_S1(), -100, 100, -Weapon.Bias_Max, Weapon.Bias_Max));
+
                 if (CRSF.Get_SE() == CRSF_SWITCH_HIGH && Previous_SE_Pos == CRSF_SWITCH_LOW)
                 {
                     if (CRSF.Get_SD() == CRSF_SWITCH_LOW)
@@ -245,8 +257,6 @@ void Class_Chariot::Control_Chassis()
             }
         }
         Previous_SE_Pos = CRSF.Get_SE();
-
-        Weapon.Set_Rotate_Bias(Math_Int_To_Float(CRSF.Get_S1(), -100, 100, -Weapon.Bias_Max, Weapon.Bias_Max));
     }
 }
 void Class_Chariot::TIM_Control_Callback()

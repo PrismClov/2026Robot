@@ -1,4 +1,6 @@
 #include "crt_weapon.h"
+#include "dvc_serialscreen.h"
+#include "ita_robot.h"
 
 /**
  * @brief 初始化
@@ -6,12 +8,35 @@
 void Class_Weapon::Init()
 {
     // 夹取舵机
+#if defined(SKILL_COMPETITION_1)
     Pick_Servo[0].Init(&htim1, TIM_CHANNEL_3, 500, 2500);
+#endif
+#if !defined(SKILL_COMPETITION_2)
     Pick_Servo[1].Init(&htim1, TIM_CHANNEL_1, 500, 2500);
+#endif
+#if defined(SKILL_COMPETITION_1)
     Pick_Servo[2].Init(&htim2, TIM_CHANNEL_3, 500, 2500);
+#endif
 
-    // 抓取舵机
-    Grab_Servo.Init(&htim2, TIM_CHANNEL_1, 500, 2500);
+    // 抓取电机 (CAN1, ID 0x206)
+    Grab_Servo.Init(
+        &hfdcan1,
+        Motor::Motor_DJI_ID_0x206,
+        Motor::Class_Motor_DJI_C620::Parameters{
+            .PID_Position = PID_Parameters{
+                .K_P = 30.0f,
+                .K_I = 0.0f,
+                .K_D = 0.0f,
+                .Out_Max = 15.0f,
+            },
+            .PID_Omega = PID_Parameters{
+                .K_P = 1.0f,
+                .K_I = 0.0f,
+                .K_D = 0.0f,
+                .Out_Max = 10.0f,
+                // .Dead_Zone = 0.5f,
+            },
+        });
 
     // 机械臂电机 (CAN1, ID 0x205)
     Motor_Arm.Init(
@@ -22,7 +47,7 @@ void Class_Weapon::Init()
                 .K_P = 50.0f,
                 .K_I = 0.0f,
                 .K_D = 0.0f,
-                .Out_Max = 6.0f,
+                .Out_Max = 8.0f,
             },
             .PID_Omega = PID_Parameters{
                 .K_P = 2.0f,
@@ -57,8 +82,8 @@ void Class_Weapon::Init()
 
     // 旋转电机
     Motor_Rotate.Init(&hfdcan1, 0xFD, 0x7F, Motor_RS_PID_Mode_ANGLE);
-    Motor_Rotate.PID_Omega.Init(1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 5.0f, 0.002f, 0.5f);
-    Motor_Rotate.PID_Angle.Init(30.0f, 0.0f, 0.0f, 0.0f, 0.0f, 2.0f, 0.002f, 0.0f);
+    Motor_Rotate.PID_Omega.Init(1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 5.0f, 0.002f, 0.0f);
+    Motor_Rotate.PID_Angle.Init(30.0f, 0.0f, 0.0f, 0.0f, 0.0f, 3.0f, 0.002f, 0.0f);
 
     // 俯仰电机
     Motor_Pitch.Init(
@@ -116,6 +141,7 @@ void Class_Weapon::Move_To_Position(float x)
  * @brief 机械臂控制
  * @param x 目标位置
  */
+#if !defined(SKILL_COMPETITION_2)
 void Class_Weapon::Arm_To_Position(float x)
 {
     if (!Arm_Calibrated)
@@ -134,6 +160,29 @@ void Class_Weapon::Arm_To_Position(float x)
         // 已校准，角度环运行到目标绝对角度
         Motor_Arm.Set_Control_Method(MOTOR_CONTROL_METHOD_POSITION);
         Motor_Arm.Set_Target_Position(x + Arm_Calibration_Offset);
+    }
+}
+#endif
+/**
+ * @brief 抓取控制
+ * @param x 目标位置
+ */
+void Class_Weapon::Grab_To_Position(float x)
+{
+    if (!Grab_Calibrated)
+    {
+        float offset;
+        if (Grab_Servo.Calibrate(Grab_Calibrate_Params, offset))
+        {
+            Grab_Calibration_Offset = offset;
+            Grab_Servo.Set_Target_Position(Grab_Calibration_Offset);
+            Grab_Calibrated = true;
+        }
+    }
+    else
+    {
+        Grab_Servo.Set_Control_Method(MOTOR_CONTROL_METHOD_POSITION);
+        Grab_Servo.Set_Target_Position(x + Grab_Calibration_Offset);
     }
 }
 
@@ -161,7 +210,8 @@ void Class_Weapon::Pitch_To_Position(float x)
         Motor_Pitch.Set_Target_Position(x + Pitch_Calibration_Offset);
     }
 }
-
+float position = -0.3f;
+float angle = 0.0f;
 /**
  * @brief 周期中断函数
  */
@@ -169,11 +219,17 @@ void Class_Weapon::TIM_Weapon_PeriodElapsedCallback()
 {
     FSM_Weapon.Weapon_TIM_Status_PeriodElapsedCallback();
 
+    // Motor_Rotate.Set_Target_Angle(angle + Rotate_Bias_Rad);
     Motor_Rotate.TIM_Calculate_PeriodElapsedCallback();
     Motor_Rotate.TIM_Send_PeriodElapsedCallback();
 
+#if !defined(SKILL_COMPETITION_2)
     Motor_Arm.Calculate();
+#endif
+    // Grab_To_Position(position);
+    Grab_Servo.Calculate();
 
+    // Pitch_To_Position(0.00f);
     Motor_Pitch.Calculate();
 
     Motor_Move.Calculate();
@@ -186,9 +242,13 @@ void Class_Weapon::TIM_Alive_PeriodElapsedCallback()
 {
     Motor_Rotate.TIM_Alive_PeriodElapsedCallback();
 
+#if !defined(SKILL_COMPETITION_2)
     Motor_Arm.TIM_100ms_Alive_PeriodElapsedCallback();
+#endif
 
     Motor_Move.TIM_100ms_Alive_PeriodElapsedCallback();
+
+    Grab_Servo.TIM_100ms_Alive_PeriodElapsedCallback();
 
     Motor_Pitch.TIM_100ms_Alive_PeriodElapsedCallback();
 }
@@ -198,7 +258,9 @@ void Class_Weapon::TIM_Alive_PeriodElapsedCallback()
  */
 bool Class_Weapon::Is_Action_Finished()
 {
+#if !defined(SKILL_COMPETITION_2)
     Check_Arm_Task_Completion();
+#endif
 
     Check_Move_Task_Completion();
 
@@ -206,13 +268,11 @@ bool Class_Weapon::Is_Action_Finished()
 
     Check_Rotate_Task_Completion();
 
-    // 在其他动作到位后再开始舵机延时
-    // if (Arm_Task_Finished && Move_Task_Finished && Pitch_Task_Finished && !Servo_Task_Finished)
-    // {
-    //     Check_Servo_Task_Completion();
-    // }
-
-    return Arm_Task_Finished && Move_Task_Finished && Pitch_Task_Finished;
+    return
+#if !defined(SKILL_COMPETITION_2)
+        Arm_Task_Finished &&
+#endif
+        Move_Task_Finished && Pitch_Task_Finished;
 }
 
 /**
@@ -308,7 +368,9 @@ void Class_Weapon::Check_Servo_Task_Completion()
  */
 void Class_Weapon::Enter_New_Status_Clear_Completion_Flag()
 {
+#if !defined(SKILL_COMPETITION_2)
     Arm_Task_Finished = false;
+#endif
     Move_Task_Finished = false;
     Pitch_Task_Finished = false;
     Rotate_Task_Finished = false;
@@ -321,10 +383,12 @@ void Class_Weapon::Enter_New_Status_Clear_Completion_Flag()
 void Class_Weapon::Weapon_Grab_Status_Task()
 {
     // 旋转电机
-    Motor_Rotate.Set_Target_Angle(Target.Rotate_Target_Position[FSM_Weapon.Get_Now_Status_Serial()] + Rotate_Bias_Rad);
+    Motor_Rotate.Set_Target_Angle(Target.Rotate_Target_Position[FSM_Weapon.Get_Now_Status_Serial()] + (Chariot->Get_Robot_Mode() == Robot_Mode_Weapon ? Rotate_Bias_Rad : 0));
 
     // 机械臂电机
+#if defined(SKILL_COMPETITION_1) || defined(MAIN_COMPETITION)
     Arm_To_Position(Target.Arm_Target_Position[FSM_Weapon.Get_Now_Status_Serial()]);
+#endif
 
     // 位移电机
     Move_To_Position(Move_Target_Position[Move_Index]);
@@ -333,6 +397,7 @@ void Class_Weapon::Weapon_Grab_Status_Task()
     Pitch_To_Position(Target.Pitch_Target_Position[FSM_Weapon.Get_Now_Status_Serial()]);
 
     // 夹取舵机
+#if defined(SKILL_COMPETITION_1) || defined(MAIN_COMPETITION)
     if (Need_All_Servo_Action)
     {
         Pick_Servo[0].Set_Normalized_Position(Target.Pick_Servo_Target_Position[FSM_Weapon.Get_Now_Status_Serial()]);
@@ -343,9 +408,10 @@ void Class_Weapon::Weapon_Grab_Status_Task()
     {
         Pick_Servo[2 - Move_Index].Set_Normalized_Position(Target.Pick_Servo_Target_Position[FSM_Weapon.Get_Now_Status_Serial()]);
     }
+#endif
 
-    // 抓取舵机
-    Grab_Servo.Set_Normalized_Position(Target.Grab_Servo_Target_Position[FSM_Weapon.Get_Now_Status_Serial()]);
+    // 抓取电机
+    Grab_To_Position(Target.Grab_Servo_Target_Position[FSM_Weapon.Get_Now_Status_Serial()]);
 }
 
 /**
@@ -370,12 +436,18 @@ void Class_FSM_Weapon::Weapon_TIM_Status_PeriodElapsedCallback()
             {
                 Status[Now_Status_Serial].Count_Time = 0;
                 Weapon->Enter_New_Status_Clear_Completion_Flag();
-                Set_Status(Weapon_Status_Grab_Prepare);
+                Set_Status(Now_Status_Serial + 1);
             }
             // }
+
+            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon && Weapon->Chariot->CRSF.Get_SA() == CRSF_SWITCH_HIGH)
+            {
+                Weapon->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
+            }
             break;
         }
 
+#if defined(SKILL_COMPETITION_1) || defined(MAIN_COMPETITION)
         case Weapon_Status_Grab_Prepare:
         {
             Weapon->Need_All_Servo_Action = true;
@@ -384,7 +456,7 @@ void Class_FSM_Weapon::Weapon_TIM_Status_PeriodElapsedCallback()
             {
                 Status[Now_Status_Serial].Count_Time = 0;
                 Weapon->Enter_New_Status_Clear_Completion_Flag();
-                Set_Status(Weapon_Status_Init);
+                Set_Status(Now_Status_Serial - 1);
             }
 
             Weapon->Weapon_Grab_Status_Task();
@@ -395,9 +467,15 @@ void Class_FSM_Weapon::Weapon_TIM_Status_PeriodElapsedCallback()
             {
                 Status[Now_Status_Serial].Count_Time = 0;
                 Weapon->Enter_New_Status_Clear_Completion_Flag();
-                Set_Status(Weapon_Status_Grab);
+                Set_Status(Now_Status_Serial + 1);
             }
             // }
+
+            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon && Weapon->Chariot->CRSF.Get_SA() == CRSF_SWITCH_HIGH)
+            {
+                Weapon->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
+            }
+
             break;
         }
 
@@ -405,12 +483,6 @@ void Class_FSM_Weapon::Weapon_TIM_Status_PeriodElapsedCallback()
         {
             Weapon->Need_All_Servo_Action = true;
 
-            if (Weapon->Backward_Yaw_Flag)
-            {
-                Status[Now_Status_Serial].Count_Time = 0;
-                Weapon->Enter_New_Status_Clear_Completion_Flag();
-                Set_Status(Weapon_Status_Grab);
-            }
             Weapon->Weapon_Grab_Status_Task();
             if (Weapon->Forward_Yaw_Flag)
             {
@@ -418,9 +490,15 @@ void Class_FSM_Weapon::Weapon_TIM_Status_PeriodElapsedCallback()
                 // {
                 Status[Now_Status_Serial].Count_Time = 0;
                 Weapon->Enter_New_Status_Clear_Completion_Flag();
-                Set_Status(Weapon_Status_Lift_1);
+                Set_Status(Now_Status_Serial + 1);
                 // }
             }
+
+            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon && Weapon->Chariot->CRSF.Get_SA() == CRSF_SWITCH_HIGH)
+            {
+                Weapon->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
+            }
+
             break;
         }
 
@@ -432,7 +510,7 @@ void Class_FSM_Weapon::Weapon_TIM_Status_PeriodElapsedCallback()
             {
                 Status[Now_Status_Serial].Count_Time = 0;
                 Weapon->Enter_New_Status_Clear_Completion_Flag();
-                Set_Status(Weapon_Status_Grab);
+                Set_Status(Now_Status_Serial - 1);
             }
 
             Weapon->Weapon_Grab_Status_Task();
@@ -443,11 +521,18 @@ void Class_FSM_Weapon::Weapon_TIM_Status_PeriodElapsedCallback()
             {
                 Status[Now_Status_Serial].Count_Time = 0;
                 Weapon->Enter_New_Status_Clear_Completion_Flag();
-                Set_Status(Weapon_Status_Pick);
+                Set_Status(Now_Status_Serial + 1);
             }
             // }
+
+            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon && Weapon->Chariot->CRSF.Get_SA() == CRSF_SWITCH_HIGH)
+            {
+                Weapon->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
+            }
             break;
         }
+#endif
+#if defined(SKILL_COMPETITION_1) || defined(MAIN_COMPETITION)
 
         case Weapon_Status_Pick:
         {
@@ -457,20 +542,57 @@ void Class_FSM_Weapon::Weapon_TIM_Status_PeriodElapsedCallback()
             {
                 Status[Now_Status_Serial].Count_Time = 0;
                 Weapon->Enter_New_Status_Clear_Completion_Flag();
-                Set_Status(Weapon_Status_Lift_1);
+                Set_Status(Now_Status_Serial - 1);
             }
 
             Weapon->Weapon_Grab_Status_Task();
 
             // if (Weapon->Is_Action_Finished())
             // {
+
             if (Weapon->Forward_Yaw_Flag)
             {
                 Status[Now_Status_Serial].Count_Time = 0;
                 Weapon->Enter_New_Status_Clear_Completion_Flag();
-                Set_Status(Weapon_Status_Lift_2);
+                Set_Status(Now_Status_Serial + 1);
             }
+
             // }
+
+            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon && Weapon->Chariot->CRSF.Get_SA() == CRSF_SWITCH_HIGH)
+            {
+                Weapon->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
+            }
+
+            break;
+        }
+#endif
+#if defined(SKILL_COMPETITION_1) || defined(MAIN_COMPETITION)
+
+        case Weapon_Status_Lift_2_Prepare:
+        {
+            Weapon->Need_All_Servo_Action = false;
+
+            if (Weapon->Backward_Yaw_Flag)
+            {
+                Status[Now_Status_Serial].Count_Time = 0;
+                Weapon->Enter_New_Status_Clear_Completion_Flag();
+                Set_Status(Now_Status_Serial - 1);
+            }
+
+            Weapon->Weapon_Grab_Status_Task();
+
+            if (Weapon->Forward_Yaw_Flag)
+            {
+                Status[Now_Status_Serial].Count_Time = 0;
+                Weapon->Enter_New_Status_Clear_Completion_Flag();
+                Set_Status(Now_Status_Serial + 1);
+            }
+
+            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon && Weapon->Chariot->CRSF.Get_SA() == CRSF_SWITCH_HIGH)
+            {
+                Weapon->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
+            }
             break;
         }
 
@@ -482,7 +604,7 @@ void Class_FSM_Weapon::Weapon_TIM_Status_PeriodElapsedCallback()
             {
                 Status[Now_Status_Serial].Count_Time = 0;
                 Weapon->Enter_New_Status_Clear_Completion_Flag();
-                Set_Status(Weapon_Status_Pick);
+                Set_Status(Now_Status_Serial - 1);
             }
 
             Weapon->Weapon_Grab_Status_Task();
@@ -493,11 +615,18 @@ void Class_FSM_Weapon::Weapon_TIM_Status_PeriodElapsedCallback()
             {
                 Status[Now_Status_Serial].Count_Time = 0;
                 Weapon->Enter_New_Status_Clear_Completion_Flag();
-                Set_Status(Weapon_Status_Rotate_To_Connection);
+                Set_Status(Now_Status_Serial + 1);
             }
             // }
+
+            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon && Weapon->Chariot->CRSF.Get_SA() == CRSF_SWITCH_HIGH)
+            {
+                Weapon->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
+            }
             break;
         }
+#endif
+#if defined(SKILL_COMPETITION_1) || defined(MAIN_COMPETITION)
 
         case Weapon_Status_Rotate_To_Connection:
         {
@@ -507,7 +636,7 @@ void Class_FSM_Weapon::Weapon_TIM_Status_PeriodElapsedCallback()
             {
                 Status[Now_Status_Serial].Count_Time = 0;
                 Weapon->Enter_New_Status_Clear_Completion_Flag();
-                Set_Status(Weapon_Status_Lift_2);
+                Set_Status(Now_Status_Serial - 1);
             }
 
             Weapon->Weapon_Grab_Status_Task();
@@ -518,11 +647,43 @@ void Class_FSM_Weapon::Weapon_TIM_Status_PeriodElapsedCallback()
             {
                 Status[Now_Status_Serial].Count_Time = 0;
                 Weapon->Enter_New_Status_Clear_Completion_Flag();
-                Set_Status(Weapon_Status_Rotate_To_Storage_Prepare);
+                Set_Status(Now_Status_Serial + 1);
             }
             // }
+            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon && Weapon->Chariot->CRSF.Get_SA() == CRSF_SWITCH_HIGH)
+            {
+                Weapon->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
+            }
             break;
         }
+
+        case Weapon_Status_Show_Completion_Graph:
+        {
+            Weapon->Need_All_Servo_Action = false;
+
+            if (Weapon->Backward_Yaw_Flag)
+            {
+                Status[Now_Status_Serial].Count_Time = 0;
+                Weapon->Enter_New_Status_Clear_Completion_Flag();
+                Set_Status(Now_Status_Serial - 1);
+            }
+
+            Weapon->Weapon_Grab_Status_Task();
+
+            if (Weapon->Forward_Yaw_Flag)
+            {
+                Status[Now_Status_Serial].Count_Time = 0;
+                Weapon->Enter_New_Status_Clear_Completion_Flag();
+                Set_Status(Now_Status_Serial + 1);
+            }
+
+            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon && Weapon->Chariot->CRSF.Get_SA() == CRSF_SWITCH_HIGH)
+            {
+                Weapon->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_3);
+            }
+            break;
+        }
+#endif
 
         case Weapon_Status_Rotate_To_Storage_Prepare:
         {
@@ -532,7 +693,7 @@ void Class_FSM_Weapon::Weapon_TIM_Status_PeriodElapsedCallback()
             {
                 Status[Now_Status_Serial].Count_Time = 0;
                 Weapon->Enter_New_Status_Clear_Completion_Flag();
-                Set_Status(Weapon_Status_Rotate_To_Connection);
+                Set_Status(Weapon_Status_Show_Completion_Graph);
             }
 
             Weapon->Weapon_Grab_Status_Task();
@@ -541,37 +702,16 @@ void Class_FSM_Weapon::Weapon_TIM_Status_PeriodElapsedCallback()
             {
                 Status[Now_Status_Serial].Count_Time = 0;
                 Weapon->Enter_New_Status_Clear_Completion_Flag();
-                Set_Status(Weapon_Status_Rotate_To_Storage);
+                Set_Status(Now_Status_Serial + 1);
+            }
+            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon && Weapon->Chariot->CRSF.Get_SA() == CRSF_SWITCH_HIGH)
+            {
+                Weapon->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
             }
             break;
         }
 
-        case Weapon_Status_Rotate_To_Storage:
-        {
-            Weapon->Need_All_Servo_Action = false;
-
-            if (Weapon->Backward_Yaw_Flag)
-            {
-                Status[Now_Status_Serial].Count_Time = 0;
-                Weapon->Enter_New_Status_Clear_Completion_Flag();
-                Set_Status(Weapon_Status_Pick);
-            }
-
-            Weapon->Weapon_Grab_Status_Task();
-
-            // if (Weapon->Is_Action_Finished())
-            // {
-            if (Weapon->Forward_Yaw_Flag)
-            {
-                Status[Now_Status_Serial].Count_Time = 0;
-                Weapon->Enter_New_Status_Clear_Completion_Flag();
-                Set_Status(Weapon_Status_Attack_Postition_1);
-            }
-            // }
-            break;
-        }
-
-        case Weapon_Status_Attack_Postition_1:
+        case Weapon_Status_Attack_Position_1:
         {
             Weapon->Need_All_Servo_Action = false;
 
@@ -590,13 +730,17 @@ void Class_FSM_Weapon::Weapon_TIM_Status_PeriodElapsedCallback()
             {
                 Status[Now_Status_Serial].Count_Time = 0;
                 Weapon->Enter_New_Status_Clear_Completion_Flag();
-                Set_Status(Weapon_Status_Attack_Postition_2);
+                Set_Status(Weapon_Status_Attack_Position_2);
             }
             // }
+            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon && Weapon->Chariot->CRSF.Get_SA() == CRSF_SWITCH_HIGH)
+            {
+                Weapon->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
+            }
             break;
         }
 
-        case Weapon_Status_Attack_Postition_2:
+        case Weapon_Status_Attack_Position_2:
         {
             Weapon->Need_All_Servo_Action = false;
 
@@ -615,9 +759,13 @@ void Class_FSM_Weapon::Weapon_TIM_Status_PeriodElapsedCallback()
             {
                 Status[Now_Status_Serial].Count_Time = 0;
                 Weapon->Enter_New_Status_Clear_Completion_Flag();
-                Set_Status(Weapon_Status_Attack_Postition_1);
+                Set_Status(Weapon_Status_Attack_Position_1);
             }
             // }
+            if (Weapon->Chariot->Get_Robot_Mode() == Robot_Mode_Weapon && Weapon->Chariot->CRSF.Get_SA() == CRSF_SWITCH_HIGH)
+            {
+                Weapon->Chariot->Serial_Screen.Jump_To_Page(SCREEN_PAGE_0);
+            }
             break;
         }
     }

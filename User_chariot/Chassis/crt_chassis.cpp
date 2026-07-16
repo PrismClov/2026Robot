@@ -22,7 +22,7 @@
 
 /* Private macros ------------------------------------------------------------*/
 
-//#define CHASSIS_SLOPE_ENABLE
+#define CHASSIS_SLOPE_ENABLE
 
 /* Private types -------------------------------------------------------------*/
 
@@ -44,22 +44,22 @@ void Class_Chassis::Init(float __Velocity_X_Max, float __Velocity_Y_Max, float _
     Omega_Max = __Omega_Max;
 
     // 斜坡初始化（小斜率，柔和平滑）
-    Slope_Velocity_X.Init(0.02f, 0.02f, Slope_First_REAL);
+    Slope_Velocity_X.Init(10.0f, 2.0f, Slope_First_REAL);
 
-    Slope_Velocity_Y.Init(0.02f, 0.02f, Slope_First_REAL);
+    Slope_Velocity_Y.Init(10.0f, 2.0f, Slope_First_REAL);
 
-    Slope_Omega.Init(0.02f, 0.02f, Slope_First_REAL);
+    Slope_Omega.Init(5.0f, 5.0f, Slope_First_REAL);
 
     // PID初始化
 
     // 底盘速度xPID, 输出摩擦力
-    PID_Velocity_X.Init(0.5f, 0.0f, 0.0f, 0.0f, 0.18f, 30.0f, 0.002f);
+    PID_Velocity_X.Init(30.0f, 0.0f, 0.0f, 0.0f, 0.18f, 30.0f, 0.002f);
 
     // 底盘速度yPID, 输出摩擦力
-    PID_Velocity_Y.Init(0.5f, 0.0f, 0.0f, 0.0f, 0.18f, 30.0f, 0.002f);
+    PID_Velocity_Y.Init(30.0f, 0.0f, 0.0f, 0.0f, 0.18f, 30.0f, 0.002f);
 
     // 底盘角速度PID, 输出扭矩
-    PID_Omega.Init(0.5f, 0.0f, 0.0f, 0.0f, 0.01f, 10.0f, 0.002f);
+    PID_Omega.Init(0.4f, 0.0f, 0.0f, 0.0f, 0.01f, 10.0f, 0.002f);
 
     // 舵向电机
     for (uint8_t i = 0; i < 4; i++)
@@ -98,6 +98,10 @@ void Class_Chassis::Init(float __Velocity_X_Max, float __Velocity_Y_Max, float _
         uint32_t index = 0x01;
         Motor_Wheel[i].Init(&hfdcan2, index + i, 14, 6.2831f, 50.0f, 50.0f, 30.0f, MOTOR_CONTROL_METHOD_CURRENT);
     }
+#ifdef USE_IMU
+    // IMU
+    BMI088.Init(&hspi2, GPIOC, GPIO_PIN_0, GPIOC, GPIO_PIN_3);
+#endif
 }
 
 /**
@@ -119,6 +123,11 @@ void Class_Chassis::TIM_100ms_Alive_PeriodElapsedCallback()
  */
 void Class_Chassis::TIM_2ms_Control_PeriodElapsedCallback()
 {
+#ifdef USE_IMU
+    BMI088.Get_Accel(Now_Accel[0], Now_Accel[1], Now_Accel[2]);
+    Judge_On_Slope();
+#endif
+
     // 斜坡函数
 #ifdef CHASSIS_SLOPE_ENABLE
     Slope_Velocity_X.Set_Target(Target_Velocity_X);
@@ -145,6 +154,27 @@ void Class_Chassis::TIM_2ms_Control_PeriodElapsedCallback()
     Dynamics_Inverse_Resolution();
 
     Output_To_Motor();
+}
+
+void Class_Chassis::Judge_On_Slope()
+{
+#ifdef USE_IMU
+    bool on_slope = Math_Abs(QEKF_INS.Pitch) > 8.0f * DEG_TO_RAD;
+
+    if (on_slope != Is_On_Slope)
+    {
+        uint32_t now = DWT_GetCurrentTimeUs();
+        if (now - Slope_Judge_Timer.start_time >= 200000)
+        {
+            Is_On_Slope = on_slope;
+            Slope_Judge_Timer.start_time = now;
+        }
+    }
+    else
+    {
+        Slope_Judge_Timer.start_time = DWT_GetCurrentTimeUs();
+    }
+#endif
 }
 
 /**
@@ -176,6 +206,24 @@ void Class_Chassis::Self_Resolution()
     Now_Velocity_X = tmp_velocity_x;
     Now_Velocity_Y = tmp_velocity_y;
     Now_Omega = tmp_omega;
+
+    if (Now_Velocity_X * Now_Velocity_X + Now_Velocity_Y * Now_Velocity_Y < 0.01f && Target_Velocity_X * Target_Velocity_X + Target_Velocity_Y * Target_Velocity_Y < 0.01f && Math_Abs(Target_Omega) < 0.1f)
+    {
+        if (Self_Lock_Timer.start_time == 0)
+        {
+            Self_Lock_Timer.start_time = DWT_GetCurrentTimeUs();
+            Self_Lock_Timer.expire_time = Self_Lock_Delay_Us;
+        }
+        if (Is_Timer_ExpiredUs(&Self_Lock_Timer, Expire_Once))
+        {
+            Chassis_Control_Type = Chassis_Control_Type_SELF_LOCK;
+        }
+    }
+    else
+    {
+        Self_Lock_Timer.start_time = 0;
+        Chassis_Control_Type = Chassis_Control_Type_NORMAL;
+    }
 
     Steer_Angle_Self_Resolution();
 }
@@ -228,7 +276,6 @@ void Class_Chassis::Kinematics_Inverse_Resolution()
             // 排除除零问题
             Target_Steer_Angle[i] = Now_Steer_Angle[i];
             Target_Wheel_Omega[i] = 0.0f;
-            // Chassis_Control_Type = Chassis_Control_Type_SELF_LOCK;
         }
         else
         {
@@ -309,7 +356,6 @@ void Class_Chassis::Output_To_Dynamics()
 
             PID_Omega.Set_Now(Now_Omega);
             PID_Omega.TIM_Calculate_PeriodElapsedCallback();
-
             break;
         }
     }
@@ -324,7 +370,7 @@ void Class_Chassis::Dynamics_Inverse_Resolution()
     float force_x, force_y, torque_omega;
 
     force_x = PID_Velocity_X.Get_Out();
-    force_y = PID_Velocity_Y.Get_Out();
+    force_y = PID_Velocity_Y.Get_Out() + On_Slope_Compensation * Is_On_Slope;
     torque_omega = PID_Omega.Get_Out();
 
     // 每个轮的扭力

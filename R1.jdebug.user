@@ -1,0 +1,44 @@
+
+
+
+Breakpoint=F:/Embedded/Wulin_R1/2026Robot/User_dvc/dvc_crsf.h:131:18, State=BP_STATE_DISABLED
+Breakpoint=F:/Embedded/Wulin_R1/2026Robot/User_tsk/tsk_config_and_callback.cpp:110, State=BP_STATE_DISABLED
+GraphedExpression="tmp_encoder", DisplayFormat=DISPLAY_FORMAT_DEC, Color=#e56a6f
+OpenDocument="startup_stm32h723xx.s", FilePath="F:/Embedded/Wulin_R1/2026Robot/startup_stm32h723xx.s", Line=46
+OpenDocument="main.c", FilePath="F:/Embedded/Wulin_R1/2026Robot/Core/Src/main.c", Line=67
+OpenDocument="stm32h7xx_it.c", FilePath="F:/Embedded/Wulin_R1/2026Robot/Core/Src/stm32h7xx_it.c", Line=94
+OpenDocument="tsk_config_and_callback.cpp", FilePath="F:/Embedded/Wulin_R1/2026Robot/User_tsk/tsk_config_and_callback.cpp", Line=282
+OpenDocument="ita_robot.cpp", FilePath="F:/Embedded/Wulin_R1/2026Robot/User_ita/ita_robot.cpp", Line=182
+OpenDocument="crt_KFS.cpp", FilePath="F:/Embedded/Wulin_R1/2026Robot/User_chariot/KFS/crt_KFS.cpp", Line=251
+OpenDocument="crt_KFS.h", FilePath="F:/Embedded/Wulin_R1/2026Robot/User_chariot/KFS/crt_KFS.h", Line=100
+OpenDocument="dvc_motor_dji.h", FilePath="F:/Embedded/Wulin_R1/2026Robot/User_dvc/dvc_motor_dji.h", Line=511
+OpenDocument="crt_weapon.cpp", FilePath="F:/Embedded/Wulin_R1/2026Robot/User_chariot/Weapons/crt_weapon.cpp", Line=321
+OpenDocument="crt_lift.h", FilePath="F:/Embedded/Wulin_R1/2026Robot/User_chariot/Lift/crt_lift.h", Line=22
+OpenToolbar="Debug", Floating=0, x=0, y=0
+OpenWindow="Registers 1", DockArea=RIGHT, x=0, y=1, w=727, h=723, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, FilteredItems=[], RefreshRate=1
+OpenWindow="Source Files", DockArea=LEFT, x=0, y=1, w=1176, h=340, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Disassembly", DockArea=RIGHT, x=0, y=0, w=727, h=369, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Memory 1", DockArea=BOTTOM, x=1, y=0, w=1520, h=328, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, EditorAddress=0x200001E8
+OpenWindow="Watched Data 1", DockArea=LEFT, x=0, y=2, w=1176, h=495, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Data Sampling", DockArea=LEFT, x=0, y=0, w=1176, h=256, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, VisibleTab=0, UniformSampleSpacing=0
+OpenWindow="Console", DockArea=BOTTOM, x=0, y=0, w=1039, h=328, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+SmartViewPlugin="", Page="", Toolbar="Hidden", Window="SmartView 1"
+TableHeader="Source Files", SortCol="File", SortOrder="ASCENDING", VisibleCols=["File";"Status";"Size";"#Insts";"Path"], ColWidths=[255;100;100;100;1214]
+TableHeader="Data Sampling Table", SortCol="None", SortOrder="ASCENDING", VisibleCols=["Index";"Time";" tmp_encoder"], ColWidths=[100;100;100]
+TableHeader="Data Sampling Setup", SortCol="Value", SortOrder="ASCENDING", VisibleCols=["Expression";"Type";"Value";"Min";"Max";"Average";"# Changes";"Min. Change";"Max. Change"], ColWidths=[462;154;100;100;100;100;110;126;126]
+TableHeader="Power Sampling", SortCol="None", SortOrder="ASCENDING", VisibleCols=["Index";"Time";"Ch 0"], ColWidths=[100;100;100]
+TableHeader="Registers 1", SortCol="Name", SortOrder="ASCENDING", VisibleCols=["Name";"Value";"Description"], ColWidths=[100;144;483]
+TableHeader="Watched Data 1", SortCol="Expression", SortOrder="ASCENDING", VisibleCols=["Expression";"Value";"Location";"Refresh";"Access"], ColWidths=[478;275;478;100;104]
+TableHeader="RegisterSelectionDialog", SortCol="None", SortOrder="ASCENDING", VisibleCols=[], ColWidths=[]
+TableHeader="TargetExceptionDialog", SortCol="Name", SortOrder="ASCENDING", VisibleCols=["Name";"Value";"Address";"Description"], ColWidths=[200;100;100;340]
+WatchedExpression="chariot", RefreshRate=5, DisplayFormat=DISPLAY_FORMAT_DEC, Window=Watched Data 1
+WatchedExpression="position_arm", DisplayFormat=DISPLAY_FORMAT_DEC, Window=Watched Data 1
+WatchedExpression="arm_angle", DisplayFormat=DISPLAY_FORMAT_DEC, Window=Watched Data 1
+WatchedExpression="wrist_angle", DisplayFormat=DISPLAY_FORMAT_DEC, Window=Watched Data 1
+WatchedExpression="lift_height", DisplayFormat=DISPLAY_FORMAT_DEC, Window=Watched Data 1
+WatchedExpression="tmp_encoder", RefreshRate=5, DisplayFormat=DISPLAY_FORMAT_DEC, Window=Watched Data 1
+WatchedExpression="position_move", DisplayFormat=DISPLAY_FORMAT_DEC, Window=Watched Data 1
+WatchedExpression="position_pitch", DisplayFormat=DISPLAY_FORMAT_DEC, Window=Watched Data 1
+WatchedExpression="rotate_angle", DisplayFormat=DISPLAY_FORMAT_DEC, Window=Watched Data 1
+WatchedExpression="cmp", DisplayFormat=DISPLAY_FORMAT_DEC, Window=Watched Data 1
+WatchedExpression="i", DisplayFormat=DISPLAY_FORMAT_DEC, Window=Watched Data 1

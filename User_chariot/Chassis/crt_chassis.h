@@ -22,11 +22,11 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "alg_slope.h"
+#include "dvc_bmi088.h"
 #include "dvc_dwt.h"
 #include "dvc_motor_dji.h"
 #include "dvc_motor_mksesc.h"
 #include "dvc_steer_encoder.h"
-
 /* Exported macros -----------------------------------------------------------*/
 
 /* Exported types ------------------------------------------------------------*/
@@ -72,6 +72,9 @@ public:
 
     // 编码器
     Class_Swerve_Steer_Encoder Steer_Encoder[4];
+
+    // IMU
+    Class_BMI088 BMI088;
 
     void Init(float __Velocity_X_Max = 8.0f, float __Velocity_Y_Max = 8.0f, float __Omega_Max = 16.0f);
 
@@ -144,6 +147,13 @@ protected:
 
     // 内部变量
 
+    // 自锁延时（防频繁切换）
+    SoftTimer_t Self_Lock_Timer = {0};
+    static constexpr uint32_t Self_Lock_Delay_Us = 200000;
+
+    // 斜坡判定消抖
+    SoftTimer_t Slope_Judge_Timer = {0, 20000};
+
     // 轮向电机静摩擦阻力电流值
     float Static_Resistance_Wheel_Current[4] = {3.0f,
                                                 3.0f,
@@ -186,10 +196,10 @@ protected:
     // 舵向标定电机误差
 
     float steer_offset_deg[4] = {
-        126.36145f + 7.60302734,                 // [0] 编码器朝前 129.67955003°
-        -78.3702621 - 1.1206665,                 // [1] 编码器朝前 164.541274806°
-        43.01409946 - 2.02160645 + 15.1181183,   // [2] 编码器朝前 43.01409946°
-        146.40174902 + 0.219741821 - 4.79032898, // [3] 编码器朝前 146.40174902°
+        406.507965 - 270.0f,         // [0] 编码器朝前 129.67955003°
+        -172.353043 + 90.0f,           // [1] 编码器朝前 164.541274806°
+        -31.038269 + 90.0f,          // [2] 编码器朝前 43.01409946°
+        410.089722 - 270.0f, // [3] 编码器朝前 146.40174902°
     };
 
     // 目标速度X
@@ -199,7 +209,20 @@ protected:
     // 目标角速度
     float Target_Omega = 0.0f;
 
+    // IMU参数
+    uint8_t Is_On_Slope = 0;
+
+    float Now_Accel[3] = {0.0f, 0.0f, 0.0f};
+
+    float Prev_Accel[3] = {0.0f, 0.0f, 0.0f};
+
+    float On_Slope_Compensation = 0.0f;
+
+    float Jerk_Threshold = 0.5f;
+
     // 内部函数
+
+    void Judge_On_Slope();
 
     void Self_Resolution();
 
